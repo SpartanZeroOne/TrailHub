@@ -1,0 +1,1015 @@
+// Translations extracted from prototype
+export const translations = {
+  de: {
+    // Navigation
+    events: 'Events',
+    map: 'Karte',
+    login: 'Anmelden',
+    logout: 'Abmelden',
+    
+    // Hero
+    heroTitle1: 'FINDE DEIN',
+    heroTitle2: 'NÄCHSTES ABENTEUER',
+    heroSubtitle: 'Alle Offroad-Events aus Deutschland, Belgien, Frankreich und Luxemburg – automatisch aktualisiert, auf einer Karte, mit deinen Freunden.',
+    allEventsShow: 'Alle Events anzeigen',
+    mapView: 'Kartenansicht',
+    
+    // Categories
+    trailAdventures: 'Trail Adventures',
+    rallyes: 'Rallyes',
+    adventureTrips: 'Adventure Trips',
+    skillsCamps: 'Skills-Camps',
+    offroadFestivals: 'Offroad Festivals',
+    
+    // Time filters
+    filterAll: 'Alle',
+    weekend: 'Wochenende',
+    soon: 'Demnächst',
+    months6: '6 Monate',
+    season: 'Saison',
+    
+    // Duration
+    days: 'Tage',
+    day: 'Tag',
+    day1: '1 Tag',
+    days2: '2 Tage',
+    days1_2: '1-2 Tage',
+    days3_4: '3-4 Tage',
+    days3_5: '3-5 Tage',
+    days5plus: '5+ Tage',
+    days6_10: '6-10 Tage',
+    days10plus: '10+ Tage',
+    weekendFilter: 'Wochenende',
+    
+    // Distance/Radius
+    inArea: 'Im Umkreis',
+    km: 'km',
+    europe: 'Europaweit',
+    
+    // Difficulty
+    beginner: 'Einsteiger',
+    intermediate: 'Fortgeschritten',
+    advanced: 'Profi',
+    allLevels: 'Alle Level',
+    
+    // Subcategories
+    trailRiding: 'Trail-Riding',
+    enduro: 'Enduro',
+    hardEnduro: 'Hard Enduro',
+    adventure: 'Adventure',
+    
+    // Trip types
+    morocco: 'Marokko',
+    balkan: 'Balkan',
+    scandinavia: 'Skandinavien',
+    alps: 'Alpen',
+    
+    // Festival types
+    communityMeet: 'Community-Treffen',
+    manufacturerEvent: 'Hersteller-Event',
+    demoEvent: 'Demo-/Test-Event',
+    raceIntegrated: 'Rennen integriert',
+    expoFair: 'Messe/Expo',
+    adventureFestival: 'Adventure-Festival',
+    hardEnduroFestival: 'Hard-Enduro-Festival',
+    
+    // Filter panel
+    moreFilters: 'Mehr Filter',
+    countries: 'Länder',
+    mainCountries: 'Hauptländer',
+    moreCountries: 'Weitere Länder',
+    priceRange: 'Preisbereich',
+    upTo: 'bis',
+    showPastEvents: 'Vergangene Events anzeigen',
+    newOnly: 'Nur neue Events',
+    friendsOnly: 'Nur mit Freunden',
+    resetFilters: 'Filter zurücksetzen',
+    
+    // Event card
+    new: 'NEU',
+    attending: 'dabei',
+    participated: 'Teilgenommen',
+    
+    // Event detail
+    aiSummary: 'KI-Zusammenfassung',
+    friendsAtEvent: 'Freunde dabei',
+    organizer: 'Veranstalter',
+    verifiedOrganizer: 'Verifizierter Veranstalter',
+    allEventsFromOrganizer: 'Alle Events von diesem Veranstalter',
+    price: 'Preis',
+    date: 'Datum',
+    location: 'Ort',
+    duration: 'Dauer',
+    similarEvents: 'Ähnliche Events',
+    registerNow: 'Jetzt anmelden',
+    registered: 'Angemeldet',
+    forwardToOrganizer: 'Weiterleitung zur Veranstalter-Seite',
+    back: 'Zurück',
+    
+    // Profile
+    profile: 'Profil',
+    myDashboard: 'Mein Offroad-Dashboard',
+    myEvents: 'Meine Events',
+    friends: 'Freunde',
+    favorites: 'Favoriten',
+    settings: 'Einstellungen',
+    upcoming: 'Bevorstehend',
+    past: 'Vergangen',
+    noUpcomingEvents: 'Keine bevorstehenden Events',
+    discoverEvents: 'Events entdecken',
+    copyLink: 'Profil-Link',
+    copied: 'Kopiert!',
+    edit: 'Bearbeiten',
+    eventsAttended: 'Events besucht',
+    registeredEvents: 'Angemeldete Events',
+    
+    // Friends
+    searchFriends: 'Freunde suchen...',
+    pendingRequests: 'Ausstehende Anfragen',
+    allFriends: 'Alle Freunde',
+    commonEvents: 'gemeinsame Events',
+    nudge: 'Anstupsen',
+    nudged: 'Angestupst!',
+    viewProfile: 'Profil ansehen',
+    friend: 'Freund',
+    eventsPlanned: 'Events geplant',
+    registeredAt: 'Angemeldet bei',
+    hideRegistrations: 'Anmeldungen verbergen',
+    removeFriend: 'Freund entfernen',
+    accept: 'Annehmen',
+    decline: 'Ablehnen',
+    
+    // Settings
+    profileSettings: 'Profil',
+    name: 'Name',
+    locationSetting: 'Standort',
+    bio: 'Bio',
+    maxChars: 'max. 200 Zeichen',
+    mainBike: 'Hauptbike',
+    preferredDiscipline: 'Bevorzugte Disziplin',
+    changeImage: 'Bild ändern',
+    privacy: 'Privatsphäre',
+    whoSeesRegistrations: 'Wer sieht meine Anmeldungen?',
+    everyone: 'Alle',
+    onlyFriends: 'Nur Freunde',
+    noOne: 'Niemand',
+    notifications: 'Benachrichtigungen',
+    eventReminders: 'Erinnerungen für angemeldete Events (2 Wochen vorher)',
+    newEventsInRegion: 'Neue Events in meiner Region',
+    friendRegistrations: 'Wenn Freunde sich für Events anmelden',
+    account: 'Account',
+    changeEmail: 'E-Mail ändern',
+    changePassword: 'Passwort ändern',
+    deleteAccount: 'Account löschen',
+    
+    // Favorites
+    noFavorites: 'Noch keine Favoriten gespeichert',
+    clickHeartToSave: 'Klicke auf das Herz bei Events, um sie zu speichern',
+    
+    // Misc
+    search: 'Suchen...',
+    noResults: 'Keine Events gefunden',
+    participants: 'Teilnehmer',
+    spotsLeft: 'Plätze verfügbar',
+    loginRequired: 'Anmeldung erforderlich',
+    loginToSee: 'Melde dich an, um Event-Details zu sehen und dich anzumelden.',
+    loginNow: 'Jetzt anmelden',
+    later: 'Später',
+    close: 'Schließen',
+    
+    // Additional
+    highlights: 'Highlights',
+    featuredEvents: 'Featured Events',
+    showAll: 'Alle anzeigen',
+    changeDetected: 'Änderung erkannt',
+    field: 'Feld',
+    old: 'Alt',
+    newValue: 'Neu',
+    pastLabel: 'VERGANGEN',
+    firstTimerFriendly: 'First-Timer Friendly',
+    perPerson: 'pro Person',
+    openInMaps: 'In Google Maps öffnen',
+    currentEvent: 'Aktuell',
+    months3: '3 Monate',
+    thisYear: 'Dieses Jahr',
+    nextYear: 'Nächstes Jahr',
+    domestic: 'Inland',
+    farTravel: 'Fernreise',
+    hobbyist: 'Hobbyfahrer',
+    ambitious: 'Ambitioniert',
+    logout: 'Abmelden',
+    upcomingEventsCount: 'Kommende Events',
+    pastEventsCount: 'Vergangene Events',
+    noEventsVisible: 'Keine Events sichtbar',
+    friendHiddenRegistrations: 'Dieser Freund hat seine Anmeldungen verborgen',
+    
+    // Countries
+    germany: 'Deutschland',
+    france: 'Frankreich',
+    belgium: 'Belgien',
+    netherlands: 'Niederlande',
+    luxembourg: 'Luxemburg',
+    spain: 'Spanien',
+    italy: 'Italien',
+    austria: 'Österreich',
+    switzerland: 'Schweiz',
+    croatia: 'Kroatien',
+    greece: 'Griechenland',
+    morocco: 'Marokko',
+    portugal: 'Portugal',
+    
+    // Regions
+    northGermany: 'Norddeutschland',
+    westGermany: 'Westdeutschland',
+    southGermany: 'Süddeutschland',
+    eastGermany: 'Ostdeutschland',
+    northFrance: 'Nordfrankreich',
+    westFrance: 'Westfrankreich',
+    eastFrance: 'Ostfrankreich',
+    southFrance: 'Südfrankreich',
+    wallonia: 'Wallonien',
+    flanders: 'Flandern',
+    northNetherlands: 'Norden',
+    southNetherlands: 'Süden',
+    
+    // MX
+    mxTrack: 'MX-Track',
+    mxRace: 'Race',
+    checkOrganizerInfo: 'ℹ︎ Aktuelle Infos auf der Veranstalter-Website prüfen',
+    
+    // Registration
+    registered: 'Angemeldet',
+    
+    // External link notice
+    openingExternalLink: 'Externen Link öffnen',
+    
+    // Footer
+    aboutUs: 'Über uns',
+    imprint: 'Impressum',
+    privacyPolicy: 'Datenschutz',
+    cookies: 'Cookies',
+    termsConditions: 'AGB',
+    legal: 'Rechtliches',
+    contactUs: 'Kontaktieren Sie uns',
+    allRightsReserved: 'Alle Rechte vorbehalten',
+  },
+  en: {
+    // Navigation
+    events: 'Events',
+    map: 'Map',
+    login: 'Login',
+    logout: 'Logout',
+    
+    // Hero
+    heroTitle1: 'FIND YOUR',
+    heroTitle2: 'NEXT ADVENTURE',
+    heroSubtitle: 'All offroad events from Germany, Belgium, France and Luxembourg – automatically updated, on a map, with your friends.',
+    allEventsShow: 'Show all events',
+    mapView: 'Map view',
+    
+    // Categories
+    trailAdventures: 'Trail Adventures',
+    rallyes: 'Rallyes',
+    adventureTrips: 'Adventure Trips',
+    skillsCamps: 'Skills Camps',
+    offroadFestivals: 'Offroad Festivals',
+    
+    // Time filters
+    filterAll: 'All',
+    weekend: 'Weekend',
+    soon: 'Soon',
+    months6: '6 Months',
+    season: 'Season',
+    
+    // Duration
+    days: 'Days',
+    day: 'Day',
+    day1: '1 Day',
+    days2: '2 Days',
+    days1_2: '1-2 Days',
+    days3_4: '3-4 Days',
+    days3_5: '3-5 Days',
+    days5plus: '5+ Days',
+    days6_10: '6-10 Days',
+    days10plus: '10+ Days',
+    weekendFilter: 'Weekend',
+    
+    // Distance/Radius
+    inArea: 'Within radius',
+    km: 'km',
+    europe: 'Europe-wide',
+    
+    // Difficulty
+    beginner: 'Beginner',
+    intermediate: 'Intermediate',
+    advanced: 'Advanced',
+    allLevels: 'All levels',
+    
+    // Subcategories
+    trailRiding: 'Trail Riding',
+    enduro: 'Enduro',
+    hardEnduro: 'Hard Enduro',
+    adventure: 'Adventure',
+    
+    // Trip types
+    morocco: 'Morocco',
+    balkan: 'Balkans',
+    scandinavia: 'Scandinavia',
+    alps: 'Alps',
+    
+    // Festival types
+    communityMeet: 'Community Meet',
+    manufacturerEvent: 'Manufacturer Event',
+    demoEvent: 'Demo/Test Event',
+    raceIntegrated: 'Race integrated',
+    expoFair: 'Expo/Fair',
+    adventureFestival: 'Adventure Festival',
+    hardEnduroFestival: 'Hard Enduro Festival',
+    
+    // Filter panel
+    moreFilters: 'More filters',
+    countries: 'Countries',
+    mainCountries: 'Main countries',
+    moreCountries: 'More countries',
+    priceRange: 'Price range',
+    upTo: 'up to',
+    showPastEvents: 'Show past events',
+    newOnly: 'New events only',
+    friendsOnly: 'With friends only',
+    resetFilters: 'Reset filters',
+    
+    // Event card
+    new: 'NEW',
+    attending: 'attending',
+    participated: 'Participated',
+    
+    // Event detail
+    aiSummary: 'AI Summary',
+    friendsAtEvent: 'Friends attending',
+    organizer: 'Organizer',
+    verifiedOrganizer: 'Verified Organizer',
+    allEventsFromOrganizer: 'All events from this organizer',
+    price: 'Price',
+    date: 'Date',
+    location: 'Location',
+    duration: 'Duration',
+    similarEvents: 'Similar Events',
+    registerNow: 'Register now',
+    registered: 'Registered',
+    forwardToOrganizer: 'Redirecting to organizer page',
+    back: 'Back',
+    
+    // Profile
+    profile: 'Profile',
+    myDashboard: 'My Offroad Dashboard',
+    myEvents: 'My Events',
+    friends: 'Friends',
+    favorites: 'Favorites',
+    settings: 'Settings',
+    upcoming: 'Upcoming',
+    past: 'Past',
+    noUpcomingEvents: 'No upcoming events',
+    discoverEvents: 'Discover events',
+    copyLink: 'Profile link',
+    copied: 'Copied!',
+    edit: 'Edit',
+    eventsAttended: 'Events attended',
+    registeredEvents: 'Registered events',
+    
+    // Friends
+    searchFriends: 'Search friends...',
+    pendingRequests: 'Pending requests',
+    allFriends: 'All friends',
+    commonEvents: 'common events',
+    nudge: 'Nudge',
+    nudged: 'Nudged!',
+    viewProfile: 'View profile',
+    friend: 'Friend',
+    eventsPlanned: 'events planned',
+    registeredAt: 'Registered at',
+    hideRegistrations: 'Hide registrations',
+    removeFriend: 'Remove friend',
+    accept: 'Accept',
+    decline: 'Decline',
+    
+    // Settings
+    profileSettings: 'Profile',
+    name: 'Name',
+    locationSetting: 'Location',
+    bio: 'Bio',
+    maxChars: 'max. 200 characters',
+    mainBike: 'Main bike',
+    preferredDiscipline: 'Preferred discipline',
+    changeImage: 'Change image',
+    privacy: 'Privacy',
+    whoSeesRegistrations: 'Who can see my registrations?',
+    everyone: 'Everyone',
+    onlyFriends: 'Friends only',
+    noOne: 'No one',
+    notifications: 'Notifications',
+    eventReminders: 'Reminders for registered events (2 weeks before)',
+    newEventsInRegion: 'New events in my region',
+    friendRegistrations: 'When friends register for events',
+    account: 'Account',
+    changeEmail: 'Change email',
+    changePassword: 'Change password',
+    deleteAccount: 'Delete account',
+    
+    // Favorites
+    noFavorites: 'No favorites saved yet',
+    clickHeartToSave: 'Click the heart on events to save them',
+    
+    // Misc
+    search: 'Search...',
+    noResults: 'No events found',
+    participants: 'Participants',
+    spotsLeft: 'spots available',
+    loginRequired: 'Login required',
+    loginToSee: 'Log in to see event details and register.',
+    loginNow: 'Login now',
+    later: 'Later',
+    close: 'Close',
+    
+    // Additional
+    highlights: 'Highlights',
+    featuredEvents: 'Featured Events',
+    showAll: 'Show all',
+    changeDetected: 'Change detected',
+    field: 'Field',
+    old: 'Old',
+    newValue: 'New',
+    pastLabel: 'PAST',
+    firstTimerFriendly: 'First-Timer Friendly',
+    perPerson: 'per person',
+    openInMaps: 'Open in Google Maps',
+    currentEvent: 'Current',
+    months3: '3 Months',
+    thisYear: 'This year',
+    nextYear: 'Next year',
+    domestic: 'Domestic',
+    farTravel: 'Long distance',
+    hobbyist: 'Hobbyist',
+    ambitious: 'Ambitious',
+    logout: 'Logout',
+    upcomingEventsCount: 'Upcoming Events',
+    pastEventsCount: 'Past Events',
+    noEventsVisible: 'No events visible',
+    friendHiddenRegistrations: 'This friend has hidden their registrations',
+    
+    // Countries
+    germany: 'Germany',
+    france: 'France',
+    belgium: 'Belgium',
+    netherlands: 'Netherlands',
+    luxembourg: 'Luxembourg',
+    spain: 'Spain',
+    italy: 'Italy',
+    austria: 'Austria',
+    switzerland: 'Switzerland',
+    croatia: 'Croatia',
+    greece: 'Greece',
+    morocco: 'Morocco',
+    portugal: 'Portugal',
+    
+    // Regions
+    northGermany: 'Northern Germany',
+    westGermany: 'Western Germany',
+    southGermany: 'Southern Germany',
+    eastGermany: 'Eastern Germany',
+    northFrance: 'Northern France',
+    westFrance: 'Western France',
+    eastFrance: 'Eastern France',
+    southFrance: 'Southern France',
+    wallonia: 'Wallonia',
+    flanders: 'Flanders',
+    northNetherlands: 'North',
+    southNetherlands: 'South',
+    
+    // MX
+    mxTrack: 'MX-Track',
+    mxRace: 'Race',
+    checkOrganizerInfo: 'ℹ︎ Check latest info on organizer website',
+    
+    // Registration
+    registered: 'Registered',
+    
+    // External link notice
+    openingExternalLink: 'Opening external link',
+    
+    // Footer
+    aboutUs: 'About us',
+    imprint: 'Imprint',
+    privacyPolicy: 'Privacy Policy',
+    cookies: 'Cookies',
+    termsConditions: 'Terms & Conditions',
+    legal: 'Legal',
+    contactUs: 'Contact us',
+    allRightsReserved: 'All rights reserved',
+  },
+  fr: {
+    // Navigation
+    events: 'Événements',
+    map: 'Carte',
+    login: 'Connexion',
+    logout: 'Déconnexion',
+    
+    // Hero
+    heroTitle1: 'TROUVE TA',
+    heroTitle2: 'PROCHAINE AVENTURE',
+    heroSubtitle: "Tous les événements offroad d'Allemagne, Belgique, France et Luxembourg – mis à jour automatiquement, sur une carte, avec tes amis.",
+    allEventsShow: 'Voir tous les événements',
+    mapView: 'Vue carte',
+    
+    // Categories
+    trailAdventures: 'Trail Adventures',
+    rallyes: 'Rallyes',
+    adventureTrips: 'Adventure Trips',
+    skillsCamps: 'Skills-Camps',
+    offroadFestivals: 'Offroad Festivals',
+    
+    // Time filters
+    filterAll: 'Tous',
+    weekend: 'Week-end',
+    soon: 'Bientôt',
+    months6: '6 Mois',
+    season: 'Saison',
+    
+    // Duration
+    days: 'Jours',
+    day: 'Jour',
+    day1: '1 Jour',
+    days2: '2 Jours',
+    days1_2: '1-2 Jours',
+    days3_4: '3-4 Jours',
+    days3_5: '3-5 Jours',
+    days5plus: '5+ Jours',
+    days6_10: '6-10 Jours',
+    days10plus: '10+ Jours',
+    weekendFilter: 'Week-end',
+    
+    // Distance/Radius
+    inArea: 'Dans un rayon',
+    km: 'km',
+    europe: 'Europe entière',
+    
+    // Difficulty
+    beginner: 'Débutant',
+    intermediate: 'Intermédiaire',
+    advanced: 'Expert',
+    allLevels: 'Tous niveaux',
+    
+    // Subcategories
+    trailRiding: 'Trail Riding',
+    enduro: 'Enduro',
+    hardEnduro: 'Hard Enduro',
+    adventure: 'Adventure',
+    
+    // Trip types
+    morocco: 'Maroc',
+    balkan: 'Balkans',
+    scandinavia: 'Scandinavie',
+    alps: 'Alpes',
+    
+    // Festival types
+    communityMeet: 'Rencontre communautaire',
+    manufacturerEvent: 'Événement constructeur',
+    demoEvent: 'Événement démo/test',
+    raceIntegrated: 'Course intégrée',
+    expoFair: 'Salon/Expo',
+    adventureFestival: 'Festival Adventure',
+    hardEnduroFestival: 'Festival Hard Enduro',
+    
+    // Filter panel
+    moreFilters: 'Plus de filtres',
+    countries: 'Pays',
+    mainCountries: 'Pays principaux',
+    moreCountries: 'Autres pays',
+    priceRange: 'Gamme de prix',
+    upTo: "jusqu'à",
+    showPastEvents: 'Afficher les événements passés',
+    newOnly: 'Nouveaux uniquement',
+    friendsOnly: 'Avec amis uniquement',
+    resetFilters: 'Réinitialiser les filtres',
+    
+    // Event card
+    new: 'NOUVEAU',
+    attending: 'présents',
+    participated: 'Participé',
+    
+    // Event detail
+    aiSummary: 'Résumé IA',
+    friendsAtEvent: 'Amis présents',
+    organizer: 'Organisateur',
+    verifiedOrganizer: 'Organisateur vérifié',
+    allEventsFromOrganizer: 'Tous les événements de cet organisateur',
+    price: 'Prix',
+    date: 'Date',
+    location: 'Lieu',
+    duration: 'Durée',
+    similarEvents: 'Événements similaires',
+    registerNow: "S'inscrire",
+    registered: 'Inscrit',
+    forwardToOrganizer: "Redirection vers l'organisateur",
+    back: 'Retour',
+    
+    // Profile
+    profile: 'Profil',
+    myDashboard: 'Mon Tableau de Bord Offroad',
+    myEvents: 'Mes Événements',
+    friends: 'Amis',
+    favorites: 'Favoris',
+    settings: 'Paramètres',
+    upcoming: 'À venir',
+    past: 'Passé',
+    noUpcomingEvents: 'Aucun événement à venir',
+    discoverEvents: 'Découvrir les événements',
+    copyLink: 'Lien du profil',
+    copied: 'Copié!',
+    edit: 'Modifier',
+    eventsAttended: 'Événements visités',
+    registeredEvents: 'Événements inscrits',
+    
+    // Friends
+    searchFriends: 'Rechercher des amis...',
+    pendingRequests: 'Demandes en attente',
+    allFriends: 'Tous les amis',
+    commonEvents: 'événements en commun',
+    nudge: 'Faire signe',
+    nudged: 'Signal envoyé!',
+    viewProfile: 'Voir le profil',
+    friend: 'Ami',
+    eventsPlanned: 'événements prévus',
+    registeredAt: 'Inscrit à',
+    hideRegistrations: 'Masquer les inscriptions',
+    removeFriend: 'Supprimer ami',
+    accept: 'Accepter',
+    decline: 'Refuser',
+    
+    // Settings
+    profileSettings: 'Profil',
+    name: 'Nom',
+    locationSetting: 'Localisation',
+    bio: 'Bio',
+    maxChars: 'max. 200 caractères',
+    mainBike: 'Moto principale',
+    preferredDiscipline: 'Discipline préférée',
+    changeImage: "Changer l'image",
+    privacy: 'Confidentialité',
+    whoSeesRegistrations: 'Qui peut voir mes inscriptions?',
+    everyone: 'Tout le monde',
+    onlyFriends: 'Amis uniquement',
+    noOne: 'Personne',
+    notifications: 'Notifications',
+    eventReminders: 'Rappels pour les événements inscrits (2 semaines avant)',
+    newEventsInRegion: 'Nouveaux événements dans ma région',
+    friendRegistrations: "Quand des amis s'inscrivent à des événements",
+    account: 'Compte',
+    changeEmail: "Changer l'email",
+    changePassword: 'Changer le mot de passe',
+    deleteAccount: 'Supprimer le compte',
+    
+    // Favorites
+    noFavorites: 'Aucun favori enregistré',
+    clickHeartToSave: 'Clique sur le cœur des événements pour les sauvegarder',
+    
+    // Misc
+    search: 'Rechercher...',
+    noResults: 'Aucun événement trouvé',
+    participants: 'Participants',
+    spotsLeft: 'places disponibles',
+    loginRequired: 'Connexion requise',
+    loginToSee: "Connecte-toi pour voir les détails et t'inscrire.",
+    loginNow: 'Se connecter',
+    later: 'Plus tard',
+    close: 'Fermer',
+    
+    // Additional
+    highlights: 'Points forts',
+    featuredEvents: 'Événements en vedette',
+    showAll: 'Tout afficher',
+    changeDetected: 'Changement détecté',
+    field: 'Champ',
+    old: 'Ancien',
+    newValue: 'Nouveau',
+    pastLabel: 'PASSÉ',
+    firstTimerFriendly: 'Adapté aux débutants',
+    perPerson: 'par personne',
+    openInMaps: 'Ouvrir dans Google Maps',
+    currentEvent: 'Actuel',
+    months3: '3 Mois',
+    thisYear: 'Cette année',
+    nextYear: "L'année prochaine",
+    domestic: 'National',
+    farTravel: 'Lointain',
+    hobbyist: 'Amateur',
+    ambitious: 'Ambitieux',
+    logout: 'Déconnexion',
+    upcomingEventsCount: 'Événements à venir',
+    pastEventsCount: 'Événements passés',
+    noEventsVisible: 'Aucun événement visible',
+    friendHiddenRegistrations: 'Cet ami a masqué ses inscriptions',
+    
+    // Countries
+    germany: 'Allemagne',
+    france: 'France',
+    belgium: 'Belgique',
+    netherlands: 'Pays-Bas',
+    luxembourg: 'Luxembourg',
+    spain: 'Espagne',
+    italy: 'Italie',
+    austria: 'Autriche',
+    switzerland: 'Suisse',
+    croatia: 'Croatie',
+    greece: 'Grèce',
+    morocco: 'Maroc',
+    portugal: 'Portugal',
+    
+    // Regions
+    northGermany: 'Allemagne du Nord',
+    westGermany: 'Allemagne de l\'Ouest',
+    southGermany: 'Allemagne du Sud',
+    eastGermany: 'Allemagne de l\'Est',
+    northFrance: 'Nord de la France',
+    westFrance: 'Ouest de la France',
+    eastFrance: 'Est de la France',
+    southFrance: 'Sud de la France',
+    wallonia: 'Wallonie',
+    flanders: 'Flandre',
+    northNetherlands: 'Nord',
+    southNetherlands: 'Sud',
+    
+    // MX
+    mxTrack: 'Piste MX',
+    mxRace: 'Course',
+    checkOrganizerInfo: "ℹ︎ Vérifier les infos actuelles sur le site de l'organisateur",
+    
+    // Registration
+    registered: 'Inscrit',
+    
+    // External link notice
+    openingExternalLink: 'Ouverture du lien externe',
+    
+    // Footer
+    aboutUs: 'À propos',
+    imprint: 'Mentions légales',
+    privacyPolicy: 'Politique de confidentialité',
+    cookies: 'Cookies',
+    termsConditions: 'CGV',
+    legal: 'Informations légales',
+    contactUs: 'Contactez-nous',
+    allRightsReserved: 'Tous droits réservés',
+  },
+  nl: {
+    // Navigation
+    events: 'Evenementen',
+    map: 'Kaart',
+    login: 'Inloggen',
+    logout: 'Uitloggen',
+    
+    // Hero
+    heroTitle1: 'VIND JE',
+    heroTitle2: 'VOLGENDE AVONTUUR',
+    heroSubtitle: 'Alle offroad-evenementen uit Duitsland, België, Frankrijk en Luxemburg – automatisch bijgewerkt, op een kaart, met je vrienden.',
+    allEventsShow: 'Alle evenementen tonen',
+    mapView: 'Kaartweergave',
+    
+    // Categories
+    trailAdventures: 'Trail Adventures',
+    rallyes: 'Rallyes',
+    adventureTrips: 'Adventure Trips',
+    skillsCamps: 'Skills-Camps',
+    offroadFestivals: 'Offroad Festivals',
+    
+    // Time filters
+    filterAll: 'Alle',
+    weekend: 'Weekend',
+    soon: 'Binnenkort',
+    months6: '6 Maanden',
+    season: 'Seizoen',
+    
+    // Duration
+    days: 'Dagen',
+    day: 'Dag',
+    day1: '1 Dag',
+    days2: '2 Dagen',
+    days1_2: '1-2 Dagen',
+    days3_4: '3-4 Dagen',
+    days3_5: '3-5 Dagen',
+    days5plus: '5+ Dagen',
+    days6_10: '6-10 Dagen',
+    days10plus: '10+ Dagen',
+    weekendFilter: 'Weekend',
+    
+    // Distance/Radius
+    inArea: 'Binnen straal',
+    km: 'km',
+    europe: 'Heel Europa',
+    
+    // Difficulty
+    beginner: 'Beginner',
+    intermediate: 'Gemiddeld',
+    advanced: 'Gevorderd',
+    allLevels: 'Alle niveaus',
+    
+    // Subcategories
+    trailRiding: 'Trail Riding',
+    enduro: 'Enduro',
+    hardEnduro: 'Hard Enduro',
+    adventure: 'Adventure',
+    
+    // Trip types
+    morocco: 'Marokko',
+    balkan: 'Balkan',
+    scandinavia: 'Scandinavië',
+    alps: 'Alpen',
+    
+    // Festival types
+    communityMeet: 'Community-ontmoeting',
+    manufacturerEvent: 'Fabrikant-evenement',
+    demoEvent: 'Demo-/test-evenement',
+    raceIntegrated: 'Race geïntegreerd',
+    expoFair: 'Beurs/Expo',
+    adventureFestival: 'Adventure Festival',
+    hardEnduroFestival: 'Hard Enduro Festival',
+    
+    // Filter panel
+    moreFilters: 'Meer filters',
+    countries: 'Landen',
+    mainCountries: 'Hoofdlanden',
+    moreCountries: 'Meer landen',
+    priceRange: 'Prijsklasse',
+    upTo: 'tot',
+    showPastEvents: 'Voorbije evenementen tonen',
+    newOnly: 'Alleen nieuwe',
+    friendsOnly: 'Alleen met vrienden',
+    resetFilters: 'Filters resetten',
+    
+    // Event card
+    new: 'NIEUW',
+    attending: 'aanwezig',
+    participated: 'Deelgenomen',
+    
+    // Event detail
+    aiSummary: 'AI-samenvatting',
+    friendsAtEvent: 'Vrienden aanwezig',
+    organizer: 'Organisator',
+    verifiedOrganizer: 'Geverifieerde Organisator',
+    allEventsFromOrganizer: 'Alle evenementen van deze organisator',
+    price: 'Prijs',
+    date: 'Datum',
+    location: 'Locatie',
+    duration: 'Duur',
+    similarEvents: 'Vergelijkbare Evenementen',
+    registerNow: 'Nu aanmelden',
+    registered: 'Aangemeld',
+    forwardToOrganizer: 'Doorverwijzing naar organisator',
+    back: 'Terug',
+    
+    // Profile
+    profile: 'Profiel',
+    myDashboard: 'Mijn Offroad Dashboard',
+    myEvents: 'Mijn Evenementen',
+    friends: 'Vrienden',
+    favorites: 'Favorieten',
+    settings: 'Instellingen',
+    upcoming: 'Aankomend',
+    past: 'Afgelopen',
+    noUpcomingEvents: 'Geen aankomende evenementen',
+    discoverEvents: 'Evenementen ontdekken',
+    copyLink: 'Profiellink',
+    copied: 'Gekopieerd!',
+    edit: 'Bewerken',
+    eventsAttended: 'Bezochte evenementen',
+    registeredEvents: 'Aangemelde evenementen',
+    
+    // Friends
+    searchFriends: 'Vrienden zoeken...',
+    pendingRequests: 'Openstaande verzoeken',
+    allFriends: 'Alle vrienden',
+    commonEvents: 'gezamenlijke evenementen',
+    nudge: 'Porren',
+    nudged: 'Gepord!',
+    viewProfile: 'Bekijk profiel',
+    friend: 'Vriend',
+    eventsPlanned: 'evenementen gepland',
+    registeredAt: 'Aangemeld bij',
+    hideRegistrations: 'Aanmeldingen verbergen',
+    removeFriend: 'Vriend verwijderen',
+    accept: 'Accepteren',
+    decline: 'Afwijzen',
+    
+    // Settings
+    profileSettings: 'Profiel',
+    name: 'Naam',
+    locationSetting: 'Locatie',
+    bio: 'Bio',
+    maxChars: 'max. 200 tekens',
+    mainBike: 'Hoofdmotor',
+    preferredDiscipline: 'Voorkeursdiscipline',
+    changeImage: 'Afbeelding wijzigen',
+    privacy: 'Privacy',
+    whoSeesRegistrations: 'Wie ziet mijn aanmeldingen?',
+    everyone: 'Iedereen',
+    onlyFriends: 'Alleen vrienden',
+    noOne: 'Niemand',
+    notifications: 'Meldingen',
+    eventReminders: 'Herinneringen voor aangemelde evenementen (2 weken van tevoren)',
+    newEventsInRegion: 'Nieuwe evenementen in mijn regio',
+    friendRegistrations: 'Wanneer vrienden zich aanmelden voor evenementen',
+    account: 'Account',
+    changeEmail: 'E-mail wijzigen',
+    changePassword: 'Wachtwoord wijzigen',
+    deleteAccount: 'Account verwijderen',
+    
+    // Favorites
+    noFavorites: 'Nog geen favorieten opgeslagen',
+    clickHeartToSave: 'Klik op het hartje bij evenementen om ze op te slaan',
+    
+    // Misc
+    search: 'Zoeken...',
+    noResults: 'Geen evenementen gevonden',
+    participants: 'Deelnemers',
+    spotsLeft: 'plaatsen beschikbaar',
+    loginRequired: 'Inloggen vereist',
+    loginToSee: 'Log in om eventdetails te zien en je aan te melden.',
+    loginNow: 'Nu inloggen',
+    later: 'Later',
+    close: 'Sluiten',
+    
+    // Additional
+    highlights: 'Hoogtepunten',
+    featuredEvents: 'Uitgelichte Evenementen',
+    showAll: 'Alles tonen',
+    changeDetected: 'Wijziging gedetecteerd',
+    field: 'Veld',
+    old: 'Oud',
+    newValue: 'Nieuw',
+    pastLabel: 'AFGELOPEN',
+    firstTimerFriendly: 'Geschikt voor beginners',
+    perPerson: 'per persoon',
+    openInMaps: 'Openen in Google Maps',
+    currentEvent: 'Huidig',
+    months3: '3 Maanden',
+    thisYear: 'Dit jaar',
+    nextYear: 'Volgend jaar',
+    domestic: 'Binnenland',
+    farTravel: 'Verre reis',
+    hobbyist: 'Hobbyrijder',
+    ambitious: 'Ambitieus',
+    logout: 'Uitloggen',
+    upcomingEventsCount: 'Aankomende Evenementen',
+    pastEventsCount: 'Afgelopen Evenementen',
+    noEventsVisible: 'Geen evenementen zichtbaar',
+    friendHiddenRegistrations: 'Deze vriend heeft zijn aanmeldingen verborgen',
+    
+    // Countries
+    germany: 'Duitsland',
+    france: 'Frankrijk',
+    belgium: 'België',
+    netherlands: 'Nederland',
+    luxembourg: 'Luxemburg',
+    spain: 'Spanje',
+    italy: 'Italië',
+    austria: 'Oostenrijk',
+    switzerland: 'Zwitserland',
+    croatia: 'Kroatië',
+    greece: 'Griekenland',
+    morocco: 'Marokko',
+    portugal: 'Portugal',
+    
+    // Regions
+    northGermany: 'Noord-Duitsland',
+    westGermany: 'West-Duitsland',
+    southGermany: 'Zuid-Duitsland',
+    eastGermany: 'Oost-Duitsland',
+    northFrance: 'Noord-Frankrijk',
+    westFrance: 'West-Frankrijk',
+    eastFrance: 'Oost-Frankrijk',
+    southFrance: 'Zuid-Frankrijk',
+    wallonia: 'Wallonië',
+    flanders: 'Vlaanderen',
+    northNetherlands: 'Noord',
+    southNetherlands: 'Zuid',
+    
+    // MX
+    mxTrack: 'MX-Baan',
+    mxRace: 'Race',
+    checkOrganizerInfo: 'ℹ︎ Controleer actuele info op de organisator website',
+    
+    // Registration
+    registered: 'Aangemeld',
+    
+    // External link notice
+    openingExternalLink: 'Externe link openen',
+    
+    // Footer
+    aboutUs: 'Over ons',
+    imprint: 'Colofon',
+    privacyPolicy: 'Privacybeleid',
+    cookies: 'Cookies',
+    termsConditions: 'Algemene voorwaarden',
+    legal: 'Juridisch',
+    contactUs: 'Neem contact op',
+    allRightsReserved: 'Alle rechten voorbehouden',
+  },
+};

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TRAILFINDER – Seite nicht gefunden</title>
+    <!-- SPA-Fallback: leitet alle 404-Anfragen auf index.html weiter (client-side routing) -->
+    <script>
+      // Speichere den Pfad und leite auf index.html weiter
+      // Kompatibel mit GitHub Pages und Supabase Storage
+      const path = window.location.pathname;
+      const query = window.location.search;
+      const hash = window.location.hash;
+      // Redirect mit dem vollständigen Pfad als Query-Parameter
+      const redirectUrl = '/?redirect=' + encodeURIComponent(path + query + hash);
+      window.location.replace(redirectUrl);
+    </script>
+  </head>
+  <body>
+    <p>Weiterleitung...</p>
+  </body>
+</html>

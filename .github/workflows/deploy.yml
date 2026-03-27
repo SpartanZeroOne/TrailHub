@@ -1,0 +1,65 @@
+# TrailFinder – GitHub Actions: Build & Deploy to Netlify
+# Trigger: Push auf main → Build → Netlify Deploy
+#
+# Erforderliche GitHub Secrets (Settings > Secrets > Actions):
+#   NETLIFY_AUTH_TOKEN   – nfp_jH6ypyapVXdEXgJMB3ajuYsR74yf1rEbe9bc
+#   NETLIFY_SITE_ID      – 16d0afc3-a74d-4b71-9a0c-71f85c6dcc61
+#   VITE_SUPABASE_URL    – https://hmdkiteqapiahwvdbdyh.supabase.co
+#   VITE_SUPABASE_ANON_KEY – sb_publishable_HP8fl1SOkZPBK2wugdBZYA_jo5s1eAC
+#   VITE_MAPBOX_TOKEN    – pk.eyJ1...
+
+name: Deploy to Netlify
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  APP_DIR: trailfinder-app
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.APP_DIR }}
+        run: npm ci
+
+      - name: Build
+        working-directory: ${{ env.APP_DIR }}
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+        run: npm run build
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: ${{ env.APP_DIR }}/dist
+          production-branch: main
+          production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions – ${{ github.sha }}"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+      - name: Summary
+        run: |
+          echo "## Deployment erfolgreich 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://trailhub.netlify.app" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
