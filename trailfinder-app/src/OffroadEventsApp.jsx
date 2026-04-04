@@ -33,7 +33,7 @@ class AppErrorBoundary extends Component {
 }
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { supabase, fetchEvents, fetchEventById, fetchOrganizers, isSupabaseConfigured, uploadAvatar, fetchFriendsWithStatus, fetchIncomingRequests, searchUsers, fetchUserById, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriendship, setHideMyEventsFromFriend } from './services/supabaseClient';
+import { supabase, fetchEvents, fetchEventById, fetchOrganizers, isSupabaseConfigured, uploadAvatar, fetchFriendsWithStatus, fetchIncomingRequests, searchUsers, fetchUserById, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriendship, setHideMyEventsFromFriend, fetchMxTracks } from './services/supabaseClient';
 import { useAuth } from './hooks/useAuth';
 import AuthModal from './components/Auth/AuthModal';
 import PasswordResetModal from './components/Auth/PasswordResetModal';
@@ -3600,6 +3600,44 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
   });
   const mxTracksInitializedRef = useRef(false);
 
+  // ── Live MX-Tracks from Supabase ─────────────────────────────────────────
+  const [liveMxTracks, setLiveMxTracks] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        console.log('[MX-Tracks] Fetching from Supabase…');
+        const rows = await fetchMxTracks({ status: 'active' });
+        if (cancelled) return;
+        // Map snake_case DB columns → camelCase for UI
+        const mapped = rows.map(r => ({
+          ...r,
+          seasonStart: r.season_start ?? r.seasonStart,
+          seasonEnd: r.season_end ?? r.seasonEnd,
+          openDays: r.open_days ?? r.openDays ?? [],
+          openingHours: r.opening_hours ?? r.openingHours ?? {},
+          beginnerFriendly: r.beginner_friendly ?? r.beginnerFriendly ?? false,
+          priceInfo: r.price_info ?? r.priceInfo ?? '',
+          priceValue: r.price_value ?? r.priceValue ?? 0,
+          price: r.price_info ? r.price_info : (r.price_value ? `€${r.price_value}` : r.price ?? ''),
+          organizerId: r.organizer_id ?? r.organizerId,
+          mxType: 'mx-track',
+          category: 'trail-adventures',
+          subcategory: 'mx',
+          isNew: r.is_new ?? r.isNew ?? false,
+        }));
+        console.log(`[MX-Tracks] Loaded ${mapped.length} tracks from Supabase`);
+        setLiveMxTracks(mapped);
+      } catch (err) {
+        console.warn('[MX-Tracks] Supabase fetch failed, using fallback:', err.message);
+        // Fallback to hardcoded mock data
+        setLiveMxTracks(mxTracksData.filter(t => t.status === 'active'));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   // =========================================================================
   // EXPOSE saveCurrentState METHOD VIA REF (for parent to call before leaving)
   // =========================================================================
@@ -5330,7 +5368,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
           <>
             {/* MX-Tracks Section - Collapsible (shown BEFORE Races) */}
             {(() => {
-              const mxTracks = mxTracksData.filter(t => t.status === 'active');
+              const mxTracks = liveMxTracks;
 
               // Default to collapsed if > 3 tracks on first render (and no stored preference)
               if (!mxTracksInitializedRef.current && mxTracks.length > 0) {
@@ -5433,7 +5471,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
               );
             })()}
 
-            {filteredEvents.length === 0 && mxTracksData.filter(t => t.status === 'active').length === 0 && (
+            {filteredEvents.length === 0 && liveMxTracks.length === 0 && (
               <div className="text-center py-16">
                 <div className="text-stone-700 text-4xl mb-3">🏜️</div>
                 <h3 className="text-base font-medium text-white mb-1">{t('noResults')}</h3>
