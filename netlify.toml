@@ -1,7 +1,7 @@
 [build]
   base    = "trailfinder-app"
   command = "npm run build"
-  publish = "trailfinder-app/dist"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"

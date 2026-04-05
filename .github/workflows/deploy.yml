@@ -2,8 +2,8 @@
 # Trigger: Push auf main → Build → Netlify Deploy
 #
 # Erforderliche GitHub Secrets (Settings > Secrets > Actions):
-#   NETLIFY_AUTH_TOKEN   – nfp_jH6ypyapVXdEXgJMB3ajuYsR74yf1rEbe9bc
-#   NETLIFY_SITE_ID      – 16d0afc3-a74d-4b71-9a0c-71f85c6dcc61
+#   NETLIFY_AUTH_TOKEN   – nfp_LStWEX5cLPVKEi5UjVPWcxM5KA5fsokt5de4
+#   NETLIFY_SITE_ID      – e2fdf6e0-bba0-4544-9556-74c83bbc0abd
 #   VITE_SUPABASE_URL    – https://hmdkiteqapiahwvdbdyh.supabase.co
 #   VITE_SUPABASE_ANON_KEY – sb_publishable_HP8fl1SOkZPBK2wugdBZYA_jo5s1eAC
 #   VITE_MAPBOX_TOKEN    – pk.eyJ1...
