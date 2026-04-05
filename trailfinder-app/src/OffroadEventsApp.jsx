@@ -3120,15 +3120,19 @@ function RegistrationConfirmPopup({ onConfirm, onCancel }) {
           <p className="text-stone-400 text-sm mt-3 leading-relaxed">
             Bitte klicke nur auf <span className="text-amber-400 font-medium">"Teilnahme bestätigen"</span>, wenn du dich bereits auf der Veranstalter-Website angemeldet hast.
           </p>
-          <p className="text-stone-500 text-xs mt-3 font-medium">Deine Freunde zählen auf dich.</p>
         </div>
         <label className="flex items-center gap-3 mb-5 cursor-pointer group">
-          <input
-            type="checkbox"
-            checked={dontShow}
-            onChange={(e) => setDontShow(e.target.checked)}
-            className="w-4 h-4 rounded accent-amber-500 bg-stone-800 border-stone-600 cursor-pointer"
-          />
+          <div
+            onClick={() => setDontShow(v => !v)}
+            className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-all duration-200 focus-within:ring-2 focus-within:ring-amber-500/50
+              ${dontShow ? 'bg-amber-500 border-amber-500' : 'bg-stone-800 border-stone-700 group-hover:border-amber-500/30'}`}
+          >
+            {dontShow && (
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
           <span className="text-stone-400 text-sm group-hover:text-stone-300 transition-colors select-none">
             Diese Nachricht nicht wieder anzeigen
           </span>
