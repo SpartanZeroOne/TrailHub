@@ -528,6 +528,15 @@ const translations = {
     // Registration
     registered: 'Angemeldet',
 
+    // Registration confirm popup
+    regPopupTitle: 'Teilnahme bestätigen',
+    regPopupWarningLabel: 'WICHTIGER HINWEIS',
+    regPopupText1: 'Dieser Button meldet dich NICHT automatisch beim Event an. Er zeigt nur deinen Freunden, dass du teilnehmen wirst.',
+    regPopupText2: 'Bitte klicke nur auf "Teilnahme bestätigen", wenn du dich bereits auf der Veranstalter-Website angemeldet hast.',
+    regPopupCheckbox: 'Diese Nachricht nicht wieder anzeigen',
+    regPopupConfirm: 'Teilnahme bestätigen',
+    regPopupCancel: 'Abbrechen',
+
     // External link notice
     openingExternalLink: 'Externen Link öffnen',
 
@@ -827,6 +836,15 @@ const translations = {
 
     // Registration
     registered: 'Registered',
+
+    // Registration confirm popup
+    regPopupTitle: 'Confirm Attendance',
+    regPopupWarningLabel: 'IMPORTANT NOTICE',
+    regPopupText1: 'This button does NOT automatically register you for the event. It only shows your friends that you will attend.',
+    regPopupText2: 'Please only click "Confirm Attendance" if you have already registered on the organizer\'s website.',
+    regPopupCheckbox: 'Don\'t show this message again',
+    regPopupConfirm: 'Confirm Attendance',
+    regPopupCancel: 'Cancel',
 
     // External link notice
     openingExternalLink: 'Opening external link',
@@ -1128,6 +1146,15 @@ const translations = {
     // Registration
     registered: 'Inscrit',
 
+    // Registration confirm popup
+    regPopupTitle: 'Confirmer la participation',
+    regPopupWarningLabel: 'AVIS IMPORTANT',
+    regPopupText1: 'Ce bouton ne vous inscrit PAS automatiquement à l\'événement. Il indique uniquement à vos amis que vous participerez.',
+    regPopupText2: 'Veuillez cliquer uniquement sur "Confirmer la participation" si vous vous êtes déjà inscrit sur le site web de l\'organisateur.',
+    regPopupCheckbox: 'Ne plus afficher ce message',
+    regPopupConfirm: 'Confirmer la participation',
+    regPopupCancel: 'Annuler',
+
     // External link notice
     openingExternalLink: 'Ouverture du lien externe',
 
@@ -1427,6 +1454,15 @@ const translations = {
 
     // Registration
     registered: 'Aangemeld',
+
+    // Registration confirm popup
+    regPopupTitle: 'Deelname bevestigen',
+    regPopupWarningLabel: 'BELANGRIJKE OPMERKING',
+    regPopupText1: 'Deze knop meldt je NIET automatisch aan voor het evenement. Het toont alleen je vrienden dat je zult deelnemen.',
+    regPopupText2: 'Klik alleen op "Deelname bevestigen" als je je al hebt aangemeld op de website van de organisator.',
+    regPopupCheckbox: 'Dit bericht niet meer tonen',
+    regPopupConfirm: 'Deelname bevestigen',
+    regPopupCancel: 'Annuleren',
 
     // External link notice
     openingExternalLink: 'Externe link openen',
@@ -3086,6 +3122,7 @@ function FeaturedEvents({ onViewAll, onViewEvent }) {
 const REG_POPUP_KEY = 'trailhub_registration_popup_dismissed';
 
 function RegistrationConfirmPopup({ onConfirm, onCancel }) {
+  const { t } = useTranslation();
   const [dontShow, setDontShow] = useState(false);
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onCancel(); };
@@ -3110,15 +3147,17 @@ function RegistrationConfirmPopup({ onConfirm, onCancel }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h2 id="reg-confirm-title" className="text-white font-semibold text-base">Teilnahme bestätigen</h2>
+          <h2 id="reg-confirm-title" className="text-white font-semibold text-base">{t('regPopupTitle')}</h2>
         </div>
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-5">
-          <p className="text-amber-300 text-xs font-semibold mb-2 uppercase tracking-wide">Wichtiger Hinweis</p>
-          <p className="text-stone-300 text-sm leading-relaxed">
-            Dieser Button meldet dich <span className="text-white font-semibold">NICHT</span> automatisch beim Event an. Er zeigt nur deinen Freunden, dass du teilnehmen wirst.
-          </p>
+          <p className="text-amber-300 text-xs font-semibold mb-2 uppercase tracking-wide">{t('regPopupWarningLabel')}</p>
+          <p className="text-stone-300 text-sm leading-relaxed">{t('regPopupText1')}</p>
           <p className="text-stone-400 text-sm mt-3 leading-relaxed">
-            Bitte klicke nur auf <span className="text-amber-400 font-medium">"Teilnahme bestätigen"</span>, wenn du dich bereits auf der Veranstalter-Website angemeldet hast.
+            {t('regPopupText2').split(t('regPopupConfirm')).map((part, i, arr) =>
+              i < arr.length - 1
+                ? <React.Fragment key={i}>{part}<span className="text-amber-400 font-medium">"{t('regPopupConfirm')}"</span></React.Fragment>
+                : <React.Fragment key={i}>{part}</React.Fragment>
+            )}
           </p>
         </div>
         <label className="flex items-center gap-3 mb-5 cursor-pointer group">
@@ -3134,7 +3173,7 @@ function RegistrationConfirmPopup({ onConfirm, onCancel }) {
             )}
           </div>
           <span className="text-stone-400 text-sm group-hover:text-stone-300 transition-colors select-none">
-            Diese Nachricht nicht wieder anzeigen
+            {t('regPopupCheckbox')}
           </span>
         </label>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -3143,13 +3182,13 @@ function RegistrationConfirmPopup({ onConfirm, onCancel }) {
             className="flex-1 py-3 px-4 bg-gradient-to-r from-[#FF9500] to-[#FF6B00] text-white font-semibold rounded-xl text-sm shadow-md hover:brightness-110 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500"
             autoFocus
           >
-            Teilnahme bestätigen
+            {t('regPopupConfirm')}
           </button>
           <button
             onClick={onCancel}
             className="flex-1 py-3 px-4 bg-stone-800 border border-stone-700 text-stone-300 font-medium rounded-xl text-sm hover:bg-stone-700 transition-all focus:outline-none focus:ring-2 focus:ring-stone-500"
           >
-            Abbrechen
+            {t('regPopupCancel')}
           </button>
         </div>
       </div>
