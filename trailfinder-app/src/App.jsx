@@ -1,9 +1,18 @@
-import React from 'react';
-import OffroadEventsApp from './OffroadEventsApp';
+import { AuthProvider } from './hooks/useAuth';
+import OffroadEventsApp, { PasswordResetPage } from './OffroadEventsApp';
 
-// The App currently renders the full prototype as-is.
-// Routing and the EventEditor will be integrated below.
-// The prototype handles its own internal navigation via state (currentView).
+// Routing vor dem Auth-Kontext: /reset-password bekommt eigene isolierte Seite
+const isResetRoute = window.location.pathname.startsWith('/reset-password');
+
 export default function App() {
-  return <OffroadEventsApp />;
+  if (isResetRoute) {
+    return (
+      <PasswordResetPage onDone={() => { window.location.href = '/'; }} />
+    );
+  }
+  return (
+    <AuthProvider>
+      <OffroadEventsApp />
+    </AuthProvider>
+  );
 }

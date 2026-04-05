@@ -1,6 +1,6 @@
 // useAuth – React Hook für Supabase Authentifizierung
 
-import { useState, useEffect, useContext, createContext } from 'react';
+import { useState, useEffect, useContext, createContext, useRef } from 'react';
 import {
     supabase,
     signIn as sbSignIn,
@@ -10,6 +10,7 @@ import {
     upsertUserProfile,
     toggleFavorite as sbToggleFavorite,
     toggleRegistration as sbToggleRegistration,
+    saveEventDateSelection as sbSaveEventDateSelection,
     isSupabaseConfigured,
 } from '../services/supabaseClient';
 
@@ -19,6 +20,9 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+    // Ref needed because onAuthStateChange closure can't read stale useState value
+    const isRecoveryRef = useRef(false);
 
     useEffect(() => {
         if (!isSupabaseConfigured()) {
@@ -28,13 +32,31 @@ export function AuthProvider({ children }) {
 
         // Aktuelle Session laden
         supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
-            if (session?.user) loadProfile(session.user.id);
+            // Don't log in automatically if this is a recovery session
+            if (!isRecoveryRef.current) {
+                setUser(session?.user ?? null);
+                if (session?.user) loadProfile(session.user.id);
+            }
             setLoading(false);
         });
 
         // Auth-State-Änderungen abonnieren
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (_event === 'PASSWORD_RECOVERY') {
+                // Recovery-Link geklickt: Modal anzeigen, NICHT normal einloggen
+                isRecoveryRef.current = true;
+                setIsPasswordRecovery(true);
+                setUser(session?.user ?? null);
+                return;
+            }
+            // SIGNED_IN und USER_UPDATED während Recovery → Modal nicht schließen
+            if ((_event === 'SIGNED_IN' || _event === 'USER_UPDATED') && isRecoveryRef.current) {
+                setUser(session?.user ?? null);
+                return;
+            }
+            // Alle anderen Events (SIGNED_OUT etc.) beenden den Recovery-Mode
+            isRecoveryRef.current = false;
+            setIsPasswordRecovery(false);
             setUser(session?.user ?? null);
             if (session?.user) {
                 loadProfile(session.user.id);
@@ -78,6 +100,30 @@ export function AuthProvider({ children }) {
         return updated;
     };
 
+    const sendPasswordReset = async (email) => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            // Dedizierte Reset-Seite — kein Auto-Login in der Haupt-App
+            redirectTo: 'https://trailhub.netlify.app/reset-password',
+        });
+        if (error) throw error;
+    };
+
+    const updatePassword = async (newPassword) => {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+        // isPasswordRecovery bleibt true → Modal zeigt Success-Screen
+        // Der Aufrufer muss signOut() aufrufen um den Reset-Flow zu beenden
+    };
+
+    const deleteAccount = async () => {
+        if (!user) return;
+        // Delete profile row first (cascade deletes friends too)
+        await supabase.from('users').delete().eq('id', user.id);
+        await supabase.auth.signOut();
+        setUser(null);
+        setProfile(null);
+    };
+
     const toggleFavorite = async (eventId) => {
         if (!user) return;
         const updated = await sbToggleFavorite(user.id, eventId);
@@ -90,6 +136,12 @@ export function AuthProvider({ children }) {
         setProfile(updated);
     };
 
+    const saveEventDateSelection = async (eventId, dateIdx) => {
+        if (!user) return;
+        const updated = await sbSaveEventDateSelection(user.id, eventId, dateIdx);
+        setProfile(updated);
+    };
+
     const isFavorite = (eventId) => profile?.favorite_event_ids?.includes(eventId) ?? false;
     const isRegistered = (eventId) => profile?.registered_event_ids?.includes(eventId) ?? false;
 
@@ -98,12 +150,17 @@ export function AuthProvider({ children }) {
             user,
             profile,
             loading,
+            isPasswordRecovery,
             signIn,
             signUp,
             signOut,
             updateProfile,
+            sendPasswordReset,
+            updatePassword,
+            deleteAccount,
             toggleFavorite,
             toggleRegistration,
+            saveEventDateSelection,
             isFavorite,
             isRegistered,
         }}>

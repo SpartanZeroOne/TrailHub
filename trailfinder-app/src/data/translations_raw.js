@@ -10,7 +10,7 @@ export const translations = {
     // Hero
     heroTitle1: 'FINDE DEIN',
     heroTitle2: 'NÄCHSTES ABENTEUER',
-    heroSubtitle: 'Alle Offroad-Events aus Deutschland, Belgien, Frankreich und Luxemburg – automatisch aktualisiert, auf einer Karte, mit deinen Freunden.',
+    heroSubtitle: 'Die ultimative Offroad-Karte für Europa. Entdecke Offroad-Events in Europa bis in die Wüsten Afrikas und die Trails Asiens – und erlebe sie mit deinen Freunden.',
     allEventsShow: 'Alle Events anzeigen',
     mapView: 'Kartenansicht',
     
@@ -263,7 +263,7 @@ export const translations = {
     // Hero
     heroTitle1: 'FIND YOUR',
     heroTitle2: 'NEXT ADVENTURE',
-    heroSubtitle: 'All offroad events from Germany, Belgium, France and Luxembourg – automatically updated, on a map, with your friends.',
+    heroSubtitle: 'The ultimate offroad map for Europe. Discover offroad events across Europe, into the deserts of Africa and the trails of Asia – and experience them with your friends.',
     allEventsShow: 'Show all events',
     mapView: 'Map view',
     
@@ -516,7 +516,7 @@ export const translations = {
     // Hero
     heroTitle1: 'TROUVE TA',
     heroTitle2: 'PROCHAINE AVENTURE',
-    heroSubtitle: "Tous les événements offroad d'Allemagne, Belgique, France et Luxembourg – mis à jour automatiquement, sur une carte, avec tes amis.",
+    heroSubtitle: "La carte offroad ultime pour l’Europe. Découvre des événements offroad à travers l’Europe, jusqu’aux déserts d’Afrique et aux trails d’Asie – et vis-les avec tes amis.",
     allEventsShow: 'Voir tous les événements',
     mapView: 'Vue carte',
     
@@ -769,7 +769,7 @@ export const translations = {
     // Hero
     heroTitle1: 'VIND JE',
     heroTitle2: 'VOLGENDE AVONTUUR',
-    heroSubtitle: 'Alle offroad-evenementen uit Duitsland, België, Frankrijk en Luxemburg – automatisch bijgewerkt, op een kaart, met je vrienden.',
+    heroSubtitle: 'De ultieme offroad-kaart voor Europa. Ontdek offroad-evenementen door heel Europa, tot in de woestijnen van Afrika en de trails van Azië – en beleef ze samen met je vrienden.',
     allEventsShow: 'Alle evenementen tonen',
     mapView: 'Kaartweergave',
     

@@ -1,28 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation, mockEvents, organizers } from '../OffroadEventsApp';
+import { useState, useEffect } from 'react';
+import { fetchEvents, createEvent, updateEvent, deleteEvent } from '../services/supabaseClient';
+
+// Self-contained organizer data (mirrors OffroadEventsApp.jsx organizers)
+const organizers = {
+    'rally-masters':    { id: 'rally-masters',    name: 'Rally Masters GmbH' },
+    'enduro-events':    { id: 'enduro-events',    name: 'Enduro Events Europe' },
+    'adventure-tours':  { id: 'adventure-tours',  name: 'Adventure Tours International' },
+    'moto-academy':     { id: 'moto-academy',     name: 'MotoSkills Academy' },
+    'offroad-community':{ id: 'offroad-community',name: 'Offroad Community e.V.' },
+};
+
+// Festival type options — IDs must match CHECK constraint in Supabase
+// and festivalTypeOptions in OffroadEventsApp.jsx
+const FESTIVAL_TYPES = [
+    { id: null,                   label: 'Kein Typ (Alle)' },
+    { id: 'Community-Treffen',    label: 'Community-Treffen' },
+    { id: 'Hersteller-Event',     label: 'Hersteller-Event' },
+    { id: 'Demo-/Test-Event',     label: 'Demo-/Test-Event' },
+    { id: 'Rennen integriert',    label: 'Rennen integriert' },
+    { id: 'Messe/Expo',           label: 'Messe/Expo' },
+    { id: 'Adventure-Festival',   label: 'Adventure-Festival' },
+    { id: 'Hard-Enduro-Festival', label: 'Hard-Enduro-Festival' },
+];
 
 // Default empty event template
 const emptyEvent = {
     name: '',
-    startDate: '',
-    endDate: '',
+    start_date: '',
+    end_date: '',
     location: '',
     coordinates: { lat: 50.0, lng: 7.0 },
     price: '',
-    priceValue: 0,
+    price_value: 0,
     image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
     status: 'upcoming',
     category: 'trail-adventures',
     subcategory: null,
     difficulty: null,
-    beginnerFriendly: false,
-    tripType: null,
-    skillLevel: null,
-    isNew: true,
-    hasChanges: false,
-    organizerId: '',
-    registeredFriends: [],
-    // NEW: multiple links per event
+    beginner_friendly: false,
+    trip_type: null,
+    skill_level: null,
+    festival_type: null,
+    is_new: true,
+    organizer_id: '',
     links: [],
     description: '',
 };
@@ -44,27 +64,36 @@ const DIFFICULTIES = [
 ];
 
 export default function EventEditor({ onClose }) {
-    const { t } = useTranslation();
-
-    // Load events from localStorage or fall back to mockEvents
-    const [events, setEvents] = useState(() => {
-        try {
-            const saved = localStorage.getItem('trailfinder_events');
-            return saved ? JSON.parse(saved) : [...mockEvents];
-        } catch {
-            return [...mockEvents];
-        }
-    });
-
-    // Currently selected event for editing (null = list view)
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [editingEvent, setEditingEvent] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
     const [saveMessage, setSaveMessage] = useState('');
+    const [error, setError] = useState('');
 
-    // Persist events to localStorage whenever they change
+    // Load events from Supabase on mount
     useEffect(() => {
-        localStorage.setItem('trailfinder_events', JSON.stringify(events));
-    }, [events]);
+        loadEvents();
+    }, []);
+
+    const loadEvents = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const rows = await fetchEvents();
+            // Map snake_case DB columns → camelCase for display
+            setEvents(rows.map(r => ({
+                ...r,
+                startDate: r.start_date,
+                endDate: r.end_date,
+                festivalType: r.festival_type,
+            })));
+        } catch (err) {
+            setError('Events konnten nicht geladen werden: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // ─── List View ─────────────────────────────────────────────
     const handleEdit = (event) => {
@@ -73,30 +102,63 @@ export default function EventEditor({ onClose }) {
     };
 
     const handleCreateNew = () => {
-        const maxId = events.reduce((max, e) => Math.max(max, e.id), 0);
-        setEditingEvent({ ...emptyEvent, id: maxId + 1 });
+        setEditingEvent({ ...emptyEvent, links: [] });
         setIsCreating(true);
     };
 
-    const handleDelete = (eventId) => {
-        if (confirm('Event wirklich löschen?')) {
+    const handleDelete = async (eventId) => {
+        if (!confirm('Event wirklich löschen?')) return;
+        setError('');
+        try {
+            await deleteEvent(eventId);
             setEvents(prev => prev.filter(e => e.id !== eventId));
+        } catch (err) {
+            setError('Löschen fehlgeschlagen: ' + err.message);
         }
     };
 
     // ─── Form Save ─────────────────────────────────────────────
-    const handleSave = (updatedEvent) => {
-        setEvents(prev => {
-            const exists = prev.find(e => e.id === updatedEvent.id);
-            if (exists) {
-                return prev.map(e => e.id === updatedEvent.id ? updatedEvent : e);
+    const handleSave = async (formData) => {
+        setError('');
+        // Build DB payload (snake_case)
+        const payload = {
+            name:               formData.name,
+            start_date:         formData.start_date,
+            end_date:           formData.end_date || null,
+            location:           formData.location,
+            coordinates:        formData.coordinates,
+            price:              formData.price || null,
+            price_value:        formData.price_value || 0,
+            image:              formData.image || null,
+            status:             formData.status || 'upcoming',
+            category:           formData.category,
+            subcategory:        formData.subcategory || null,
+            difficulty:         formData.difficulty || null,
+            beginner_friendly:  formData.beginner_friendly || false,
+            trip_type:          formData.trip_type || null,
+            skill_level:        formData.skill_level || null,
+            festival_type:      formData.festival_type || null,
+            is_new:             formData.is_new || false,
+            organizer_id:       formData.organizer_id || null,
+            links:              formData.links || [],
+            description:        formData.description || null,
+        };
+
+        try {
+            if (isCreating) {
+                await createEvent(payload);
+            } else {
+                await updateEvent(formData.id, payload);
             }
-            return [...prev, updatedEvent];
-        });
-        setEditingEvent(null);
-        setIsCreating(false);
-        setSaveMessage(isCreating ? 'Event erstellt!' : 'Event gespeichert!');
-        setTimeout(() => setSaveMessage(''), 3000);
+            // Reload full list to stay in sync
+            await loadEvents();
+            setEditingEvent(null);
+            setIsCreating(false);
+            setSaveMessage(isCreating ? 'Event erstellt!' : 'Event gespeichert!');
+            setTimeout(() => setSaveMessage(''), 3000);
+        } catch (err) {
+            setError('Speichern fehlgeschlagen: ' + err.message);
+        }
     };
 
     // ─── Render ────────────────────────────────────────────────
@@ -106,7 +168,8 @@ export default function EventEditor({ onClose }) {
                 event={editingEvent}
                 isNew={isCreating}
                 onSave={handleSave}
-                onCancel={() => { setEditingEvent(null); setIsCreating(false); }}
+                onCancel={() => { setEditingEvent(null); setIsCreating(false); setError(''); }}
+                error={error}
             />
         );
     }
@@ -141,6 +204,13 @@ export default function EventEditor({ onClose }) {
                     </div>
                 </div>
 
+                {/* Error */}
+                {error && (
+                    <div className="mb-4 px-4 py-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm font-medium">
+                        {error}
+                    </div>
+                )}
+
                 {/* Save toast */}
                 {saveMessage && (
                     <div className="mb-4 px-4 py-3 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm font-medium flex items-center gap-2">
@@ -151,67 +221,81 @@ export default function EventEditor({ onClose }) {
                     </div>
                 )}
 
-                {/* Event List */}
-                <div className="space-y-3">
-                    {events.map(event => (
-                        <div
-                            key={event.id}
-                            className="bg-stone-900 border border-stone-800 rounded-xl p-4 flex items-center gap-4 hover:border-stone-700 transition-colors group"
-                        >
-                            {/* Image */}
-                            <img
-                                src={event.image}
-                                alt={event.name}
-                                className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                            />
+                {/* Loading */}
+                {loading ? (
+                    <div className="text-center py-16 text-stone-500">Events werden geladen…</div>
+                ) : (
+                    /* Event List */
+                    <div className="space-y-3">
+                        {events.length === 0 && (
+                            <div className="text-center py-16 text-stone-500">Noch keine Events vorhanden.</div>
+                        )}
+                        {events.map(event => (
+                            <div
+                                key={event.id}
+                                className="bg-stone-900 border border-stone-800 rounded-xl p-4 flex items-center gap-4 hover:border-stone-700 transition-colors group"
+                            >
+                                {/* Image */}
+                                <img
+                                    src={event.image}
+                                    alt={event.name}
+                                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                                />
 
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-white font-semibold truncate">{event.name}</h3>
-                                    {event.isNew && (
-                                        <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-bold rounded-full">NEU</span>
-                                    )}
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-white font-semibold truncate">{event.name}</h3>
+                                        {event.is_new && (
+                                            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-bold rounded-full">NEU</span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-3 text-sm text-stone-400 mt-1 flex-wrap">
+                                        <span>{event.start_date || 'Kein Datum'}</span>
+                                        <span>•</span>
+                                        <span>{event.location || 'Kein Ort'}</span>
+                                        <span>•</span>
+                                        <span className="text-amber-500/70">{event.category}</span>
+                                        {event.festival_type && (
+                                            <>
+                                                <span>•</span>
+                                                <span className="text-purple-400/70">{FESTIVAL_TYPES.find(t => t.id === event.festival_type)?.label || event.festival_type}</span>
+                                            </>
+                                        )}
+                                        {event.links && event.links.length > 0 && (
+                                            <>
+                                                <span>•</span>
+                                                <span className="text-sky-400/70">{event.links.length} Link{event.links.length !== 1 ? 's' : ''}</span>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-3 text-sm text-stone-400 mt-1">
-                                    <span>{event.startDate || 'Kein Datum'}</span>
-                                    <span>•</span>
-                                    <span>{event.location || 'Kein Ort'}</span>
-                                    <span>•</span>
-                                    <span className="text-amber-500/70">{event.category}</span>
-                                    {event.links && event.links.length > 0 && (
-                                        <>
-                                            <span>•</span>
-                                            <span className="text-sky-400/70">{event.links.length} Link{event.links.length !== 1 ? 's' : ''}</span>
-                                        </>
-                                    )}
+
+                                {/* Actions */}
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => handleEdit(event)}
+                                        className="p-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition-all"
+                                        title="Bearbeiten"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(event.id)}
+                                        className="p-2 rounded-lg bg-stone-800 hover:bg-red-900/50 text-stone-300 hover:text-red-400 transition-all"
+                                        title="Löschen"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    onClick={() => handleEdit(event)}
-                                    className="p-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition-all"
-                                    title="Bearbeiten"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(event.id)}
-                                    className="p-2 rounded-lg bg-stone-800 hover:bg-red-900/50 text-stone-300 hover:text-red-400 transition-all"
-                                    title="Löschen"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -221,7 +305,7 @@ export default function EventEditor({ onClose }) {
 // ═══════════════════════════════════════════════════════════════
 //  EventForm – Create / Edit an event with multi-link support
 // ═══════════════════════════════════════════════════════════════
-function EventForm({ event, isNew, onSave, onCancel }) {
+function EventForm({ event, isNew, onSave, onCancel, error }) {
     const [form, setForm] = useState({ ...event });
 
     const update = (field, value) => {
@@ -254,9 +338,9 @@ function EventForm({ event, isNew, onSave, onCancel }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Parse priceValue from price string
-        const priceValue = parseFloat(form.price?.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
-        onSave({ ...form, priceValue });
+        // Parse price_value from price string
+        const price_value = parseFloat(form.price?.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+        onSave({ ...form, price_value });
     };
 
     return (
@@ -276,6 +360,13 @@ function EventForm({ event, isNew, onSave, onCancel }) {
                         {isNew ? 'Neues Event erstellen' : `Event bearbeiten: ${form.name}`}
                     </h1>
                 </div>
+
+                {/* Error */}
+                {error && (
+                    <div className="mb-6 px-4 py-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm font-medium">
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* ─── Basic Info ────────────────────────────────── */}
@@ -318,8 +409,8 @@ function EventForm({ event, isNew, onSave, onCancel }) {
                                 <label className="block text-sm font-medium text-stone-400 mb-1">Startdatum *</label>
                                 <input
                                     type="date"
-                                    value={form.startDate}
-                                    onChange={e => update('startDate', e.target.value)}
+                                    value={form.start_date || ''}
+                                    onChange={e => update('start_date', e.target.value)}
                                     required
                                     className="w-full px-4 py-2.5 bg-stone-800 border border-stone-700 rounded-xl text-white focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all"
                                 />
@@ -330,8 +421,8 @@ function EventForm({ event, isNew, onSave, onCancel }) {
                                 <label className="block text-sm font-medium text-stone-400 mb-1">Enddatum</label>
                                 <input
                                     type="date"
-                                    value={form.endDate || ''}
-                                    onChange={e => update('endDate', e.target.value)}
+                                    value={form.end_date || ''}
+                                    onChange={e => update('end_date', e.target.value)}
                                     className="w-full px-4 py-2.5 bg-stone-800 border border-stone-700 rounded-xl text-white focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all"
                                 />
                             </div>
@@ -341,7 +432,7 @@ function EventForm({ event, isNew, onSave, onCancel }) {
                                 <label className="block text-sm font-medium text-stone-400 mb-1">Ort</label>
                                 <input
                                     type="text"
-                                    value={form.location}
+                                    value={form.location || ''}
                                     onChange={e => update('location', e.target.value)}
                                     placeholder="z.B. Nürburgring, Deutschland"
                                     className="w-full px-4 py-2.5 bg-stone-800 border border-stone-700 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all"
@@ -353,7 +444,7 @@ function EventForm({ event, isNew, onSave, onCancel }) {
                                 <label className="block text-sm font-medium text-stone-400 mb-1">Preis</label>
                                 <input
                                     type="text"
-                                    value={form.price}
+                                    value={form.price || ''}
                                     onChange={e => update('price', e.target.value)}
                                     placeholder="z.B. €189"
                                     className="w-full px-4 py-2.5 bg-stone-800 border border-stone-700 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all"
@@ -365,7 +456,7 @@ function EventForm({ event, isNew, onSave, onCancel }) {
                                 <label className="block text-sm font-medium text-stone-400 mb-1">Bild URL</label>
                                 <input
                                     type="url"
-                                    value={form.image}
+                                    value={form.image || ''}
                                     onChange={e => update('image', e.target.value)}
                                     placeholder="https://..."
                                     className="w-full px-4 py-2.5 bg-stone-800 border border-stone-700 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all"
@@ -446,11 +537,22 @@ function EventForm({ event, isNew, onSave, onCancel }) {
                                 <label className="flex items-center gap-3 mt-4 px-3 py-2 rounded-lg cursor-pointer bg-stone-800 border border-stone-700 text-stone-300 hover:border-stone-600 transition-all">
                                     <input
                                         type="checkbox"
-                                        checked={form.beginnerFriendly}
-                                        onChange={e => update('beginnerFriendly', e.target.checked)}
+                                        checked={form.beginner_friendly || false}
+                                        onChange={e => update('beginner_friendly', e.target.checked)}
                                         className="w-4 h-4 accent-amber-500"
                                     />
                                     <span className="text-sm">Anfängerfreundlich</span>
+                                </label>
+
+                                {/* isNew */}
+                                <label className="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg cursor-pointer bg-stone-800 border border-stone-700 text-stone-300 hover:border-stone-600 transition-all">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.is_new || false}
+                                        onChange={e => update('is_new', e.target.checked)}
+                                        className="w-4 h-4 accent-amber-500"
+                                    />
+                                    <span className="text-sm">Als NEU markieren</span>
                                 </label>
                             </div>
 
@@ -458,8 +560,8 @@ function EventForm({ event, isNew, onSave, onCancel }) {
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-stone-400 mb-1">Veranstalter</label>
                                 <select
-                                    value={form.organizerId || ''}
-                                    onChange={e => update('organizerId', e.target.value || null)}
+                                    value={form.organizer_id || ''}
+                                    onChange={e => update('organizer_id', e.target.value || null)}
                                     className="w-full px-4 py-2.5 bg-stone-800 border border-stone-700 rounded-xl text-white focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all"
                                 >
                                     <option value="">Keiner zugewiesen</option>
@@ -470,6 +572,39 @@ function EventForm({ event, isNew, onSave, onCancel }) {
                             </div>
                         </div>
                     </section>
+
+                    {/* ─── Festival Typ (nur für Offroad Festivals) ─── */}
+                    {form.category === 'offroad-festivals' && (
+                        <section className="bg-stone-900 border border-amber-500/20 rounded-2xl p-6">
+                            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                </svg>
+                                Festival-Typ
+                            </h2>
+                            <p className="text-stone-500 text-sm mb-4">Bestimmt welchem Filter-Typ das Event zugeordnet wird.</p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {FESTIVAL_TYPES.map(ft => (
+                                    <label
+                                        key={String(ft.id)}
+                                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-all ${form.festival_type === ft.id
+                                                ? 'bg-amber-500/20 border border-amber-500/40 text-amber-400'
+                                                : 'bg-stone-800 border border-stone-700 text-stone-300 hover:border-stone-600'
+                                            }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="festival_type"
+                                            checked={form.festival_type === ft.id}
+                                            onChange={() => update('festival_type', ft.id)}
+                                            className="sr-only"
+                                        />
+                                        <span className="text-xs font-medium">{ft.label}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
                     {/* ─── Links (Multi-Link Support) ────────────────── */}
                     <section className="bg-stone-900 border border-stone-800 rounded-2xl p-6">
