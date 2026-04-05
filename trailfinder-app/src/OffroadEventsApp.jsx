@@ -3083,6 +3083,76 @@ function FeaturedEvents({ onViewAll, onViewEvent }) {
   );
 }
 
+const REG_POPUP_KEY = 'trailhub_registration_popup_dismissed';
+
+function RegistrationConfirmPopup({ onConfirm, onCancel }) {
+  const [dontShow, setDontShow] = useState(false);
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onCancel]);
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[300] flex items-center justify-center p-4"
+      onClick={onCancel}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reg-confirm-title"
+    >
+      <div
+        className="bg-stone-900 border border-stone-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 id="reg-confirm-title" className="text-white font-semibold text-base">Teilnahme bestätigen</h2>
+        </div>
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-5">
+          <p className="text-amber-300 text-xs font-semibold mb-2 uppercase tracking-wide">Wichtiger Hinweis</p>
+          <p className="text-stone-300 text-sm leading-relaxed">
+            Dieser Button meldet dich <span className="text-white font-semibold">NICHT</span> automatisch beim Event an. Er zeigt nur deinen Freunden, dass du teilnehmen wirst.
+          </p>
+          <p className="text-stone-400 text-sm mt-3 leading-relaxed">
+            Bitte klicke nur auf <span className="text-amber-400 font-medium">"Teilnahme bestätigen"</span>, wenn du dich bereits auf der Veranstalter-Website angemeldet hast.
+          </p>
+          <p className="text-stone-500 text-xs mt-3 font-medium">Deine Freunde zählen auf dich.</p>
+        </div>
+        <label className="flex items-center gap-3 mb-5 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={dontShow}
+            onChange={(e) => setDontShow(e.target.checked)}
+            className="w-4 h-4 rounded accent-amber-500 bg-stone-800 border-stone-600 cursor-pointer"
+          />
+          <span className="text-stone-400 text-sm group-hover:text-stone-300 transition-colors select-none">
+            Diese Nachricht nicht wieder anzeigen
+          </span>
+        </label>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() => onConfirm(dontShow)}
+            className="flex-1 py-3 px-4 bg-gradient-to-r from-[#FF9500] to-[#FF6B00] text-white font-semibold rounded-xl text-sm shadow-md hover:brightness-110 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500"
+            autoFocus
+          >
+            Teilnahme bestätigen
+          </button>
+          <button
+            onClick={onCancel}
+            className="flex-1 py-3 px-4 bg-stone-800 border border-stone-700 text-stone-300 font-medium rounded-xl text-sm hover:bg-stone-700 transition-all focus:outline-none focus:ring-2 focus:ring-stone-500"
+          >
+            Abbrechen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
   const { t, language } = useTranslation();
   const { isRegistered, isFavorite, toggleRegistration, toggleFavorite, friendsPerEvent } = useUserState();
@@ -3091,6 +3161,14 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
   const [isHovered, setIsHovered] = useState(false);
   const [shareStatus, setShareStatus] = useState(null); // null, 'copied', 'shared'
   const isPast = event.status === 'past';
+  const [pendingRegId, setPendingRegId] = useState(null);
+
+  const handleRegClick = (e, eventId) => {
+    e?.stopPropagation();
+    if (isRegistered(eventId)) { toggleRegistration(eventId); return; }
+    if (localStorage.getItem(REG_POPUP_KEY) === 'true') { toggleRegistration(eventId); return; }
+    setPendingRegId(eventId);
+  };
 
   const localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
   const translatedLocation = translateLocation(event.location, language);
@@ -3323,7 +3401,7 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
             {/* Registration Toggle */}
             {isLoggedIn && !isPast && (
               <button
-                onClick={(e) => { e.stopPropagation(); toggleRegistration(event.id); }}
+                onClick={(e) => handleRegClick(e, event.id)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${isRegistered(event.id)
                   ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30'
                   : 'bg-stone-800 text-stone-400 hover:bg-stone-700'
@@ -3331,6 +3409,16 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
               >
                 {isRegistered(event.id) ? '✓' : '+'}
               </button>
+            )}
+            {pendingRegId !== null && (
+              <RegistrationConfirmPopup
+                onConfirm={(dontShow) => {
+                  if (dontShow) localStorage.setItem(REG_POPUP_KEY, 'true');
+                  toggleRegistration(pendingRegId);
+                  setPendingRegId(null);
+                }}
+                onCancel={() => setPendingRegId(null)}
+              />
             )}
           </div>
         </div>
@@ -5702,6 +5790,14 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
   const [isHovered, setIsHovered] = useState(false);
   const [shareStatus, setShareStatus] = useState(null);
   const isPast = event.status === 'past';
+  const [pendingRegId, setPendingRegId] = useState(null);
+
+  const handleRegClick = (e, eventId) => {
+    e?.stopPropagation();
+    if (isRegistered(eventId)) { toggleRegistration(eventId); return; }
+    if (localStorage.getItem(REG_POPUP_KEY) === 'true') { toggleRegistration(eventId); return; }
+    setPendingRegId(eventId);
+  };
 
   const localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
   const translatedLocation = translateLocation(event.location, language);
@@ -5925,12 +6021,22 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
 
             {isLoggedIn && !isPast && (
               <button
-                onClick={(e) => { e.stopPropagation(); toggleRegistration(event.id); }}
+                onClick={(e) => handleRegClick(e, event.id)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${isRegistered(event.id) ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30' : 'bg-stone-800 text-stone-400 hover:bg-stone-700'
                   }`}
               >
                 {isRegistered(event.id) ? '✓' : '+'}
               </button>
+            )}
+            {pendingRegId !== null && (
+              <RegistrationConfirmPopup
+                onConfirm={(dontShow) => {
+                  if (dontShow) localStorage.setItem(REG_POPUP_KEY, 'true');
+                  toggleRegistration(pendingRegId);
+                  setPendingRegId(null);
+                }}
+                onCancel={() => setPendingRegId(null)}
+              />
             )}
           </div>
         </div>
@@ -7728,6 +7834,21 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
         </div>
       </div>
 
+      {/* Hints / Popup Settings */}
+      <div className="bg-stone-900/50 rounded-xl border border-stone-800/50 p-6">
+        <h3 className="text-white font-semibold mb-1">Hinweise</h3>
+        <p className="text-stone-500 text-sm mb-4">Wenn du Bestätigungs-Popups deaktiviert hast, kannst du sie hier zurücksetzen.</p>
+        <button
+          onClick={() => {
+            localStorage.removeItem(REG_POPUP_KEY);
+            alert('Bestätigungs-Popup wird wieder angezeigt.');
+          }}
+          className="w-full text-left px-4 py-3 bg-stone-800 rounded-lg text-stone-300 text-sm hover:bg-stone-700 transition-colors"
+        >
+          Bestätigungs-Popup wieder anzeigen
+        </button>
+      </div>
+
       {/* Account Settings */}
       <div className="bg-stone-900/50 rounded-xl border border-stone-800/50 p-6">
         <h3 className="text-white font-semibold mb-4">{t('account')}</h3>
@@ -8544,6 +8665,13 @@ function EventDetailPage({ event, onBack, isLoggedIn, onViewEvent, setCurrentVie
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [showOrganizerPopup, setShowOrganizerPopup] = useState(false);
   const [shareStatus, setShareStatus] = useState(null); // null, 'copied', 'shared'
+  const [pendingRegId, setPendingRegId] = useState(null);
+
+  const handleRegClick = () => {
+    if (isRegistered(event.id)) { toggleRegistration(event.id); return; }
+    if (localStorage.getItem(REG_POPUP_KEY) === 'true') { toggleRegistration(event.id); return; }
+    setPendingRegId(event.id);
+  };
 
   // ── Multi-date selector state ──────────────────────────────────────────────
   // liveEventDates: source of truth for event_dates; refreshed from Supabase on mount.
@@ -8998,26 +9126,38 @@ function EventDetailPage({ event, onBack, isLoggedIn, onViewEvent, setCurrentVie
             {event.difficulty && <div className="mb-3"><DifficultyIcon level={event.difficulty} /></div>}
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 leading-tight">{event.name}</h1>
 
-            {/* Registration Toggle - minimal, refined */}
+            {/* Registration Toggle */}
             {isLoggedIn && (
               <button
-                onClick={() => toggleRegistration(event.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 mb-4 ${isRegistered(event.id)
-                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                  : 'border-stone-700 text-stone-400 hover:bg-stone-800/50'
+                onClick={handleRegClick}
+                aria-label={isRegistered(event.id) ? 'Vom Event abmelden' : 'Zum Event anmelden'}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm text-white shadow-md transition-all duration-300 ease-in-out mb-4 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent
+                  ${isRegistered(event.id)
+                    ? 'bg-gradient-to-r from-[#4CAF50] to-[#45A049] shadow-green-900/40 hover:brightness-110 hover:-translate-y-0.5 hover:shadow-lg focus:ring-green-500'
+                    : 'bg-gradient-to-r from-[#FF9500] to-[#FF6B00] shadow-orange-900/40 hover:brightness-110 hover:-translate-y-0.5 hover:shadow-lg focus:ring-orange-500'
                   }`}
               >
                 {isRegistered(event.id) ? (
-                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 ) : (
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                     <circle cx="12" cy="12" r="10" />
                   </svg>
                 )}
-                <span className="text-xs font-medium">{t('registered')}</span>
+                <span>{t('registered')}</span>
               </button>
+            )}
+            {pendingRegId !== null && (
+              <RegistrationConfirmPopup
+                onConfirm={(dontShow) => {
+                  if (dontShow) localStorage.setItem(REG_POPUP_KEY, 'true');
+                  toggleRegistration(pendingRegId);
+                  setPendingRegId(null);
+                }}
+                onCancel={() => setPendingRegId(null)}
+              />
             )}
 
             <div className="flex flex-wrap items-center gap-4 text-stone-300">
