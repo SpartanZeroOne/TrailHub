@@ -3120,6 +3120,7 @@ function FeaturedEvents({ onViewAll, onViewEvent }) {
 }
 
 const REG_POPUP_KEY = 'trailhub_registration_popup_dismissed';
+const LANG_STORAGE_KEY = 'trailhub_preferred_language';
 
 function RegistrationConfirmPopup({ onConfirm, onCancel }) {
   const { t } = useTranslation();
@@ -10024,7 +10025,20 @@ export default function OffroadEventsApp() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [language, setLanguage] = useState('de');
+  const [language, setLanguageState] = useState(
+    () => localStorage.getItem(LANG_STORAGE_KEY) || 'en'
+  );
+
+  // Wrapper: persists language to localStorage + Supabase profile (if logged in)
+  const handleSetLanguage = (lang) => {
+    setLanguageState(lang);
+    localStorage.setItem(LANG_STORAGE_KEY, lang);
+    if (auth.user) {
+      auth.updateProfile({ preferred_language: lang }).catch(e =>
+        console.error('[TrailHub] save preferred_language:', e)
+      );
+    }
+  };
   const [selectedCategory, setSelectedCategory] = useState(() => {
     const { category } = parsePathname(window.location.pathname);
     return category || null;
@@ -10272,6 +10286,11 @@ export default function OffroadEventsApp() {
       setRegisteredEventIds(auth.profile.registered_event_ids ?? []);
       setFavoriteEventIds(auth.profile.favorite_event_ids ?? []);
       setEventDateSelections(auth.profile.event_date_selections ?? {});
+      // Restore saved language preference from profile (cross-device sync)
+      if (auth.profile.preferred_language) {
+        setLanguageState(auth.profile.preferred_language);
+        localStorage.setItem(LANG_STORAGE_KEY, auth.profile.preferred_language);
+      }
     } else if (!auth.user) {
       setRegisteredEventIds([]);
       setFavoriteEventIds([]);
@@ -10549,7 +10568,7 @@ export default function OffroadEventsApp() {
           isLoggedIn={isLoggedIn}
           onShowLogin={() => setShowAuthModal(true)}
           language={language}
-          setLanguage={setLanguage}
+          setLanguage={handleSetLanguage}
           onSwitchToMap={handleSwitchToMap}
           onSwitchToEvents={handleSwitchToEvents}
         />
