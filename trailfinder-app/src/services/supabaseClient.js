@@ -54,6 +54,10 @@ export const updateEvent = async (id, updates) => {
     if (error) throw error;
     return data;
 };
+export const deleteEvent = async (id) => {
+    const { error } = await supabase.from('events').delete().eq('id', id);
+    if (error) throw error;
+};
 
 // ─── USERS ────────────────────────────────────────────────────────────────────
 export const fetchUserProfile = async (userId) => {
