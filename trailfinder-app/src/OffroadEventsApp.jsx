@@ -3199,20 +3199,12 @@ function RegistrationConfirmPopup({ onConfirm, onCancel }) {
 
 function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
   const { t, language } = useTranslation();
-  const { isRegistered, isFavorite, toggleRegistration, toggleFavorite, friendsPerEvent } = useUserState();
+  const { isRegistered, isFavorite, toggleFavorite, friendsPerEvent } = useUserState();
   const registeredFriends = friendsPerEvent.get(event.id) ?? [];
   const [showChangeTooltip, setShowChangeTooltip] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [shareStatus, setShareStatus] = useState(null); // null, 'copied', 'shared'
   const isPast = event.status === 'past';
-  const [pendingRegId, setPendingRegId] = useState(null);
-
-  const handleRegClick = (e, eventId) => {
-    e?.stopPropagation();
-    if (isRegistered(eventId)) { toggleRegistration(eventId); return; }
-    if (localStorage.getItem(REG_POPUP_KEY) === 'true') { toggleRegistration(eventId); return; }
-    setPendingRegId(eventId);
-  };
 
   const localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
   const translatedLocation = translateLocation(event.location, language);
@@ -3442,27 +3434,11 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
               </div>
             )}
 
-            {/* Registration Toggle */}
-            {isLoggedIn && !isPast && (
-              <button
-                onClick={(e) => handleRegClick(e, event.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${isRegistered(event.id)
-                  ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30'
-                  : 'bg-stone-800 text-stone-400 hover:bg-stone-700'
-                  }`}
-              >
-                {isRegistered(event.id) ? '✓' : '+'}
-              </button>
-            )}
-            {pendingRegId !== null && (
-              <RegistrationConfirmPopup
-                onConfirm={(dontShow) => {
-                  if (dontShow) localStorage.setItem(REG_POPUP_KEY, 'true');
-                  toggleRegistration(pendingRegId);
-                  setPendingRegId(null);
-                }}
-                onCancel={() => setPendingRegId(null)}
-              />
+            {/* Registration indicator – non-interactive, visible only when registered */}
+            {isLoggedIn && !isPast && isRegistered(event.id) && (
+              <div className="px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30 select-none">
+                ✓
+              </div>
             )}
           </div>
         </div>
@@ -5828,20 +5804,12 @@ function MXTrackCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
 // Event Card with clickable friend avatars
 function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventClick, showMxRaceTag, origin = 'events' }) {
   const { t, language } = useTranslation();
-  const { isRegistered, isFavorite, toggleRegistration, toggleFavorite, friendsPerEvent } = useUserState();
+  const { isRegistered, isFavorite, toggleFavorite, friendsPerEvent } = useUserState();
   const registeredFriends = friendsPerEvent.get(event.id) ?? [];
   const [showChangeTooltip, setShowChangeTooltip] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [shareStatus, setShareStatus] = useState(null);
   const isPast = event.status === 'past';
-  const [pendingRegId, setPendingRegId] = useState(null);
-
-  const handleRegClick = (e, eventId) => {
-    e?.stopPropagation();
-    if (isRegistered(eventId)) { toggleRegistration(eventId); return; }
-    if (localStorage.getItem(REG_POPUP_KEY) === 'true') { toggleRegistration(eventId); return; }
-    setPendingRegId(eventId);
-  };
 
   const localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
   const translatedLocation = translateLocation(event.location, language);
@@ -6063,24 +6031,11 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
               </div>
             )}
 
-            {isLoggedIn && !isPast && (
-              <button
-                onClick={(e) => handleRegClick(e, event.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${isRegistered(event.id) ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30' : 'bg-stone-800 text-stone-400 hover:bg-stone-700'
-                  }`}
-              >
-                {isRegistered(event.id) ? '✓' : '+'}
-              </button>
-            )}
-            {pendingRegId !== null && (
-              <RegistrationConfirmPopup
-                onConfirm={(dontShow) => {
-                  if (dontShow) localStorage.setItem(REG_POPUP_KEY, 'true');
-                  toggleRegistration(pendingRegId);
-                  setPendingRegId(null);
-                }}
-                onCancel={() => setPendingRegId(null)}
-              />
+            {/* Registration indicator – non-interactive, visible only when registered */}
+            {isLoggedIn && !isPast && isRegistered(event.id) && (
+              <div className="px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30 select-none">
+                ✓
+              </div>
             )}
           </div>
         </div>
@@ -6691,14 +6646,12 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
             <div className="flex items-center justify-between pt-2 border-t border-stone-800/50">
               <span className="text-lg font-bold text-amber-400">{event.price}</span>
               <div className="flex items-center gap-2">
-                {/* Registration button - matches EventCard style */}
-                <button
-                  onClick={(e) => handleRegistrationToggle(event.id, e)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${isReg ? 'bg-amber-500/15 text-amber-400' : 'bg-stone-800 text-stone-400 hover:bg-stone-700'
-                    }`}
-                >
-                  {isReg ? '✓' : '+'}
-                </button>
+                {/* Registration indicator – non-interactive */}
+                {isReg && (
+                  <div className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-amber-500/15 text-amber-400 select-none">
+                    ✓
+                  </div>
+                )}
                 {/* Details button */}
                 <button
                   onClick={() => handleEventDetails(event)}
