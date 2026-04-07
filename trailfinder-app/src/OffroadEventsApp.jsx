@@ -8102,7 +8102,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-stone-900/30 p-1 rounded-xl w-fit">
+        <div className="flex gap-1.5 mb-6 bg-stone-900/50 p-1.5 rounded-2xl border border-stone-800/50">
           {[
             { id: 'events', label: t('myEvents'), icon: '📅' },
             { id: 'friends', label: t('friends'), icon: '👥', badge: incomingRequests.length },
@@ -8111,21 +8111,33 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => onActiveTabChange(tab.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === tab.id
-                ? 'bg-amber-500/20 text-amber-400'
+              onClick={() => {
+                onActiveTabChange(tab.id);
+                setTimeout(() => {
+                  const el = document.getElementById('tab-content');
+                  if (!el) return;
+                  const top = el.getBoundingClientRect().top + window.scrollY - 88;
+                  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+                }, 80);
+              }}
+              className={`relative flex-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 min-h-[44px] ${activeTab === tab.id
+                ? 'bg-amber-500/20 text-amber-400 shadow-sm ring-1 ring-amber-500/20'
                 : 'text-stone-400 hover:text-white hover:bg-stone-800/50'
                 }`}
             >
-              <span>{tab.icon}</span>
+              <span className="text-base leading-none">{tab.icon}</span>
               <span className="hidden sm:inline">{tab.label}</span>
-              {tab.badge > 0 && <span className="w-4 h-4 bg-amber-500 rounded-full text-[10px] font-bold text-stone-950 flex items-center justify-center">{tab.badge}</span>}
+              {tab.badge > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full text-[10px] font-bold text-stone-950 flex items-center justify-center">
+                  {tab.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
 
         {/* Tab Content */}
-        <div>
+        <div id="tab-content">
           {activeTab === 'events' && renderEventsTab()}
           {activeTab === 'friends' && renderFriendsTab()}
           {activeTab === 'favorites' && renderFavoritesTab()}
