@@ -8102,7 +8102,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1.5 mb-6 bg-stone-900/50 p-1.5 rounded-2xl border border-stone-800/50">
+        <div id="dashboard-tabs" className="flex gap-1.5 mb-6 bg-stone-900/50 p-1.5 rounded-2xl border border-stone-800/50">
           {[
             { id: 'events', label: t('myEvents'), icon: '📅' },
             { id: 'friends', label: t('friends'), icon: '👥', badge: incomingRequests.length },
@@ -8112,13 +8112,13 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
             <button
               key={tab.id}
               onClick={() => {
-                onActiveTabChange(tab.id);
-                setTimeout(() => {
-                  const el = document.getElementById('tab-content');
-                  if (!el) return;
-                  const top = el.getBoundingClientRect().top + window.scrollY - 88;
+                // Scroll BEFORE state change so layout is stable — same position for all tabs
+                const nav = document.getElementById('dashboard-tabs');
+                if (nav) {
+                  const top = nav.getBoundingClientRect().top + window.scrollY - 88;
                   window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-                }, 80);
+                }
+                onActiveTabChange(tab.id);
               }}
               className={`relative flex-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 min-h-[44px] ${activeTab === tab.id
                 ? 'bg-amber-500/20 text-amber-400 shadow-sm ring-1 ring-amber-500/20'
