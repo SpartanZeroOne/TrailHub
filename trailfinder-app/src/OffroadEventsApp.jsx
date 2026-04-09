@@ -3452,7 +3452,6 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
   const [locationGeocodingError, setLocationGeocodingError] = useState('');
   const [showRadiusDropdown, setShowRadiusDropdown] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
-  const [geoError, setGeoError] = useState('');
 
   // =========================================================================
   // CRITICAL: Determine if we should restore state (POP) or apply preference (PUSH)
@@ -3688,7 +3687,6 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     setFestivalTime('all');
     setFestivalRadius('all');
     setFestivalType('all');
-    setGeoError('');
     clearAllSharedFilters();
   };
 
@@ -4291,7 +4289,6 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
   });
 
   const handleSkillRadiusClick = async (radiusId) => {
-    setGeoError('');
     if (skillRadius === radiusId) {
       setSkillRadius('all');
       return;
@@ -4302,25 +4299,14 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     try {
       const loc = await requestGeolocation();
       setUserLocation(loc);
-    } catch (err) {
-      const denied = err?.code === 1;
-      setGeoError(
-        language === 'de'
-          ? (denied ? 'Standort-Zugriff verweigert. Bitte in den Browser-Einstellungen erlauben.' : 'Standort konnte nicht ermittelt werden.')
-          : language === 'fr'
-            ? (denied ? 'Accès à la localisation refusé.' : 'Impossible de déterminer la position.')
-            : language === 'nl'
-              ? (denied ? 'Locatietoegang geweigerd.' : 'Locatie kon niet worden bepaald.')
-              : (denied ? 'Location access denied. Please allow in browser settings.' : 'Could not determine your location.')
-      );
-      setSkillRadius('all');
+    } catch {
+      openLocationInput(); // geolocation blocked → fall back to manual input
     } finally {
       setGeoLoading(false);
     }
   };
 
   const handleFestivalRadiusClick = async (radiusId) => {
-    setGeoError('');
     if (festivalRadius === radiusId) {
       setFestivalRadius('all');
       return;
@@ -4335,18 +4321,8 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     try {
       const loc = await requestGeolocation();
       setUserLocation(loc);
-    } catch (err) {
-      const denied = err?.code === 1;
-      setGeoError(
-        language === 'de'
-          ? (denied ? 'Standort-Zugriff verweigert. Bitte in den Browser-Einstellungen erlauben.' : 'Standort konnte nicht ermittelt werden.')
-          : language === 'fr'
-            ? (denied ? 'Accès à la localisation refusé.' : 'Impossible de déterminer la position.')
-            : language === 'nl'
-              ? (denied ? 'Locatietoegang geweigerd.' : 'Locatie kon niet worden bepaald.')
-              : (denied ? 'Location access denied. Please allow in browser settings.' : 'Could not determine your location.')
-      );
-      setFestivalRadius('all');
+    } catch {
+      openLocationInput(); // geolocation blocked → fall back to manual input
     } finally {
       setGeoLoading(false);
     }
@@ -4863,15 +4839,12 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
               ))}
               {skillRadius !== 'all' && userLocation && (
                 <button
-                  onClick={() => { setSkillRadius('all'); setGeoError(''); }}
+                  onClick={() => setSkillRadius('all')}
                   className="px-2 py-1.5 rounded-lg text-xs text-stone-500 hover:text-red-400 transition-colors"
                   title={language === 'de' ? 'Filter löschen' : 'Clear filter'}
                 >✕</button>
               )}
             </div>
-            {geoError && filterCategory === 'skills-camps' && (
-              <p className="text-xs text-red-400 mt-1">{geoError}</p>
-            )}
             <div className="w-px h-5 bg-stone-700"></div>
 
             {/* Duration */}
@@ -4923,15 +4896,12 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
               ))}
               {festivalRadius !== 'all' && (festivalRadius === 'eu' || userLocation) && (
                 <button
-                  onClick={() => { setFestivalRadius('all'); setGeoError(''); }}
+                  onClick={() => setFestivalRadius('all')}
                   className="px-2 py-1.5 rounded-lg text-xs text-stone-500 hover:text-red-400 transition-colors"
                   title={language === 'de' ? 'Filter löschen' : 'Clear filter'}
                 >✕</button>
               )}
             </div>
-            {geoError && filterCategory === 'offroad-festivals' && (
-              <p className="text-xs text-red-400 mt-1">{geoError}</p>
-            )}
           </>
         );
     }
@@ -5550,7 +5520,15 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
                 {locationStatus === 'loading' ? '…' : 'OK'}
               </button>
               <button
-                onClick={() => { setShowLocationInput(false); if (!userLocation) clearLocationFilter(); setLocationGeocodingError(''); }}
+                onClick={() => {
+                  setShowLocationInput(false);
+                  setLocationGeocodingError('');
+                  if (!userLocation) {
+                    clearLocationFilter();
+                    if (skillRadius !== 'all') setSkillRadius('all');
+                    if (festivalRadius !== 'all') setFestivalRadius('all');
+                  }
+                }}
                 className="shrink-0 text-stone-500 hover:text-stone-300"
               >✕</button>
             </div>
