@@ -541,13 +541,9 @@ const translations = {
     openingExternalLink: 'Externen Link öffnen',
 
     // Footer
-    aboutUs: 'Über uns',
     imprint: 'Impressum',
     privacyPolicy: 'Datenschutz',
-    cookies: 'Cookies',
-    termsConditions: 'AGB',
-    legal: 'Rechtliches',
-    contactUs: 'Kontaktieren Sie uns',
+    contact: 'Kontakt',
     allRightsReserved: 'Alle Rechte vorbehalten',
   },
   en: {
@@ -850,13 +846,9 @@ const translations = {
     openingExternalLink: 'Opening external link',
 
     // Footer
-    aboutUs: 'About us',
     imprint: 'Imprint',
     privacyPolicy: 'Privacy Policy',
-    cookies: 'Cookies',
-    termsConditions: 'Terms & Conditions',
-    legal: 'Legal',
-    contactUs: 'Contact us',
+    contact: 'Contact',
     allRightsReserved: 'All rights reserved',
   },
   fr: {
@@ -1159,13 +1151,9 @@ const translations = {
     openingExternalLink: 'Ouverture du lien externe',
 
     // Footer
-    aboutUs: 'À propos',
     imprint: 'Mentions légales',
     privacyPolicy: 'Politique de confidentialité',
-    cookies: 'Cookies',
-    termsConditions: 'CGV',
-    legal: 'Informations légales',
-    contactUs: 'Contactez-nous',
+    contact: 'Contact',
     allRightsReserved: 'Tous droits réservés',
   },
   nl: {
@@ -1471,10 +1459,7 @@ const translations = {
     aboutUs: 'Over ons',
     imprint: 'Colofon',
     privacyPolicy: 'Privacybeleid',
-    cookies: 'Cookies',
-    termsConditions: 'Algemene voorwaarden',
-    legal: 'Juridisch',
-    contactUs: 'Neem contact op',
+    contact: 'Contact',
     allRightsReserved: 'Alle rechten voorbehouden',
   },
 };
@@ -3466,6 +3451,8 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
   const [locationCity, setLocationCity] = useState('');          // confirmed city display name
   const [locationGeocodingError, setLocationGeocodingError] = useState('');
   const [showRadiusDropdown, setShowRadiusDropdown] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState('');
 
   // =========================================================================
   // CRITICAL: Determine if we should restore state (POP) or apply preference (PUSH)
@@ -3627,7 +3614,9 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     rallyeTime !== 'all',
     skillLevel !== 'all',
     skillTime !== 'all',
+    skillRadius !== 'all',
     festivalTime !== 'all',
+    festivalRadius !== 'all',
     festivalType !== 'all',
   ].filter(Boolean).length;
   const hasActiveFilters = activeFilterCount > 0;
@@ -3647,9 +3636,9 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
         // Adventure Trips
         tripType, tripTime,
         // Skills Camps
-        skillLevel, skillTime,
+        skillLevel, skillTime, skillRadius,
         // Offroad Festivals
-        festivalTime,
+        festivalTime, festivalRadius,
         // Cross-category
         trailInArea, trailRadius, userLocation, locationCity, filterCountries,
       });
@@ -3661,8 +3650,8 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     trailSubcategory, trailTime, trailDifficulty, trailPrice, trailDuration,
     rallyeTime, rallyeRegion,
     tripType, tripTime,
-    skillLevel, skillTime,
-    festivalTime,
+    skillLevel, skillTime, skillRadius,
+    festivalTime, festivalRadius,
     trailInArea, trailRadius, userLocation, locationCity, filterCountries,
   ]);
 
@@ -3699,6 +3688,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     setFestivalTime('all');
     setFestivalRadius('all');
     setFestivalType('all');
+    setGeoError('');
     clearAllSharedFilters();
   };
 
@@ -4149,9 +4139,9 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
 
   const festivalRadiusOptions = [
     { id: 'all', label: t('filterAll') },
-    { id: '200', label: '0-200km' },
-    { id: '500', label: '200-500km' },
-    { id: '1000', label: '500-1000km' },
+    { id: '200', label: '200km' },
+    { id: '500', label: '500km' },
+    { id: '1000', label: '1000km' },
     { id: 'eu', label: t('europe') },
   ];
 
@@ -4284,6 +4274,81 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     if (!trailInArea) {
       setTrailInArea(true);
       if (!userLocation) openLocationInput();
+    }
+  };
+
+  // Request browser geolocation — returns cached userLocation if already set
+  const requestGeolocation = () => new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('unsupported'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => reject(err),
+      { timeout: 10000, maximumAge: 300000 }
+    );
+  });
+
+  const handleSkillRadiusClick = async (radiusId) => {
+    setGeoError('');
+    if (skillRadius === radiusId) {
+      setSkillRadius('all');
+      return;
+    }
+    setSkillRadius(radiusId);
+    if (userLocation) return; // reuse cached location
+    setGeoLoading(true);
+    try {
+      const loc = await requestGeolocation();
+      setUserLocation(loc);
+    } catch (err) {
+      const denied = err?.code === 1;
+      setGeoError(
+        language === 'de'
+          ? (denied ? 'Standort-Zugriff verweigert. Bitte in den Browser-Einstellungen erlauben.' : 'Standort konnte nicht ermittelt werden.')
+          : language === 'fr'
+            ? (denied ? 'Accès à la localisation refusé.' : 'Impossible de déterminer la position.')
+            : language === 'nl'
+              ? (denied ? 'Locatietoegang geweigerd.' : 'Locatie kon niet worden bepaald.')
+              : (denied ? 'Location access denied. Please allow in browser settings.' : 'Could not determine your location.')
+      );
+      setSkillRadius('all');
+    } finally {
+      setGeoLoading(false);
+    }
+  };
+
+  const handleFestivalRadiusClick = async (radiusId) => {
+    setGeoError('');
+    if (festivalRadius === radiusId) {
+      setFestivalRadius('all');
+      return;
+    }
+    if (radiusId === 'eu') {
+      setFestivalRadius('eu');
+      return;
+    }
+    setFestivalRadius(radiusId);
+    if (userLocation) return; // reuse cached location
+    setGeoLoading(true);
+    try {
+      const loc = await requestGeolocation();
+      setUserLocation(loc);
+    } catch (err) {
+      const denied = err?.code === 1;
+      setGeoError(
+        language === 'de'
+          ? (denied ? 'Standort-Zugriff verweigert. Bitte in den Browser-Einstellungen erlauben.' : 'Standort konnte nicht ermittelt werden.')
+          : language === 'fr'
+            ? (denied ? 'Accès à la localisation refusé.' : 'Impossible de déterminer la position.')
+            : language === 'nl'
+              ? (denied ? 'Locatietoegang geweigerd.' : 'Locatie kon niet worden bepaald.')
+              : (denied ? 'Location access denied. Please allow in browser settings.' : 'Could not determine your location.')
+      );
+      setFestivalRadius('all');
+    } finally {
+      setGeoLoading(false);
     }
   };
 
@@ -4572,10 +4637,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
       // Radius filter
       if (festivalRadius !== 'all' && festivalRadius !== 'eu' && userLocation && event.coordinates) {
         const distance = calculateDistance(userLocation.lat, userLocation.lng, event.coordinates.lat, event.coordinates.lng);
-        // Festival radius values are cumulative ranges: 200 = 0-200km, 500 = 200-500km, 1000 = 500-1000km
-        if (festivalRadius === '200' && distance > 200) return false;
-        if (festivalRadius === '500' && (distance < 200 || distance > 500)) return false;
-        if (festivalRadius === '1000' && (distance < 500 || distance > 1000)) return false;
+        if (distance > parseInt(festivalRadius)) return false;
       }
     }
 
@@ -4791,14 +4853,25 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
               {skillRadiusOptions.slice(1).map((r) => (
                 <button
                   key={r.id}
-                  onClick={() => setSkillRadius(skillRadius === r.id ? 'all' : r.id)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${skillRadius === r.id ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-stone-800/60 text-stone-400 hover:text-stone-300'
-                    }`}
+                  onClick={() => handleSkillRadiusClick(r.id)}
+                  disabled={geoLoading}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${skillRadius === r.id && userLocation ? 'bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30' : skillRadius === r.id ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-stone-800/60 text-stone-400 hover:text-stone-300'
+                    } disabled:opacity-50`}
                 >
-                  {r.label}
+                  {geoLoading && skillRadius === r.id ? '…' : r.label}
                 </button>
               ))}
+              {skillRadius !== 'all' && userLocation && (
+                <button
+                  onClick={() => { setSkillRadius('all'); setGeoError(''); }}
+                  className="px-2 py-1.5 rounded-lg text-xs text-stone-500 hover:text-red-400 transition-colors"
+                  title={language === 'de' ? 'Filter löschen' : 'Clear filter'}
+                >✕</button>
+              )}
             </div>
+            {geoError && filterCategory === 'skills-camps' && (
+              <p className="text-xs text-red-400 mt-1">{geoError}</p>
+            )}
             <div className="w-px h-5 bg-stone-700"></div>
 
             {/* Duration */}
@@ -4840,14 +4913,25 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
               {festivalRadiusOptions.slice(1).map((r) => (
                 <button
                   key={r.id}
-                  onClick={() => setFestivalRadius(festivalRadius === r.id ? 'all' : r.id)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${festivalRadius === r.id ? 'bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/30' : 'bg-stone-800/60 text-stone-400 hover:text-stone-300'
-                    }`}
+                  onClick={() => handleFestivalRadiusClick(r.id)}
+                  disabled={geoLoading && r.id !== 'eu'}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${festivalRadius === r.id && (userLocation || r.id === 'eu') ? 'bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30' : festivalRadius === r.id ? 'bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/30' : 'bg-stone-800/60 text-stone-400 hover:text-stone-300'
+                    } disabled:opacity-50`}
                 >
-                  {r.label}
+                  {geoLoading && festivalRadius === r.id ? '…' : r.label}
                 </button>
               ))}
+              {festivalRadius !== 'all' && (festivalRadius === 'eu' || userLocation) && (
+                <button
+                  onClick={() => { setFestivalRadius('all'); setGeoError(''); }}
+                  className="px-2 py-1.5 rounded-lg text-xs text-stone-500 hover:text-red-400 transition-colors"
+                  title={language === 'de' ? 'Filter löschen' : 'Clear filter'}
+                >✕</button>
+              )}
             </div>
+            {geoError && filterCategory === 'offroad-festivals' && (
+              <p className="text-xs text-red-400 mt-1">{geoError}</p>
+            )}
           </>
         );
     }
@@ -8600,6 +8684,397 @@ function FriendCard({ friend }) {
   );
 }
 
+// ─── Legal Page Shell ────────────────────────────────────────────────────────
+function LegalPageShell({ title, setCurrentView, children }) {
+  return (
+    <div className="min-h-screen bg-stone-950 text-stone-300">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <button
+          onClick={() => { setCurrentView('landing'); window.scrollTo(0, 0); }}
+          className="flex items-center gap-2 text-sm text-stone-500 hover:text-amber-500 transition-colors mb-10"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Zurück
+        </button>
+        <h1 className="text-3xl font-bold text-white mb-10 border-b border-stone-800 pb-6">{title}</h1>
+        <div className="space-y-8 text-sm leading-relaxed">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LegalSection({ title, children }) {
+  return (
+    <section>
+      <h2 className="text-base font-semibold text-amber-500 mb-3">{title}</h2>
+      <div className="text-stone-400 space-y-2">{children}</div>
+    </section>
+  );
+}
+
+// ─── Impressum ────────────────────────────────────────────────────────────────
+function ImpressumPage({ setCurrentView }) {
+  return (
+    <LegalPageShell title="Impressum" setCurrentView={setCurrentView}>
+      <LegalSection title="Angaben gemäß § 5 TMG">
+        <p><span className="text-stone-300 font-medium">TrailHub</span> – Offroad Event Plattform</p>
+        <p>Betrieben durch: [Vor- und Nachname des Betreibers]</p>
+        <p>[Straße und Hausnummer]</p>
+        <p>[PLZ] [Ort], Deutschland</p>
+      </LegalSection>
+
+      <LegalSection title="Kontakt">
+        <p>E-Mail: <a href="mailto:info@trailhub.app" className="text-amber-500 hover:text-amber-400">info@trailhub.app</a></p>
+        <p>Telefon: auf Anfrage</p>
+      </LegalSection>
+
+      <LegalSection title="Vertreten durch">
+        <p>[Name des Inhabers / Geschäftsführers]</p>
+      </LegalSection>
+
+      <LegalSection title="Registereintrag">
+        <p>Kleinunternehmer gemäß § 19 UStG – keine Umsatzsteuer-Pflicht. Kein Handelsregistereintrag.</p>
+      </LegalSection>
+
+      <LegalSection title="Haftungsausschluss – Inhalt">
+        <p>
+          Die Inhalte dieser Plattform wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit
+          und Aktualität der Inhalte können wir jedoch keine Haftung übernehmen. Als Plattformbetreiber sind
+          wir gemäß § 7 Abs. 1 TMG für eigene Inhalte verantwortlich. Für fremde Inhalte (z. B. Events
+          externer Veranstalter) übernehmen wir gemäß §§ 8–10 TMG keine Haftung. Eine Pflicht zur Überwachung
+          übermittelter oder gespeicherter Informationen besteht nicht.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Haftungsausschluss – externe Links">
+        <p>
+          Diese Plattform enthält Links zu externen Webseiten Dritter. Auf deren Inhalte haben wir keinen
+          Einfluss und übernehmen keine Haftung. Für die Inhalte der verlinkten Seiten ist stets der jeweilige
+          Anbieter verantwortlich. Zum Zeitpunkt der Verlinkung waren keine Rechtsverstöße erkennbar.
+          Bei Bekanntwerden von Rechtsverletzungen werden solche Links umgehend entfernt.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Haftung gegenüber Veranstaltungen">
+        <p>
+          TrailHub ist eine Community-Plattform und fungiert ausschließlich als Informationsverzeichnis.
+          Alle auf der Plattform gelisteten Events werden von unabhängigen Veranstaltern organisiert.
+          TrailHub übernimmt keine Haftung für Ablauf, Sicherheit, Absage oder sonstige Belange
+          der aufgeführten Veranstaltungen. Die finale Anmeldung erfolgt stets direkt beim Veranstalter.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Urheberrecht">
+        <p>
+          Die auf dieser Plattform enthaltenen Inhalte und Werke unterliegen dem deutschen Urheberrecht.
+          Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen
+          des Urheberrechts bedürfen der schriftlichen Zustimmung von TrailHub.
+          Downloads und Kopien sind nur für den privaten, nicht-kommerziellen Gebrauch gestattet.
+        </p>
+      </LegalSection>
+    </LegalPageShell>
+  );
+}
+
+// ─── Datenschutz ─────────────────────────────────────────────────────────────
+function DatenschutzPage({ setCurrentView }) {
+  return (
+    <LegalPageShell title="Datenschutzerklärung" setCurrentView={setCurrentView}>
+      <LegalSection title="Einleitung">
+        <p>
+          Der Schutz deiner persönlichen Daten ist uns wichtig. Diese Datenschutzerklärung informiert
+          dich darüber, welche Daten TrailHub erhebt, wie sie verwendet werden und welche Rechte
+          du als Nutzer hast. Wir verarbeiten personenbezogene Daten ausschließlich im Rahmen der
+          geltenden Datenschutzgesetze, insbesondere der EU-Datenschutz-Grundverordnung (DSGVO).
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Verantwortliche Stelle">
+        <p>[Name des Betreibers]</p>
+        <p>[Straße], [PLZ Ort]</p>
+        <p>E-Mail: <a href="mailto:info@trailhub.app" className="text-amber-500 hover:text-amber-400">info@trailhub.app</a></p>
+      </LegalSection>
+
+      <LegalSection title="Erhobene Daten">
+        <p className="text-stone-300 font-medium mb-1">Bei der Registrierung:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>E-Mail-Adresse</li>
+          <li>Benutzername (selbst gewählt)</li>
+          <li>Profilbild (optional, vom Nutzer hochgeladen)</li>
+          <li>Bevorzugte Disziplin / Spracheinstellung</li>
+        </ul>
+        <p className="text-stone-300 font-medium mb-1 mt-3">Nutzungsdaten (automatisch):</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Login-Zeitstempel</li>
+          <li>Event-Anmeldungen und Favoriten</li>
+          <li>Freundschaftsverbindungen und zugehörige Sichtbarkeitseinstellungen</li>
+        </ul>
+        <p className="text-stone-300 font-medium mb-1 mt-3">Lokale Speicherung (kein Server):</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Spracheinstellung (localStorage)</li>
+          <li>Session-Cookies für die eingeloggte Sitzung (Supabase Auth)</li>
+          <li>Bestätigungszustand des Anmelde-Hinweisdialogs (localStorage)</li>
+        </ul>
+      </LegalSection>
+
+      <LegalSection title="Zweck der Verarbeitung">
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Bereitstellung der Plattformfunktionalität (Login, Profil, Events)</li>
+          <li>Anzeige von Event-Anmeldungen bei Freunden (Freundes-Funktion)</li>
+          <li>Personalisierung der Darstellung (Sprache, Disziplin)</li>
+          <li>Sicherheit und Authentifizierung der Nutzersitzung</li>
+        </ul>
+      </LegalSection>
+
+      <LegalSection title="Rechtsgrundlage (DSGVO)">
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Art. 6 Abs. 1 lit. b DSGVO – Vertragserfüllung (Registrierung &amp; Nutzung)</li>
+          <li>Art. 6 Abs. 1 lit. f DSGVO – Berechtigtes Interesse (Sicherheit, Missbrauchsschutz)</li>
+          <li>Art. 6 Abs. 1 lit. a DSGVO – Einwilligung (wo optional, z. B. Profilbild)</li>
+        </ul>
+      </LegalSection>
+
+      <LegalSection title="Speicherdauer">
+        <p>
+          Personenbezogene Daten werden gespeichert, solange ein aktives Nutzerkonto besteht.
+          Nach Löschung des Kontos werden alle zugehörigen Daten innerhalb von 30 Tagen entfernt,
+          sofern keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Weitergabe an Dritte">
+        <p>
+          Deine Daten werden nicht an Dritte zu Werbezwecken weitergegeben.
+          TrailHub nutzt <span className="text-stone-300">Supabase</span> als Backend-Infrastruktur
+          (Datenbank, Authentifizierung, Datei-Storage). Supabase ist DSGVO-konform und verarbeitet
+          Daten auf Servern innerhalb der EU (Frankfurt). Weitere Details:&nbsp;
+          <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer"
+            className="text-amber-500 hover:text-amber-400">supabase.com/privacy</a>.
+        </p>
+        <p className="mt-2">
+          Externe Event-Veranstalter erhalten keine direkten Nutzerdaten. Bei Event-Anmeldungen
+          erfolgt die finale Registrierung stets über die eigene Website des Veranstalters.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Deine Rechte">
+        <p>Du hast jederzeit das Recht auf:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li><span className="text-stone-300">Auskunft</span> – welche Daten wir über dich gespeichert haben (Art. 15 DSGVO)</li>
+          <li><span className="text-stone-300">Berichtigung</span> – Korrektur unrichtiger Daten (Art. 16 DSGVO)</li>
+          <li><span className="text-stone-300">Löschung</span> – Löschung deines Kontos und aller Daten (Art. 17 DSGVO)</li>
+          <li><span className="text-stone-300">Einschränkung</span> – Einschränkung der Verarbeitung (Art. 18 DSGVO)</li>
+          <li><span className="text-stone-300">Widerspruch</span> – gegen Verarbeitung auf Basis berechtigter Interessen (Art. 21 DSGVO)</li>
+          <li><span className="text-stone-300">Beschwerde</span> – bei der zuständigen Datenschutzaufsichtsbehörde</li>
+        </ul>
+        <p className="mt-2">Zur Ausübung deiner Rechte wende dich an: <a href="mailto:info@trailhub.app" className="text-amber-500 hover:text-amber-400">info@trailhub.app</a></p>
+      </LegalSection>
+
+      <LegalSection title="Cookies &amp; lokaler Speicher">
+        <p>
+          TrailHub verwendet keine Tracking-Cookies oder Werbe-Cookies.
+          Folgende technische Cookies bzw. lokale Speichereinträge werden verwendet:
+        </p>
+        <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
+          <li><span className="text-stone-300">Supabase Session-Cookie</span> – für die eingeloggte Sitzung, wird beim Logout gelöscht</li>
+          <li><span className="text-stone-300">localStorage: Spracheinstellung</span> – damit deine Sprachwahl gespeichert bleibt</li>
+          <li><span className="text-stone-300">localStorage: Hinweisdialog</span> – ob der Anmelde-Hinweis bereits bestätigt wurde</li>
+        </ul>
+      </LegalSection>
+
+      <LegalSection title="SSL-Verschlüsselung">
+        <p>
+          Diese Plattform nutzt aus Sicherheitsgründen eine SSL-Verschlüsselung für alle
+          Datenübertragungen. Du erkennst dies an dem <span className="text-stone-300">https://</span> in
+          der Browser-Adresszeile und dem Schloss-Symbol in der Adressleiste.
+        </p>
+      </LegalSection>
+    </LegalPageShell>
+  );
+}
+
+// ─── Kontakt ─────────────────────────────────────────────────────────────────
+function KontaktPage({ setCurrentView }) {
+  const [formData, setFormData] = React.useState({ name: '', email: '', subject: 'general', message: '', consent: false });
+  const [submitted, setSubmitted] = React.useState(false);
+
+  const subjectOptions = [
+    { value: 'general', label: 'Allgemeine Frage' },
+    { value: 'support', label: 'Technischer Support' },
+    { value: 'event', label: 'Event eintragen' },
+    { value: 'feedback', label: 'Feedback' },
+  ];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const { name, email, subject, message } = formData;
+    const subjectLabel = subjectOptions.find(o => o.value === subject)?.label || subject;
+    const mailtoLink = `mailto:info@trailhub.app?subject=${encodeURIComponent(`[${subjectLabel}] – Kontaktanfrage von ${name}`)}&body=${encodeURIComponent(`Name: ${name}\nE-Mail: ${email}\n\n${message}`)}`;
+    window.location.href = mailtoLink;
+    setSubmitted(true);
+  };
+
+  return (
+    <LegalPageShell title="Kontakt" setCurrentView={setCurrentView}>
+      <p className="text-stone-400">
+        Du hast Fragen, Feedback oder technische Probleme? Wir helfen dir gerne weiter.
+        Füll einfach das Formular aus oder schreib uns direkt per E-Mail.
+        Wir antworten in der Regel innerhalb von <span className="text-stone-300">24–48 Stunden</span>.
+      </p>
+
+      {/* ── Event-Veranstalter Bereich ── */}
+      <div className="bg-stone-900 border border-amber-500/20 rounded-xl p-6 space-y-4">
+        <h2 className="text-base font-semibold text-amber-500">Event eintragen lassen</h2>
+        <p className="text-stone-400">
+          Du bist Veranstalter eines Offroad-Events, MX-Tracks, Skills-Camps oder Festivals?
+          Trag dein Event auf TrailHub ein und erreiche tausende Rider in deiner Region!
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-stone-400">
+          {[
+            'Offroad-Events & Trail-Rides',
+            'MX-Tracks & MX-Races',
+            'Skills-Camps & Fahrtrainings',
+            'Offroad-Festivals & Community-Treffen',
+            'Enduro-, Hard-Enduro- & Adventure-Events',
+          ].map((item) => (
+            <div key={item} className="flex items-center gap-2">
+              <span className="text-amber-500">✓</span>
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-2 text-stone-400">
+          <p className="text-stone-300 font-medium">So funktioniert's:</p>
+          <p>Schreib uns eine E-Mail an <a href="mailto:events@trailhub.app" className="text-amber-500 hover:text-amber-400">events@trailhub.app</a> mit folgenden Infos:</p>
+          <ul className="list-disc list-inside space-y-1 ml-2">
+            <li>Event-Name und Datum</li>
+            <li>Ort / GPS-Koordinaten</li>
+            <li>Kurzbeschreibung und Zielgruppe</li>
+            <li>Schwierigkeitsgrad (1–3)</li>
+            <li>Preis-Info (kostenlos / Eintritt / Anmeldung)</li>
+            <li>Link zur Veranstalter-Website</li>
+            <li>Kontakt-E-Mail für Rückfragen</li>
+          </ul>
+          <p className="mt-2">Wir prüfen dein Event und fügen es innerhalb von <span className="text-stone-300">1–3 Werktagen</span> hinzu.</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-stone-400 pt-2">
+          {[
+            { icon: '📍', text: 'Sichtbarkeit bei aktiven Offroad-Enthusiasten' },
+            { icon: '🗓️', text: 'Automatische Anzeige in Kalender & Kartenansicht' },
+            { icon: '✅', text: 'User können "Angemeldet"-Status setzen' },
+            { icon: '🌍', text: 'Mehrsprachige Darstellung (DE/EN/FR/NL)' },
+            { icon: '🔗', text: 'Direkter Link zu deiner Anmeldeseite' },
+          ].map((item) => (
+            <div key={item.text} className="flex items-start gap-2">
+              <span>{item.icon}</span>
+              <span>{item.text}</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-stone-600 pt-2 border-t border-stone-800">
+          TrailHub ist eine Community-Plattform. Wir übernehmen keine Haftung für externe Events.
+          Die finale Anmeldung erfolgt immer direkt beim Veranstalter.
+        </p>
+      </div>
+
+      {/* ── Kontaktformular ── */}
+      <LegalSection title="Schreib uns">
+        {submitted ? (
+          <div className="bg-stone-900 border border-amber-500/20 rounded-xl p-6 text-center space-y-2">
+            <p className="text-stone-300 font-medium">Deine E-Mail-App wurde geöffnet.</p>
+            <p className="text-stone-500 text-xs">Falls nichts passiert ist, schreib uns direkt an <a href="mailto:info@trailhub.app" className="text-amber-500">info@trailhub.app</a>.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-stone-500 mb-1">Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                  className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none focus:border-amber-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-stone-500 mb-1">E-Mail *</label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                  className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none focus:border-amber-500 transition-colors"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">Betreff</label>
+              <select
+                value={formData.subject}
+                onChange={e => setFormData(p => ({ ...p, subject: e.target.value }))}
+                className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none focus:border-amber-500 transition-colors"
+              >
+                {subjectOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">Nachricht *</label>
+              <textarea
+                required
+                rows={5}
+                value={formData.message}
+                onChange={e => setFormData(p => ({ ...p, message: e.target.value }))}
+                className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none focus:border-amber-500 transition-colors resize-none"
+              />
+            </div>
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="consent"
+                required
+                checked={formData.consent}
+                onChange={e => setFormData(p => ({ ...p, consent: e.target.checked }))}
+                className="mt-0.5 accent-amber-500"
+              />
+              <label htmlFor="consent" className="text-xs text-stone-500 leading-relaxed">
+                Ich stimme der Verarbeitung meiner Daten gemäß der{' '}
+                <button type="button" onClick={() => { setCurrentView('datenschutz'); window.scrollTo(0, 0); }} className="text-amber-500 hover:text-amber-400">
+                  Datenschutzerklärung
+                </button>{' '}
+                zu. *
+              </label>
+            </div>
+            <button
+              type="submit"
+              className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold text-sm px-8 py-2.5 rounded-lg transition-colors"
+            >
+              Nachricht senden
+            </button>
+          </form>
+        )}
+      </LegalSection>
+
+      {/* ── Direkte Kontaktinfos ── */}
+      <LegalSection title="Direkte Kontaktmöglichkeiten">
+        <div className="space-y-2">
+          <p>Allgemeine Anfragen: <a href="mailto:info@trailhub.app" className="text-amber-500 hover:text-amber-400">info@trailhub.app</a></p>
+          <p>Events eintragen: <a href="mailto:events@trailhub.app" className="text-amber-500 hover:text-amber-400">events@trailhub.app</a></p>
+          <p>Technischer Support: <a href="mailto:support@trailhub.app" className="text-amber-500 hover:text-amber-400">support@trailhub.app</a></p>
+        </div>
+      </LegalSection>
+    </LegalPageShell>
+  );
+}
+
 // Footer Component
 function Footer({ setCurrentView, onCategoryClick }) {
   const { t } = useTranslation();
@@ -8613,13 +9088,9 @@ function Footer({ setCurrentView, onCategoryClick }) {
   ];
 
   const legalLinks = [
-    { key: 'aboutUs', href: '#about' },
-    { key: 'imprint', href: '#imprint' },
-    { key: 'privacyPolicy', href: '#privacy' },
-    { key: 'cookies', href: '#cookies' },
-    { key: 'termsConditions', href: '#terms' },
-    { key: 'legal', href: '#legal' },
-    { key: 'contactUs', href: 'mailto:info@trailhub.com' },
+    { key: 'imprint', view: 'impressum' },
+    { key: 'privacyPolicy', view: 'datenschutz' },
+    { key: 'contact', view: 'kontakt' },
   ];
 
   return (
@@ -8644,17 +9115,15 @@ function Footer({ setCurrentView, onCategoryClick }) {
       {/* Legal Footer */}
       <div className="border-t border-stone-800/5 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-6">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-8 mb-6">
             {legalLinks.map((link) => (
-              <a
+              <button
                 key={link.key}
-                href={link.href}
-                target={link.key === 'contactUs' ? undefined : '_blank'}
-                rel={link.key === 'contactUs' ? undefined : 'noopener noreferrer'}
-                className="text-xs text-stone-600 hover:text-stone-400 transition-colors"
+                onClick={() => { setCurrentView(link.view); window.scrollTo(0, 0); }}
+                className="text-xs text-stone-600 hover:text-amber-500 transition-colors"
               >
                 {t(link.key)}
-              </a>
+              </button>
             ))}
           </div>
           <p className="text-center text-xs text-stone-700">
@@ -10627,6 +11096,18 @@ export default function OffroadEventsApp() {
           />
           <Footer setCurrentView={setCurrentView} onCategoryClick={handleCategoryClick} />
         </>
+      )}
+
+      {currentView === 'impressum' && (
+        <ImpressumPage setCurrentView={setCurrentView} />
+      )}
+
+      {currentView === 'datenschutz' && (
+        <DatenschutzPage setCurrentView={setCurrentView} />
+      )}
+
+      {currentView === 'kontakt' && (
+        <KontaktPage setCurrentView={setCurrentView} />
       )}
 
       {currentView === 'admin' && (
