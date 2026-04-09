@@ -317,7 +317,7 @@ const translations = {
     // Filter panel
     moreFilters: 'Mehr Filter',
     countries: 'Länder',
-    mainCountries: 'Hauptländer',
+    mainCountries: 'Länder',
     moreCountries: 'Weitere Länder',
     priceRange: 'Preisbereich',
     upTo: 'bis',
@@ -4240,11 +4240,8 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     setLocationStatus('loading');
     setLocationGeocodingError('');
     try {
-      const token = import.meta.env.VITE_MAPBOX_TOKEN;
       const encoded = encodeURIComponent(cityName.trim());
-      const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${token}&types=place&limit=1&language=${language}`
-      );
+      const res = await fetch(`/api/geocode?q=${encoded}&lang=${language}`);
       const data = await res.json();
       if (!data.features?.length) {
         const msg = language === 'de' ? 'Stadt nicht gefunden' : language === 'fr' ? 'Ville introuvable' : language === 'nl' ? 'Stad niet gevonden' : 'City not found';
@@ -7168,6 +7165,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
   const [showChangePwModal, setShowChangePwModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
   const [accountActionLoading, setAccountActionLoading] = useState(false);
   const [accountActionError, setAccountActionError] = useState('');
   const [accountActionSuccess, setAccountActionSuccess] = useState('');
@@ -7976,7 +7974,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
             {t('logout')}
           </button>
           <button
-            onClick={() => { setAccountActionError(''); setShowDeleteConfirm(true); }}
+            onClick={() => { setAccountActionError(''); setDeleteConfirmPassword(''); setShowDeleteConfirm(true); }}
             className="w-full text-left px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm hover:bg-red-500/20"
           >
             {t('deleteAccount')}
@@ -8082,13 +8080,23 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
             <p className="text-stone-400 text-sm text-center mb-6">Diese Aktion ist <span className="text-red-400 font-semibold">nicht rückgängig</span> zu machen. Alle deine Daten werden dauerhaft gelöscht.</p>
             {accountActionError && <div className="mb-4 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">{accountActionError}</div>}
             <div className="space-y-3">
+              <div>
+                <label className="block text-stone-400 text-xs mb-1.5">Passwort bestätigen</label>
+                <input
+                  type="password"
+                  value={deleteConfirmPassword}
+                  onChange={e => setDeleteConfirmPassword(e.target.value)}
+                  placeholder="Dein aktuelles Passwort"
+                  className="w-full px-3 py-2.5 bg-stone-800 border border-stone-700 rounded-lg text-white text-sm placeholder-stone-600 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30 transition-colors"
+                />
+              </div>
               <button
-                disabled={accountActionLoading}
+                disabled={accountActionLoading || !deleteConfirmPassword}
                 onClick={async () => {
                   setAccountActionLoading(true);
                   setAccountActionError('');
                   try {
-                    await auth.deleteAccount();
+                    await auth.deleteAccount(deleteConfirmPassword);
                     setShowDeleteConfirm(false);
                   } catch (e) {
                     setAccountActionError(e.message || 'Fehler beim Löschen des Accounts.');
@@ -8099,7 +8107,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
               >
                 {accountActionLoading ? 'Wird gelöscht…' : 'Ja, Account löschen'}
               </button>
-              <button onClick={() => setShowDeleteConfirm(false)} className="w-full py-3 bg-stone-800 text-stone-300 rounded-xl text-sm hover:bg-stone-700">Abbrechen</button>
+              <button onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmPassword(''); }} className="w-full py-3 bg-stone-800 text-stone-300 rounded-xl text-sm hover:bg-stone-700">Abbrechen</button>
             </div>
           </div>
         </div>

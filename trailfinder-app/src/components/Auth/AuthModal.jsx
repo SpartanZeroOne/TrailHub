@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
 const Spinner = () => (
@@ -47,6 +47,19 @@ export default function AuthModal({ onClose }) {
 
   const switchTab = (t) => { setTab(t); setError(''); setSuccess(''); };
 
+  // Password strength: 0-4 (length, uppercase, digit, special char)
+  const strength = useMemo(() => {
+    if (!password) return 0;
+    let s = 0;
+    if (password.length >= 8)           s++;
+    if (/[A-Z]/.test(password))         s++;
+    if (/[0-9]/.test(password))         s++;
+    if (/[^A-Za-z0-9]/.test(password))  s++;
+    return s;
+  }, [password]);
+  const strengthLabel = ['', 'Schwach', 'Mittel', 'Gut', 'Stark'];
+  const strengthColor = ['', 'bg-red-500', 'bg-orange-400', 'bg-amber-400', 'bg-green-500'];
+
   // ── Login ──────────────────────────────────────────────────────────────────
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -67,6 +80,7 @@ export default function AuthModal({ onClose }) {
     e.preventDefault();
     setError('');
     if (password.length < 8) { setError('Das Passwort muss mindestens 8 Zeichen haben.'); return; }
+    if (strength < 2) { setError('Bitte wähle ein stärkeres Passwort (Großbuchstabe, Zahl oder Sonderzeichen).'); return; }
     if (password !== confirmPassword) { setError('Die Passwörter stimmen nicht überein.'); return; }
     setLoading(true);
     try {
@@ -202,9 +216,21 @@ export default function AuthModal({ onClose }) {
                 required placeholder="deine@email.de" className={INPUT_CLASS} />
             </div>
             <div>
-              <label className={LABEL_CLASS}>Passwort <span className="text-stone-600">(min. 8 Zeichen)</span></label>
+              <label className={LABEL_CLASS}>Passwort <span className="text-stone-600">(min. 8 Zeichen, Groß­buchstabe + Zahl)</span></label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                 required placeholder="••••••••" className={INPUT_CLASS} />
+              {password.length > 0 && (
+                <div className="mt-2">
+                  <div className="flex gap-1 mb-1">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= strength ? strengthColor[strength] : 'bg-stone-700'}`} />
+                    ))}
+                  </div>
+                  <p className={`text-[10px] ${strength <= 1 ? 'text-red-400' : strength === 2 ? 'text-orange-400' : strength === 3 ? 'text-amber-400' : 'text-green-400'}`}>
+                    {strengthLabel[strength]}
+                  </p>
+                </div>
+              )}
             </div>
             <div>
               <label className={LABEL_CLASS}>Passwort wiederholen</label>

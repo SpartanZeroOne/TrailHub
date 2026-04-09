@@ -7,7 +7,9 @@ node_modules/
 dist/
 dist-ssr/
 build/
-netlify/
+# .netlify/ = Netlify CLI state cache (ignored)
+# netlify/  = functions & config directory (NOT ignored — must be committed)
+.netlify/
 
 # Environment files (NEVER commit these)
 .env

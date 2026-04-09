@@ -101,9 +101,10 @@ export function AuthProvider({ children }) {
     };
 
     const sendPasswordReset = async (email) => {
+        const appUrl = import.meta.env.VITE_APP_URL || 'https://trailhub.netlify.app';
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             // Dedizierte Reset-Seite — kein Auto-Login in der Haupt-App
-            redirectTo: 'https://trailhub.netlify.app/reset-password',
+            redirectTo: `${appUrl}/reset-password`,
         });
         if (error) throw error;
     };
@@ -115,8 +116,14 @@ export function AuthProvider({ children }) {
         // Der Aufrufer muss signOut() aufrufen um den Reset-Flow zu beenden
     };
 
-    const deleteAccount = async () => {
+    const deleteAccount = async (confirmPassword) => {
         if (!user) return;
+        // Re-authenticate to verify the user knows their password before deleting.
+        const { error: authErr } = await supabase.auth.signInWithPassword({
+            email: user.email,
+            password: confirmPassword,
+        });
+        if (authErr) throw new Error('Falsches Passwort. Account wurde nicht gelöscht.');
         // Delete profile row first (cascade deletes friends too)
         await supabase.from('users').delete().eq('id', user.id);
         await supabase.auth.signOut();

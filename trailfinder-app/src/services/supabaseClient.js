@@ -125,7 +125,9 @@ export const addFriend = async (userId, friendId) => {
 // fail silently (default false) if migration 04 has not been applied yet.
 // This ensures the friend list and "Add Friend" flow always work.
 export const fetchFriendsWithStatus = async (userId) => {
-    // Primary query: friend list + status (always works even without migration 04)
+    // Primary query: friend list + status.
+    // For accepted friends the users join returns full data (RLS: accepted friend).
+    // For pending-outgoing rows the join is blocked by RLS → users will be null.
     const { data: myRows, error: myErr } = await supabase.from('friends')
         .select('friend_id, status, created_at, users!friends_friend_id_fkey(id, name, avatar, location, bio, registered_event_ids, event_date_selections, privacy_registration_visibility)')
         .eq('user_id', userId);
@@ -133,6 +135,18 @@ export const fetchFriendsWithStatus = async (userId) => {
 
     const rows = myRows ?? [];
     if (rows.length === 0) return [];
+
+    // For pending-outgoing rows the join returned null (RLS blocked).
+    // Fetch their basic profile (no sensitive fields) via SECURITY DEFINER RPC.
+    const pendingNullIds = rows
+        .filter(r => !r.users && r.status === 'pending')
+        .map(r => r.friend_id);
+
+    let pendingBasicMap = {};
+    if (pendingNullIds.length > 0) {
+        const { data: basicUsers } = await supabase.rpc('get_users_basic', { user_ids: pendingNullIds });
+        pendingBasicMap = Object.fromEntries((basicUsers ?? []).map(u => [u.id, u]));
+    }
 
     const friendIds = rows.map(r => r.friend_id);
 
@@ -158,7 +172,7 @@ export const fetchFriendsWithStatus = async (userId) => {
     );
 
     return rows.map(r => ({
-        ...r.users,
+        ...(r.users ?? pendingBasicMap[r.friend_id] ?? {}),
         status: r.status,
         since: r.created_at,
         i_hide_from_them: iHideMap[r.friend_id] ?? false,
@@ -176,35 +190,44 @@ export const setHideMyEventsFromFriend = async (userId, friendId, hide) => {
     if (error) throw error;
 };
 
-// Returns users who sent a pending request to userId
+// Returns users who sent a pending request to userId.
+// Two-step: fetch friend rows first, then get basic profiles via RPC
+// (direct join is blocked by RLS since requester is not yet an accepted friend).
 export const fetchIncomingRequests = async (userId) => {
     const { data, error } = await supabase.from('friends')
-        .select('user_id, created_at, users!friends_user_id_fkey(id, name, avatar, location, bio)')
+        .select('user_id, created_at')
         .eq('friend_id', userId)
         .eq('status', 'pending');
     if (error) throw error;
-    return (data ?? []).map(r => ({ ...r.users, requestedAt: r.created_at }));
+    const rows = data ?? [];
+    if (rows.length === 0) return [];
+
+    const requesterIds = rows.map(r => r.user_id);
+    const { data: users, error: usersErr } = await supabase.rpc('get_users_basic', { user_ids: requesterIds });
+    if (usersErr) throw usersErr;
+
+    const usersMap = Object.fromEntries((users ?? []).map(u => [u.id, u]));
+    return rows
+        .map(r => ({ ...usersMap[r.user_id], requestedAt: r.created_at }))
+        .filter(r => r.id);
 };
 
-// Search users by name or email (case-insensitive)
-export const searchUsers = async (query, currentUserId) => {
+// Search users by name or email (case-insensitive).
+// Uses SECURITY DEFINER RPC — bypasses RLS but returns only non-sensitive columns.
+// registered_event_ids is never exposed for non-friends.
+export const searchUsers = async (query) => {
     if (!query || query.length < 2) return [];
-    let q = supabase.from('users')
-        .select('id, name, email, avatar, location, bio')
-        .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
-        .limit(8);
-    if (currentUserId) q = q.neq('id', currentUserId);
-    const { data, error } = await q;
+    const { data, error } = await supabase.rpc('search_users_safe', { search_query: query });
     if (error) throw error;
     return data ?? [];
 };
 
+// Returns basic public profile (name, avatar, location, bio) for any user ID.
+// Uses SECURITY DEFINER RPC — safe for non-friends (no sensitive fields).
 export const fetchUserById = async (userId) => {
-    const { data, error } = await supabase.from('users')
-        .select('id, name, avatar, location, bio')
-        .eq('id', userId).single();
+    const { data, error } = await supabase.rpc('get_users_basic', { user_ids: [userId] });
     if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    return data?.[0] ?? null;
 };
 
 // Send a friend request (one direction, status='pending')
