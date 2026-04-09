@@ -39,6 +39,17 @@ export const fetchEvents = async ({ category, status } = {}) => {
     if (error) throw error;
     return data ?? [];
 };
+export const fetchFeaturedEvents = async ({ limit = 8 } = {}) => {
+    const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('is_featured', true)
+        .eq('status', 'upcoming')
+        .order('start_date', { ascending: true })
+        .limit(limit);
+    if (error) throw error;
+    return data ?? [];
+};
 export const fetchEventById = async (id) => {
     const { data, error } = await supabase.from('events').select('*, organizers(*)').eq('id', id).single();
     if (error) throw error;

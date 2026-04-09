@@ -33,7 +33,7 @@ class AppErrorBoundary extends Component {
 }
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { supabase, fetchEvents, fetchEventById, fetchOrganizers, isSupabaseConfigured, uploadAvatar, fetchFriendsWithStatus, fetchIncomingRequests, searchUsers, fetchUserById, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriendship, setHideMyEventsFromFriend, fetchMxTracks } from './services/supabaseClient';
+import { supabase, fetchEvents, fetchFeaturedEvents, fetchEventById, fetchOrganizers, isSupabaseConfigured, uploadAvatar, fetchFriendsWithStatus, fetchIncomingRequests, searchUsers, fetchUserById, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriendship, setHideMyEventsFromFriend, fetchMxTracks } from './services/supabaseClient';
 import { useAuth } from './hooks/useAuth';
 import AuthModal from './components/Auth/AuthModal';
 import PasswordResetModal from './components/Auth/PasswordResetModal';
@@ -2470,7 +2470,7 @@ function formatMxTrackDaysShort(track, lang = 'de') {
   return track.openDays.map(d => shorts[d] || d).join(', ');
 }
 
-const featuredEvents = mockEvents.filter(e => e.status === 'upcoming').slice(0, 3);
+// featuredEvents now loaded from Supabase inside the FeaturedEvents component
 
 // Helper Functions
 function formatDate(dateStr, locale = 'de-DE') {
@@ -2997,9 +2997,51 @@ function HeroSection({ onExplore, onMap }) {
 }
 
 function FeaturedEvents({ onViewAll, onViewEvent }) {
-  const { t, language } = useTranslation();
-  // Duplicate events for seamless loop
-  const duplicatedEvents = [...featuredEvents, ...featuredEvents, ...featuredEvents];
+  const { t } = useTranslation();
+  const [featuredEvents, setFeaturedEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchFeaturedEvents({ limit: 8 })
+      .then(rows => {
+        setFeaturedEvents(rows.map(r => ({
+          id:         r.id,
+          name:       r.name,
+          category:   r.category,
+          startDate:  r.start_date,
+          endDate:    r.end_date   ?? null,
+          location:   r.location,
+          price:      r.price      ?? null,
+          image:      r.image      ?? null,
+          status:     r.status     ?? 'upcoming',
+          isNew:      r.is_new     ?? false,
+          isFeatured: r.is_featured ?? true,
+        })));
+      })
+      .catch(err => {
+        console.error('[FeaturedEvents] fetch error:', err);
+        setError(err.message);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Need at least 1 event; triplicate for seamless marquee loop
+  const duplicatedEvents = featuredEvents.length > 0
+    ? [...featuredEvents, ...featuredEvents, ...featuredEvents]
+    : [];
+
+  if (loading) return (
+    <section className="py-16 bg-stone-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-48 flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    </section>
+  );
+
+  if (error || featuredEvents.length === 0) return null;
 
   return (
     <section className="py-16 bg-stone-950 overflow-hidden">
@@ -10413,6 +10455,7 @@ export default function OffroadEventsApp() {
           aiSummaryUpdatedAt:    r.ai_summary_updated_at  ?? null,
           eventDates:            r.event_dates            ?? null,
           festivalType:          r.festival_type          ?? null,
+          isFeatured:            r.is_featured            ?? false,
         }));
         _forceRender();
       })
