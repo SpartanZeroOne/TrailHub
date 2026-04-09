@@ -9889,7 +9889,7 @@ function EventDetailPage({ event, onBack, isLoggedIn, onViewEvent, setCurrentVie
                   onClick={(e) => {
                     e.preventDefault();
                     if (window.confirm(t('openingExternalLink'))) {
-                      window.open(event.eventUrl || event.registrationUrl || organizer?.website || '#', '_blank');
+                      window.open(event.eventUrl || organizer?.website || '#', '_blank');
                     }
                   }}
                   className="w-full py-4 rounded-xl text-base font-semibold bg-amber-500 text-stone-950 hover:bg-amber-400 transition-all text-center block"
@@ -10446,8 +10446,6 @@ export default function OffroadEventsApp() {
           hasChanges:       r.has_changes         ?? false,
           changeDetails:    r.change_details      ?? null,
           eventUrl:              r.event_url              ?? null,
-          registrationUrl:       r.registration_url       ?? null,
-          organizerDescription:  r.organizer_description  ?? null,
           aiSummaryDe:           r.ai_summary_de          ?? null,
           aiSummaryEn:           r.ai_summary_en          ?? null,
           aiSummaryFr:           r.ai_summary_fr          ?? null,
