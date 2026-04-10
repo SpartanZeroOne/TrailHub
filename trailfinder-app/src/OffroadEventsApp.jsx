@@ -2811,25 +2811,27 @@ function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, lang
           </div>
 
           {/* Mobile Nav Buttons - visible only on mobile */}
-          <div className="flex md:hidden items-center gap-1">
-            <button
-              onClick={handleEventsClick}
-              className={`min-h-[44px] px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentView === 'events'
-                ? 'bg-amber-500/20 text-amber-400'
-                : 'text-stone-400'
-                }`}
-            >
-              {t('events')}
-            </button>
-            <button
-              onClick={handleMapClick}
-              className={`min-h-[44px] px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentView === 'map'
-                ? 'bg-amber-500/20 text-amber-400'
-                : 'text-stone-400'
-                }`}
-            >
-              {t('map')}
-            </button>
+          <div className="flex-1 flex md:hidden justify-center">
+            <div className="flex items-center gap-0.5 bg-stone-800/60 rounded-lg p-0.5">
+              <button
+                onClick={handleEventsClick}
+                className={`min-h-[36px] px-3 py-1 rounded-md text-sm font-semibold transition-all ${currentView === 'events'
+                  ? 'bg-amber-500/25 text-amber-400'
+                  : 'text-stone-400'
+                  }`}
+              >
+                {t('events')}
+              </button>
+              <button
+                onClick={handleMapClick}
+                className={`min-h-[36px] px-3 py-1 rounded-md text-sm font-semibold transition-all ${currentView === 'map'
+                  ? 'bg-amber-500/25 text-amber-400'
+                  : 'text-stone-400'
+                  }`}
+              >
+                {t('map')}
+              </button>
+            </div>
           </div>
 
           {/* Right side: Lang + Auth */}
