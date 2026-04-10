@@ -1,6 +1,14 @@
 // useAuth – React Hook für Supabase Authentifizierung
 
 import { useState, useEffect, useContext, createContext, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
+
+// On native: use the deep link scheme; on web: use the current origin
+const getAppUrl = () =>
+    Capacitor.isNativePlatform()
+        ? 'com.trailhub.app://callback'
+        : (import.meta.env.VITE_APP_URL || window.location.origin);
 import {
     supabase,
     signIn as sbSignIn,
@@ -40,6 +48,16 @@ export function AuthProvider({ children }) {
             setLoading(false);
         });
 
+        // Native Deep Link abfangen (Supabase OAuth / Password-Reset auf Capacitor)
+        let appUrlListener;
+        if (Capacitor.isNativePlatform()) {
+            CapApp.addListener('appUrlOpen', async ({ url }) => {
+                if (url.includes('access_token') || url.includes('code=')) {
+                    await supabase.auth.getSessionFromUrl({ url });
+                }
+            }).then(handle => { appUrlListener = handle; });
+        }
+
         // Auth-State-Änderungen abonnieren
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (_event === 'PASSWORD_RECOVERY') {
@@ -65,7 +83,10 @@ export function AuthProvider({ children }) {
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            subscription.unsubscribe();
+            appUrlListener?.remove();
+        };
     }, []);
 
     const loadProfile = async (userId) => {
@@ -101,7 +122,7 @@ export function AuthProvider({ children }) {
     };
 
     const sendPasswordReset = async (email) => {
-        const appUrl = import.meta.env.VITE_APP_URL || 'https://trailhub.netlify.app';
+        const appUrl = getAppUrl();
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             // Dedizierte Reset-Seite — kein Auto-Login in der Haupt-App
             redirectTo: `${appUrl}/reset-password`,

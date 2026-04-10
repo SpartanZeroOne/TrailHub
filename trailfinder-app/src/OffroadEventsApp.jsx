@@ -6405,6 +6405,8 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
       center: [5, 47],
       zoom: 4,
       attributionControl: false,
+      preserveDrawingBuffer: true, // required for iOS WebView (Capacitor)
+      fadeDuration: 0,             // smoother in WebView
     });
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
     mapInstanceRef.current = map;
@@ -9519,6 +9521,8 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
       zoom: 12,
       interactive: true,
       attributionControl: false,
+      preserveDrawingBuffer: true, // required for iOS WebView (Capacitor)
+      fadeDuration: 0,             // smoother in WebView
     });
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
