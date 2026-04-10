@@ -1,0 +1,22 @@
+# Cloudflare Pages – TrailHub
+# Docs: https://developers.cloudflare.com/pages/configuration/wrangler-configuration/
+
+name = "trailhub"
+pages_build_output_dir = "dist"
+
+# ─── Build (used when Cloudflare builds directly, e.g. dashboard git integration) ───
+[build]
+command = "npm run build"
+
+# ─── Environment Variables (reference only – set real values in dashboard or via wrangler secret) ───
+# VITE_SUPABASE_URL      → Cloudflare Pages → Settings → Environment Variables
+# VITE_SUPABASE_ANON_KEY → Cloudflare Pages → Settings → Environment Variables
+# VITE_MAPBOX_TOKEN      → Cloudflare Pages → Settings → Environment Variables (Production only)
+# MAPBOX_TOKEN           → Cloudflare Pages → Settings → Environment Variables (secret, no VITE_ prefix)
+#                          This is used server-side by functions/api/geocode.js only.
+
+[env.production]
+name = "trailhub"
+
+[env.preview]
+name = "trailhub"

@@ -1,27 +1,18 @@
-# TrailFinder – GitHub Actions: Build & Deploy to Netlify
-# Trigger: Push auf main → Build → Netlify Deploy
-#
-# Erforderliche GitHub Secrets (Settings > Secrets > Actions):
-#   NETLIFY_AUTH_TOKEN   – nfp_LStWEX5cLPVKEi5UjVPWcxM5KA5fsokt5de4
-#   NETLIFY_SITE_ID      – e2fdf6e0-bba0-4544-9556-74c83bbc0abd
-#   VITE_SUPABASE_URL    – https://hmdkiteqapiahwvdbdyh.supabase.co
-#   VITE_SUPABASE_ANON_KEY – sb_publishable_HP8fl1SOkZPBK2wugdBZYA_jo5s1eAC
-#   VITE_MAPBOX_TOKEN    – pk.eyJ1...
-
-name: Deploy to Netlify
+name: Deploy to Cloudflare Pages
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:
-
-env:
-  APP_DIR: trailfinder-app
+  pull_request:
+    branches: [main]
 
 jobs:
   deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
 
     steps:
       - name: Checkout
@@ -32,34 +23,24 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
+          cache-dependency-path: trailfinder-app/package-lock.json
 
       - name: Install dependencies
-        working-directory: ${{ env.APP_DIR }}
+        working-directory: trailfinder-app
         run: npm ci
 
       - name: Build
-        working-directory: ${{ env.APP_DIR }}
+        working-directory: trailfinder-app
+        run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
-        run: npm run build
 
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
         with:
-          publish-dir: ${{ env.APP_DIR }}/dist
-          production-branch: main
-          production-deploy: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions – ${{ github.sha }}"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-
-      - name: Summary
-        run: |
-          echo "## Deployment erfolgreich 🚀" >> $GITHUB_STEP_SUMMARY
-          echo "- **URL:** https://trailhub.netlify.app" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: trailfinder-app
+          command: pages deploy dist --project-name=trailhub --branch=${{ github.ref_name }}
