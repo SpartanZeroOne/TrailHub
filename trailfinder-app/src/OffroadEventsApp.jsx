@@ -2840,11 +2840,11 @@ function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, lang
             <div className="relative">
               <button
                 onClick={() => setShowLangMenu(!showLangMenu)}
-                className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg bg-stone-800/70 hover:bg-stone-800 transition-colors border border-stone-700/50"
+                className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 min-h-[36px] py-1 md:py-2 rounded-lg bg-stone-800/70 hover:bg-stone-800 transition-colors border border-stone-700/50"
               >
                 {currentLang.flag}
                 <span className="text-stone-300 text-sm font-medium hidden sm:inline">{currentLang.code.toUpperCase()}</span>
-                <svg className="w-3 h-3 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3 h-3 text-stone-500 hidden md:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
