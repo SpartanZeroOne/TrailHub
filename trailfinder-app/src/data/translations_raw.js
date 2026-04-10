@@ -76,7 +76,7 @@ export const translations = {
     // Filter panel
     moreFilters: 'Mehr Filter',
     countries: 'Länder',
-    mainCountries: 'Hauptländer',
+    mainCountries: 'Länder',
     moreCountries: 'Weitere Länder',
     priceRange: 'Preisbereich',
     upTo: 'bis',
