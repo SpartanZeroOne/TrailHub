@@ -32,7 +32,7 @@ const emptyEvent = {
     coordinates: { lat: 50.0, lng: 7.0 },
     price: '',
     price_value: 0,
-    image: 'https://images.unsplash.com/photo-1Awnf0Eg8XQ?w=400&h=300&fit=crop',
+    image: 'https://images.pexels.com/photos/3536269/pexels-photo-3536269.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
     status: 'upcoming',
     category: 'trail-adventures',
     subcategory: null,
