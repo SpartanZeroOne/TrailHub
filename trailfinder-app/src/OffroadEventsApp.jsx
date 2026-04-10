@@ -3006,17 +3006,45 @@ function FeaturedEvents({ onViewAll, onViewEvent }) {
     fetchFeaturedEvents({ limit: 8 })
       .then(rows => {
         setFeaturedEvents(rows.map(r => ({
-          id:         r.id,
-          name:       r.name,
-          category:   r.category,
-          startDate:  r.start_date,
-          endDate:    r.end_date   ?? null,
-          location:   r.location,
-          price:      r.price      ?? null,
-          image:      r.image      ?? null,
-          status:     r.status     ?? 'upcoming',
-          isNew:      r.is_new     ?? false,
-          isFeatured: r.is_featured ?? true,
+          id:                 r.id,
+          name:               r.name,
+          category:           r.category,
+          startDate:          r.start_date,
+          endDate:            r.end_date            ?? null,
+          location:           r.location,
+          price:              r.price               ?? null,
+          image:              r.image               ?? null,
+          status:             r.status              ?? 'upcoming',
+          isNew:              r.is_new              ?? false,
+          isFeatured:         r.is_featured         ?? true,
+          // Fields required by EventDetail — must not be stripped here
+          coordinates:        (() => {
+            const c = r.coordinates;
+            if (!c) return null;
+            if (c.lat != null && c.lng != null) return c;
+            if (c.latitude != null && c.longitude != null) return { lat: c.latitude, lng: c.longitude };
+            return null;
+          })(),
+          organizerId:        r.organizer_id         ?? null,
+          difficulty:         r.difficulty           ?? null,
+          beginnerFriendly:   r.beginner_friendly    ?? false,
+          eventUrl:           r.event_url            ?? null,
+          hasChanges:         r.has_changes          ?? false,
+          changeDetails:      r.change_details       ?? null,
+          rallyeRegion:       r.rallye_region        ?? null,
+          tripType:           r.trip_type            ?? null,
+          skillLevel:         r.skill_level          ?? null,
+          mxType:             r.mx_type              ?? null,
+          bikeType:           r.bike_type            ?? null,
+          groupSize:          r.group_size           ?? null,
+          level:              r.level                ?? null,
+          festivalType:       r.festival_type        ?? null,
+          eventDates:         r.event_dates          ?? null,
+          aiSummaryDe:        r.ai_summary_de        ?? null,
+          aiSummaryEn:        r.ai_summary_en        ?? null,
+          aiSummaryFr:        r.ai_summary_fr        ?? null,
+          aiSummaryNl:        r.ai_summary_nl        ?? null,
+          aiSummaryUpdatedAt: r.ai_summary_updated_at ?? null,
         })));
       })
       .catch(err => {
@@ -9164,9 +9192,15 @@ function Footer({ setCurrentView, onCategoryClick }) {
 }
 
 // Event Detail Page
-function EventDetailPage({ event, onBack, isLoggedIn, onViewEvent, setCurrentView, onViewFriend, onCategoryClick }) {
+function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, setCurrentView, onViewFriend, onCategoryClick }) {
   const { t, language } = useTranslation();
   const { isRegistered, isFavorite, toggleRegistration, toggleFavorite, friendsPerEvent, eventDateSelections, saveEventDateSelection } = useUserState();
+
+  // Enrich event data on mount: if coordinates or AI summaries are missing (e.g. when
+  // navigating from FeaturedEvents with a partial object), fetch the full record from Supabase.
+  const [event, setEvent] = useState(eventProp);
+  useEffect(() => { setEvent(eventProp); }, [eventProp.id]); // reset when event changes
+
   const registeredFriends = friendsPerEvent.get(event.id) ?? [];
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [showOrganizerPopup, setShowOrganizerPopup] = useState(false);
@@ -9195,11 +9229,40 @@ function EventDetailPage({ event, onBack, isLoggedIn, onViewEvent, setCurrentVie
   // Ref: prevents the "first-future date" default from overriding a user-saved selection.
   const savedIdxAppliedRef = useRef(false);
 
-  // On mount: fetch fresh event_dates from Supabase.
+  // On mount: fetch fresh data from Supabase.
+  // - Always refreshes event_dates (multi-date events need up-to-date entries)
+  // - Enriches coordinates + AI summaries if missing (e.g. navigation from FeaturedEvents)
   useEffect(() => {
     const fetchFreshData = async () => {
       try {
         const freshData = await fetchEventById(event.id);
+
+        // Enrich missing fields from the full DB record
+        const needsCoords = !event.coordinates?.lat;
+        const needsAI = !event.aiSummaryDe && !event.aiSummaryEn && !event.aiSummaryFr && !event.aiSummaryNl;
+
+        if (needsCoords || needsAI || Array.isArray(freshData.event_dates)) {
+          setEvent(prev => ({
+            ...prev,
+            ...(needsCoords && freshData.coordinates ? {
+              coordinates: (() => {
+                const c = freshData.coordinates;
+                if (!c) return null;
+                if (c.lat != null && c.lng != null) return c;
+                if (c.latitude != null && c.longitude != null) return { lat: c.latitude, lng: c.longitude };
+                return null;
+              })(),
+            } : {}),
+            ...(needsAI ? {
+              aiSummaryDe:        freshData.ai_summary_de         ?? null,
+              aiSummaryEn:        freshData.ai_summary_en         ?? null,
+              aiSummaryFr:        freshData.ai_summary_fr         ?? null,
+              aiSummaryNl:        freshData.ai_summary_nl         ?? null,
+              aiSummaryUpdatedAt: freshData.ai_summary_updated_at ?? null,
+            } : {}),
+          }));
+        }
+
         if (Array.isArray(freshData.event_dates) && freshData.event_dates.length > 0) {
           setLiveEventDates(freshData.event_dates);
           // Only set default idx if the user's saved selection hasn't been applied yet.
