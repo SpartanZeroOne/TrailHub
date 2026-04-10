@@ -2702,7 +2702,6 @@ function renderBio(text) {
 // Components
 function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, language, setLanguage, onSwitchToMap, onSwitchToEvents }) {
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { userProfile, incomingRequests } = useUserState();
   const pendingCount = incomingRequests?.length ?? 0;
 
@@ -2777,7 +2776,7 @@ function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, lang
           {/* Logo */}
           <div
             className="flex items-center gap-2 md:gap-3 cursor-pointer flex-shrink-0"
-            onClick={() => { setCurrentView('landing'); setShowMobileMenu(false); window.scrollTo(0, 0); }}
+            onClick={() => { setCurrentView('landing'); window.scrollTo(0, 0); }}
           >
             <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2811,7 +2810,29 @@ function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, lang
             </button>
           </div>
 
-          {/* Right side: Lang + Auth + Hamburger */}
+          {/* Mobile Nav Buttons - visible only on mobile */}
+          <div className="flex md:hidden items-center gap-1">
+            <button
+              onClick={handleEventsClick}
+              className={`min-h-[44px] px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentView === 'events'
+                ? 'bg-amber-500/20 text-amber-400'
+                : 'text-stone-400'
+                }`}
+            >
+              {t('events')}
+            </button>
+            <button
+              onClick={handleMapClick}
+              className={`min-h-[44px] px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentView === 'map'
+                ? 'bg-amber-500/20 text-amber-400'
+                : 'text-stone-400'
+                }`}
+            >
+              {t('map')}
+            </button>
+          </div>
+
+          {/* Right side: Lang + Auth */}
           <div className="flex items-center gap-2 md:gap-3">
             {/* Language Selector */}
             <div className="relative">
@@ -2846,7 +2867,7 @@ function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, lang
             {/* Auth Button */}
             {isLoggedIn ? (
               <button
-                onClick={() => { setCurrentView('profile'); setShowMobileMenu(false); }}
+                onClick={() => { setCurrentView('profile'); }}
                 className={`relative flex items-center gap-2 px-2 md:px-3 py-1.5 rounded-xl transition-all ${currentView === 'profile' || currentView === 'friend-profile'
                   ? 'bg-amber-500/20 ring-1 ring-amber-500/30'
                   : 'bg-stone-800 hover:bg-stone-700'
@@ -2871,51 +2892,9 @@ function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, lang
               </button>
             )}
 
-            {/* Hamburger - mobile only */}
-            <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
-              aria-label="Menu"
-            >
-              {showMobileMenu ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
           </div>
         </div>
       </div>
-
-      {/* Mobile Menu Dropdown */}
-      {showMobileMenu && (
-        <div className="md:hidden border-t border-stone-800/50 bg-stone-950/98 backdrop-blur-md">
-          <div className="px-4 py-3 space-y-1">
-            <button
-              onClick={() => { handleEventsClick(); setShowMobileMenu(false); }}
-              className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${currentView === 'events'
-                ? 'bg-amber-500/20 text-amber-400'
-                : 'text-stone-400 hover:text-white hover:bg-stone-800'
-                }`}
-            >
-              {t('events')}
-            </button>
-            <button
-              onClick={() => { handleMapClick(); setShowMobileMenu(false); }}
-              className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${currentView === 'map'
-                ? 'bg-amber-500/20 text-amber-400'
-                : 'text-stone-400 hover:text-white hover:bg-stone-800'
-                }`}
-            >
-              {t('map')}
-            </button>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
