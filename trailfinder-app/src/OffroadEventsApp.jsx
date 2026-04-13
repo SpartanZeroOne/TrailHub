@@ -2907,13 +2907,8 @@ function HeroSection({ onExplore, onMap }) {
   return (
     <div className="relative min-h-[100svh] flex items-center justify-center overflow-hidden" style={{ minHeight: '100svh' }}>
       {/* Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: 'url(https://images.pexels.com/photos/2745827/pexels-photo-2745827.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop)',
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/70 via-stone-950/50 to-stone-950"></div>
+      <div className="absolute inset-0 bg-stone-950">
+        <div className="absolute inset-0 bg-gradient-to-b from-stone-950 via-stone-900/60 to-stone-950"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-stone-950/80 via-transparent to-stone-950/80"></div>
       </div>
 
