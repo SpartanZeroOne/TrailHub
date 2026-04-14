@@ -1,0 +1,205 @@
+// ─── TrailHub Admin – Organizer Form ──────────────────────────────────────────
+import { useState, useEffect, useRef } from 'react';
+import { adminFetchOrganizerById, adminCreateOrganizer, adminUpdateOrganizer } from '../../services/adminSupabase';
+import { supabase } from '../../../services/supabaseClient';
+
+const DEFAULTS = {
+  id: '', name: '', email: '', phone: '', website: '',
+  logo: '', description: '', verified: false, status: 'active',
+};
+
+function Field({ label, required, hint, children }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-sm font-medium text-stone-300">
+        {label}{required && <span className="text-red-400 ml-1">*</span>}
+      </label>
+      {children}
+      {hint && <p className="text-xs text-stone-500">{hint}</p>}
+    </div>
+  );
+}
+
+function Input({ value, onChange, placeholder, type = 'text' }) {
+  return (
+    <input
+      type={type}
+      value={value ?? ''}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm placeholder:text-stone-600 placeholder:italic focus:outline-none focus:border-orange-500/60 transition-colors"
+    />
+  );
+}
+
+function Toggle({ value, onChange, label }) {
+  return (
+    <label className="flex items-center gap-3 cursor-pointer">
+      <div
+        onClick={() => onChange(!value)}
+        className={`relative w-10 h-5 rounded-full transition-colors ${value ? 'bg-orange-500' : 'bg-stone-700'}`}
+      >
+        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${value ? 'translate-x-5' : ''}`} />
+      </div>
+      <span className="text-sm text-stone-300">{label}</span>
+    </label>
+  );
+}
+
+export default function OrganizerForm({ organizerId, onNavigate, toast }) {
+  const isNew = !organizerId || organizerId === 'new';
+  const [form, setFormState] = useState({ ...DEFAULTS });
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(!isNew);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const fileRef = useRef();
+
+  const setField = (k, v) => setFormState(f => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (!isNew) {
+      setLoading(true);
+      adminFetchOrganizerById(organizerId)
+        .then(data => setFormState({ ...DEFAULTS, ...data }))
+        .catch(err => toast?.error('Laden fehlgeschlagen: ' + err.message))
+        .finally(() => setLoading(false));
+    }
+  }, [organizerId]);
+
+  const validate = () => {
+    const e = {};
+    if (!form.name?.trim()) e.name = 'Name ist erforderlich';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      const payload = { ...form };
+      if (isNew && !payload.id?.trim()) delete payload.id;
+      else if (isNew) payload.id = payload.id.trim().toLowerCase().replace(/\s+/g, '-');
+
+      if (isNew) await adminCreateOrganizer(payload);
+      else await adminUpdateOrganizer(organizerId, payload);
+      toast?.success(isNew ? 'Organizer erstellt!' : 'Organizer gespeichert!');
+      onNavigate('/admin/organizers');
+    } catch (err) {
+      toast?.error('Speichern fehlgeschlagen: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (file) => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['jpg','jpeg','png','webp'].includes(ext)) { toast?.error('Nur JPG/PNG/WebP'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast?.error('Max. 5 MB'); return; }
+    setLogoUploading(true);
+    try {
+      const fileName = `organizers/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('organizer-logos').upload(fileName, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from('organizer-logos').getPublicUrl(fileName);
+      setField('logo', data.publicUrl);
+      toast?.success('Logo hochgeladen!');
+    } catch (err) {
+      toast?.error('Upload fehlgeschlagen: ' + err.message);
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"/>
+    </div>
+  );
+
+  return (
+    <div className="p-6 max-w-2xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-stone-100">{isNew ? 'Neuer Organizer' : 'Organizer bearbeiten'}</h1>
+        <div className="flex gap-3">
+          <button onClick={() => onNavigate('/admin/organizers')} className="px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm border border-stone-700 transition-colors">Abbrechen</button>
+          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium disabled:opacity-50 transition-colors">
+            {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>}
+            {isNew ? 'Erstellen' : 'Speichern'}
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-stone-900 rounded-xl border border-stone-800 p-6 space-y-5">
+
+        {/* Logo */}
+        <div className="flex items-start gap-5">
+          <div
+            className="w-20 h-20 rounded-xl border-2 border-stone-700 bg-stone-800 flex items-center justify-center overflow-hidden flex-shrink-0 cursor-pointer hover:border-orange-500/50 transition-colors"
+            onClick={() => fileRef.current?.click()}
+          >
+            {form.logo
+              ? <img src={form.logo} alt="Logo" className="w-full h-full object-cover"/>
+              : <span className="text-stone-600 text-3xl">{form.name?.[0]?.toUpperCase() ?? '?'}</span>
+            }
+          </div>
+          <div className="flex-1 space-y-2">
+            <Field label="Logo" hint="URL eingeben oder Datei hochladen (JPG, PNG, WebP – max. 5 MB)">
+              <div className="flex gap-2">
+                <Input value={form.logo} onChange={v => setField('logo', v)} placeholder="https://..." />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={logoUploading}
+                  className="flex-shrink-0 px-3 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-400 text-sm hover:bg-stone-700 disabled:opacity-50 transition-colors"
+                >
+                  {logoUploading ? <span className="w-4 h-4 border border-stone-400 border-t-transparent rounded-full animate-spin block"/> : '↑'}
+                </button>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && handleLogoUpload(e.target.files[0])} />
+              </div>
+            </Field>
+          </div>
+        </div>
+
+        {isNew && (
+          <Field label="ID (Slug)" hint="Eindeutiger Bezeichner, z.B. 'rally-masters' – wird automatisch aus Name generiert wenn leer">
+            <Input value={form.id} onChange={v => setField('id', v)} placeholder="rally-masters" />
+          </Field>
+        )}
+
+        <Field label="Name" required>
+          <Input value={form.name} onChange={v => setField('name', v)} placeholder="z.B. Rally Masters GmbH" />
+          {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
+        </Field>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <Field label="E-Mail">
+            <Input type="email" value={form.email} onChange={v => setField('email', v)} placeholder="info@rally-masters.de" />
+          </Field>
+          <Field label="Telefon">
+            <Input value={form.phone} onChange={v => setField('phone', v)} placeholder="+49 123 456789" />
+          </Field>
+        </div>
+
+        <Field label="Website">
+          <Input value={form.website} onChange={v => setField('website', v)} placeholder="https://rally-masters.de" />
+        </Field>
+
+        <Field label="Beschreibung" hint="Kurze Beschreibung des Veranstalters">
+          <textarea
+            value={form.description ?? ''}
+            onChange={e => setField('description', e.target.value)}
+            placeholder="z.B. Europas führender Enduro-Veranstalter seit 2008"
+            rows={4}
+            className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm placeholder:text-stone-600 placeholder:italic focus:outline-none focus:border-orange-500/60 resize-y"
+          />
+        </Field>
+
+        <div className="flex gap-6 pt-2">
+          <Toggle value={form.verified} onChange={v => setField('verified', v)} label="Verifizierter Organizer" />
+        </div>
+      </div>
+    </div>
+  );
+}

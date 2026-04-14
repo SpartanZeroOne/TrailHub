@@ -39,6 +39,7 @@ Thumbs.db
 # Temp files
 *.zip
 *.tar.gz
+*.exe
 
 # OS
 .DS_Store

@@ -1,0 +1,320 @@
+// ─── TrailHub Admin – Dashboard ───────────────────────────────────────────────
+import { useState, useEffect } from 'react';
+import { adminFetchDashboardStats, adminFetchEventsByCategory, adminFetchEventsPerMonth } from '../services/adminSupabase';
+
+const CATEGORY_LABELS = {
+  'trail-adventures': 'Trail Adventures',
+  'rallyes':          'Rallyes',
+  'adventure-trips':  'Adventure Trips',
+  'skills-camps':     'Skills-Camps',
+  'offroad-festivals':'Offroad Festivals',
+};
+
+const CATEGORY_COLORS = {
+  'trail-adventures': '#f97316',
+  'rallyes':          '#eab308',
+  'adventure-trips':  '#22c55e',
+  'skills-camps':     '#3b82f6',
+  'offroad-festivals':'#a855f7',
+};
+
+// ─── Mini Bar Chart (SVG) ─────────────────────────────────────────────────────
+function BarChart({ data, labelKey, valueKey, color = '#f97316' }) {
+  if (!data?.length) return <div className="h-40 flex items-center justify-center text-stone-600 text-sm">Keine Daten</div>;
+  const max = Math.max(...data.map(d => d[valueKey]), 1);
+  const barWidth = Math.max(8, Math.min(32, Math.floor(320 / data.length) - 4));
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="flex items-end gap-1 h-40 min-w-max px-2">
+        {data.map((item, i) => {
+          const h = Math.max(4, Math.round((item[valueKey] / max) * 130));
+          return (
+            <div key={i} className="flex flex-col items-center gap-1" style={{ width: barWidth + 16 }}>
+              <span className="text-xs text-stone-400">{item[valueKey]}</span>
+              <div
+                className="rounded-t transition-all"
+                style={{ height: h, width: barWidth, background: color, opacity: 0.85 }}
+                title={`${item[labelKey]}: ${item[valueKey]}`}
+              />
+              <span className="text-[10px] text-stone-500 truncate w-full text-center" title={item[labelKey]}>
+                {String(item[labelKey]).length > 6 ? String(item[labelKey]).slice(0, 6) + '…' : item[labelKey]}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Donut Chart (SVG) ────────────────────────────────────────────────────────
+function DonutChart({ data }) {
+  if (!data?.length) return <div className="h-40 flex items-center justify-center text-stone-600 text-sm">Keine Daten</div>;
+  const total = data.reduce((s, d) => s + d.count, 0);
+  let offset = 0;
+  const radius = 60, cx = 80, cy = 70, strokeWidth = 22;
+  const circ = 2 * Math.PI * radius;
+
+  return (
+    <div className="flex items-center gap-4 flex-wrap">
+      <svg width="160" height="140" viewBox="0 0 160 140">
+        {data.map((d, i) => {
+          const pct = d.count / total;
+          const dash = pct * circ;
+          const gap = circ - dash;
+          const color = CATEGORY_COLORS[d.category] ?? '#888';
+          const slice = (
+            <circle
+              key={d.category}
+              cx={cx} cy={cy} r={radius}
+              fill="none"
+              stroke={color}
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${dash} ${gap}`}
+              strokeDashoffset={-offset * circ}
+              style={{ transition: 'all 0.4s' }}
+            />
+          );
+          offset += pct;
+          return slice;
+        })}
+        <text x={cx} y={cy - 4} textAnchor="middle" fill="#d4d4d4" fontSize="18" fontWeight="bold">{total}</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" fill="#737373" fontSize="10">Events</text>
+      </svg>
+      <div className="flex flex-col gap-1.5">
+        {data.map(d => (
+          <div key={d.category} className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: CATEGORY_COLORS[d.category] ?? '#888' }} />
+            <span className="text-xs text-stone-400">{CATEGORY_LABELS[d.category] ?? d.category}</span>
+            <span className="text-xs text-stone-300 ml-1 font-medium">{d.count}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Metric Card ──────────────────────────────────────────────────────────────
+function MetricCard({ label, value, icon, color = 'orange', subtext, onClick }) {
+  const colors = {
+    orange: 'from-orange-500/20 to-amber-600/10 border-orange-500/20',
+    blue:   'from-blue-500/20 to-cyan-600/10 border-blue-500/20',
+    green:  'from-green-500/20 to-emerald-600/10 border-green-500/20',
+    purple: 'from-purple-500/20 to-violet-600/10 border-purple-500/20',
+  };
+  const iconColors = { orange: 'text-orange-400', blue: 'text-blue-400', green: 'text-green-400', purple: 'text-purple-400' };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`text-left w-full rounded-xl border bg-gradient-to-br p-5 transition-all hover:scale-[1.02] ${colors[color]}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-stone-400 text-sm">{label}</p>
+          <p className="text-3xl font-bold text-stone-100 mt-1">{value ?? '–'}</p>
+          {subtext && <p className="text-xs text-stone-500 mt-1">{subtext}</p>}
+        </div>
+        <div className={`${iconColors[color]} opacity-70`}>{icon}</div>
+      </div>
+    </button>
+  );
+}
+
+// ─── Activity Feed ────────────────────────────────────────────────────────────
+function ActivityFeed({ events }) {
+  const catColors = {
+    'trail-adventures': 'bg-orange-500',
+    'rallyes': 'bg-yellow-500',
+    'adventure-trips': 'bg-green-500',
+    'skills-camps': 'bg-blue-500',
+    'offroad-festivals': 'bg-purple-500',
+  };
+
+  return (
+    <div className="space-y-3">
+      {events.map(e => (
+        <div key={e.id} className="flex items-center gap-3">
+          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${catColors[e.category] ?? 'bg-stone-500'}`} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-stone-300 truncate">{e.name}</p>
+            <p className="text-xs text-stone-500">{CATEGORY_LABELS[e.category] ?? e.category}</p>
+          </div>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${
+            e.status === 'upcoming' ? 'bg-green-500/15 text-green-400' :
+            e.status === 'past' ? 'bg-stone-700 text-stone-400' :
+            'bg-blue-500/15 text-blue-400'
+          }`}>{e.status}</span>
+        </div>
+      ))}
+      {events.length === 0 && (
+        <p className="text-stone-600 text-sm text-center py-4">Keine Aktivitäten</p>
+      )}
+    </div>
+  );
+}
+
+// ─── Dashboard Page ───────────────────────────────────────────────────────────
+export default function Dashboard({ onNavigate, toast }) {
+  const [stats, setStats] = useState(null);
+  const [catData, setCatData] = useState([]);
+  const [monthData, setMonthData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      adminFetchDashboardStats(),
+      adminFetchEventsByCategory(),
+      adminFetchEventsPerMonth(),
+    ]).then(([s, c, m]) => {
+      setStats(s);
+      setCatData(c);
+      // Show last 8 months
+      setMonthData(m.slice(-8));
+    }).catch(err => {
+      toast?.error('Fehler beim Laden: ' + err.message);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"/>
+          <p className="text-stone-400 text-sm">Dashboard wird geladen...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-100">Dashboard</h1>
+          <p className="text-stone-500 text-sm mt-1">TrailHub Admin Übersicht</p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => onNavigate('/admin/events/new')}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+            </svg>
+            Event erstellen
+          </button>
+          <button
+            onClick={() => onNavigate('/admin/csv-import')}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm font-medium border border-stone-700 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            CSV Import
+          </button>
+        </div>
+      </div>
+
+      {/* Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          label="Gesamt Events"
+          value={stats?.totalEvents}
+          color="orange"
+          subtext={`${stats?.upcomingEvents ?? 0} upcoming`}
+          onClick={() => onNavigate('/admin/events')}
+          icon={
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          }
+        />
+        <MetricCard
+          label="Aktive User"
+          value={stats?.totalUsers}
+          color="blue"
+          subtext="Registrierte Nutzer"
+          onClick={() => onNavigate('/admin/users')}
+          icon={
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+          }
+        />
+        <MetricCard
+          label="Organizer"
+          value={stats?.totalOrganizers}
+          color="green"
+          subtext="Aktive Veranstalter"
+          onClick={() => onNavigate('/admin/organizers')}
+          icon={
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+          }
+        />
+        <MetricCard
+          label="Upcoming Events"
+          value={stats?.upcomingEvents}
+          color="purple"
+          subtext="Bevorstehende Events"
+          onClick={() => onNavigate('/admin/events?status=upcoming')}
+          icon={
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          }
+        />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Events per Month */}
+        <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
+          <h2 className="text-stone-200 font-semibold mb-4">Events pro Monat</h2>
+          <BarChart data={monthData} labelKey="month" valueKey="count" color="#f97316" />
+        </div>
+
+        {/* Events by Category */}
+        <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
+          <h2 className="text-stone-200 font-semibold mb-4">Events nach Kategorie</h2>
+          <DonutChart data={catData} />
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-stone-200 font-semibold">Zuletzt hinzugefügte Events</h2>
+          <button onClick={() => onNavigate('/admin/events')} className="text-orange-400 text-sm hover:text-orange-300">
+            Alle ansehen →
+          </button>
+        </div>
+        <ActivityFeed events={stats?.recentEvents ?? []} />
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { label: 'Neues Event', sub: 'Event erstellen', icon: '📅', onClick: () => onNavigate('/admin/events/new'), color: 'hover:border-orange-500/50' },
+          { label: 'CSV Import', sub: 'Events importieren', icon: '📂', onClick: () => onNavigate('/admin/csv-import'), color: 'hover:border-blue-500/50' },
+          { label: 'Berichte', sub: 'Analytics anzeigen', icon: '📊', onClick: () => onNavigate('/admin/reports'), color: 'hover:border-green-500/50' },
+        ].map(a => (
+          <button
+            key={a.label}
+            onClick={a.onClick}
+            className={`text-left p-4 rounded-xl bg-stone-900 border border-stone-800 ${a.color} hover:bg-stone-800/50 transition-all`}
+          >
+            <div className="text-2xl mb-2">{a.icon}</div>
+            <div className="text-stone-200 font-medium text-sm">{a.label}</div>
+            <div className="text-stone-500 text-xs">{a.sub}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}

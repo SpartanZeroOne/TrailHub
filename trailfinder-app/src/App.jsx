@@ -1,11 +1,18 @@
 import { AuthProvider } from './hooks/useAuth';
 import OffroadEventsApp, { PasswordResetPage } from './OffroadEventsApp';
+import AdminApp from './admin/AdminApp';
 
-// Routing vor dem Auth-Kontext: /reset-password bekommt eigene isolierte Seite
-const isResetRoute = window.location.pathname.startsWith('/reset-password');
+const path = window.location.pathname;
 
+// Routing before AuthProvider:
+// /admin/*  → Admin Dashboard (own auth gate)
+// /reset-password → isolated password reset page
+// all else  → main TrailHub App
 export default function App() {
-  if (isResetRoute) {
+  if (path.startsWith('/admin')) {
+    return <AdminApp />;
+  }
+  if (path.startsWith('/reset-password')) {
     return (
       <PasswordResetPage onDone={() => { window.location.href = '/'; }} />
     );
