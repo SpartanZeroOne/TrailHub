@@ -3375,27 +3375,43 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
               {t('pastLabel')}
             </span>
           )}
-          {isSoldOut && (
+        </div>
+
+        {/* SOLD OUT overlay – centered sticker, independent of other badges */}
+        {isSoldOut && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
             <span
-              className="px-2.5 py-1 text-white text-xs font-black rounded-lg tracking-widest uppercase"
+              className="px-4 py-2 text-white text-sm font-black rounded-xl tracking-widest uppercase"
               style={{
-                background: '#111',
-                border: '1.5px solid #ef4444',
-                boxShadow: '0 0 6px #ef4444, 0 0 14px rgba(239,68,68,0.5), inset 0 0 6px rgba(239,68,68,0.15)',
-                transform: 'rotate(-4deg)',
-                display: 'inline-block',
-                textShadow: '0 0 4px rgba(255,255,255,0.6)',
+                background: '#0f0f0f',
+                border: '2px solid #ef4444',
+                boxShadow: '0 0 10px #ef4444, 0 0 24px rgba(239,68,68,0.6), inset 0 0 8px rgba(239,68,68,0.2)',
+                transform: 'rotate(-6deg)',
+                textShadow: '0 0 6px rgba(255,255,255,0.7)',
+                letterSpacing: '0.18em',
               }}
             >
               {t('soldOutLabel') || 'SOLD OUT'}
             </span>
-          )}
-          {isCancelled && (
-            <span className="px-2 py-1 bg-stone-900 text-red-400 text-xs font-bold rounded-md border border-red-700/60 tracking-wide">
+          </div>
+        )}
+
+        {/* CANCELLED overlay */}
+        {isCancelled && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
+            <span
+              className="px-4 py-2 text-red-400 text-sm font-bold rounded-xl tracking-widest uppercase"
+              style={{
+                background: 'rgba(10,10,10,0.85)',
+                border: '2px solid #b91c1c',
+                boxShadow: '0 0 8px rgba(185,28,28,0.5)',
+                transform: 'rotate(-6deg)',
+              }}
+            >
               {t('cancelledLabel') || 'CANCELLED'}
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Action Buttons (top-right) - horizontal layout */}
         {isLoggedIn && (
@@ -6086,6 +6102,42 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
             <span className="px-2 py-1 bg-stone-700 text-stone-300 text-xs font-medium rounded-md">{t('pastLabel')}</span>
           )}
         </div>
+
+        {/* SOLD OUT overlay – centered sticker, independent of other badges */}
+        {isSoldOut && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
+            <span
+              className="px-4 py-2 text-white text-sm font-black rounded-xl tracking-widest uppercase"
+              style={{
+                background: '#0f0f0f',
+                border: '2px solid #ef4444',
+                boxShadow: '0 0 10px #ef4444, 0 0 24px rgba(239,68,68,0.6), inset 0 0 8px rgba(239,68,68,0.2)',
+                transform: 'rotate(-6deg)',
+                textShadow: '0 0 6px rgba(255,255,255,0.7)',
+                letterSpacing: '0.18em',
+              }}
+            >
+              {t('soldOutLabel') || 'SOLD OUT'}
+            </span>
+          </div>
+        )}
+
+        {/* CANCELLED overlay */}
+        {isCancelled && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
+            <span
+              className="px-4 py-2 text-red-400 text-sm font-bold rounded-xl tracking-widest uppercase"
+              style={{
+                background: 'rgba(10,10,10,0.85)',
+                border: '2px solid #b91c1c',
+                boxShadow: '0 0 8px rgba(185,28,28,0.5)',
+                transform: 'rotate(-6deg)',
+              }}
+            >
+              {t('cancelledLabel') || 'CANCELLED'}
+            </span>
+          </div>
+        )}
 
         {/* Action Buttons - horizontal layout */}
         {isLoggedIn && (
@@ -10507,7 +10559,7 @@ export default function OffroadEventsApp() {
     fetchEvents()
       .then(rows => {
         if (!rows || rows.length === 0) return;
-        mockEvents = rows.map(r => ({
+              mockEvents = rows.map(r => ({
           id:               r.id,
           name:             r.name,
           category:         r.category,

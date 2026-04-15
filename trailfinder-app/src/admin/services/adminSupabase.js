@@ -37,26 +37,7 @@ export const adminCreateEvent = async (eventData) => {
 
 export const adminUpdateEvent = async (id, eventData) => {
   const payload = normalizeEventPayload(eventData);
-
-  // DEBUG – remove once ghost-data issue is resolved
-  console.group('[adminUpdateEvent] DEBUG');
-  console.log('event id (type):', id, typeof id);
-  console.log('ai_summary_de:', payload.ai_summary_de);
-  console.log('ai_summary_en:', payload.ai_summary_en);
-  console.log('ai_summary_fr:', payload.ai_summary_fr);
-  console.log('ai_summary_nl:', payload.ai_summary_nl);
-  console.log('full payload keys:', Object.keys(payload));
-  console.groupEnd();
-
   const { data, error } = await supabase.from('events').update(payload).eq('id', id).select().single();
-
-  // DEBUG – remove once ghost-data issue is resolved
-  console.group('[adminUpdateEvent] RESPONSE');
-  console.log('error:', error);
-  console.log('returned row ai_summary_de:', data?.ai_summary_de);
-  console.log('returned row id:', data?.id);
-  console.groupEnd();
-
   if (error) throw error;
   return data;
 };
@@ -67,8 +48,15 @@ export const adminDeleteEvent = async (id) => {
 };
 
 export const adminBulkUpdateEvents = async (ids, updates) => {
-  const { error } = await supabase.from('events').update(updates).in('id', ids);
+  const { data, error } = await supabase
+    .from('events')
+    .update(updates)
+    .in('id', ids)
+    .select('id, status');
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error('0 Events aktualisiert – prüfe Supabase RLS Policy für "events".');
+  }
 };
 
 export const adminBulkDeleteEvents = async (ids) => {

@@ -395,15 +395,6 @@ export default function EventForm({ eventId, onNavigate, toast }) {
       else if (errors.location) setActiveTab('location');
       return;
     }
-    // DEBUG – remove once ghost-data issue is resolved
-    console.group('[handleSave] form snapshot');
-    console.log('eventId (type):', eventId, typeof eventId);
-    console.log('ai_summary_de:', form.ai_summary_de);
-    console.log('ai_summary_en:', form.ai_summary_en);
-    console.log('ai_summary_fr:', form.ai_summary_fr);
-    console.log('ai_summary_nl:', form.ai_summary_nl);
-    console.groupEnd();
-
     setSaving(true);
     try {
       if (isNew) {
