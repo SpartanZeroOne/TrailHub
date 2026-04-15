@@ -37,7 +37,26 @@ export const adminCreateEvent = async (eventData) => {
 
 export const adminUpdateEvent = async (id, eventData) => {
   const payload = normalizeEventPayload(eventData);
+
+  // DEBUG – remove once ghost-data issue is resolved
+  console.group('[adminUpdateEvent] DEBUG');
+  console.log('event id (type):', id, typeof id);
+  console.log('ai_summary_de:', payload.ai_summary_de);
+  console.log('ai_summary_en:', payload.ai_summary_en);
+  console.log('ai_summary_fr:', payload.ai_summary_fr);
+  console.log('ai_summary_nl:', payload.ai_summary_nl);
+  console.log('full payload keys:', Object.keys(payload));
+  console.groupEnd();
+
   const { data, error } = await supabase.from('events').update(payload).eq('id', id).select().single();
+
+  // DEBUG – remove once ghost-data issue is resolved
+  console.group('[adminUpdateEvent] RESPONSE');
+  console.log('error:', error);
+  console.log('returned row ai_summary_de:', data?.ai_summary_de);
+  console.log('returned row id:', data?.id);
+  console.groupEnd();
+
   if (error) throw error;
   return data;
 };
@@ -74,6 +93,8 @@ const EVENTS_DB_COLUMNS = new Set([
   'event_dates',
   // Migration 10: Festival type
   'festival_type',
+  // Event-URL (external registration / info link)
+  'event_url',
 ]);
 
 // Normalise form values → DB columns
@@ -121,14 +142,33 @@ export const adminFetchOrganizerById = async (id) => {
   return data;
 };
 
+// Known DB columns for the organizers table (schema + migrations 15, 17)
+const ORGANIZER_DB_COLUMNS = new Set([
+  'id', 'name', 'logo', 'logo_bg_color', 'verified',
+  'since', 'events_hosted', 'rating', 'specialties',
+  'website', 'description', 'email', 'phone', 'status',
+]);
+
+function normalizeOrganizerPayload(form) {
+  const payload = {};
+  for (const key of ORGANIZER_DB_COLUMNS) {
+    if (key in form && form[key] !== undefined) {
+      payload[key] = form[key] === '' ? null : form[key];
+    }
+  }
+  return payload;
+}
+
 export const adminCreateOrganizer = async (org) => {
-  const { data, error } = await supabase.from('organizers').insert([org]).select().single();
+  const payload = normalizeOrganizerPayload(org);
+  const { data, error } = await supabase.from('organizers').insert([payload]).select().single();
   if (error) throw error;
   return data;
 };
 
 export const adminUpdateOrganizer = async (id, updates) => {
-  const { data, error } = await supabase.from('organizers').update(updates).eq('id', id).select().single();
+  const payload = normalizeOrganizerPayload(updates);
+  const { data, error } = await supabase.from('organizers').update(payload).eq('id', id).select().single();
   if (error) throw error;
   return data;
 };
@@ -150,7 +190,7 @@ export const adminCountEventsByOrganizer = async () => {
 // ─── USERS ────────────────────────────────────────────────────────────────────
 
 export const adminFetchUsers = async ({
-  page = 1, perPage = 25, search, minRegistrations, status,
+  page = 1, perPage = 25, search, minRegistrations,
 } = {}) => {
   let q = supabase.from('users').select('*', { count: 'exact' });
   if (search) q = q.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
@@ -276,16 +316,15 @@ export const adminImportEvents = async (events, { onProgress } = {}) => {
 // ─── STORAGE: EVENT IMAGE UPLOAD ──────────────────────────────────────────────
 
 export const adminUploadEventImage = async (file, eventId) => {
-  const ext = file.name.split('.').pop().toLowerCase();
-  const allowed = ['jpg', 'jpeg', 'png', 'webp'];
-  if (!allowed.includes(ext)) throw new Error('Nur JPG, PNG, WebP erlaubt');
+  if (!file.type.startsWith('image/')) throw new Error('Nur Bilddateien erlaubt');
   if (file.size > 10 * 1024 * 1024) throw new Error('Max. 10 MB');
+  const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
 
   const fileName = `events/${eventId ?? Date.now()}/${Date.now()}.${ext}`;
   const { error } = await supabase.storage
-    .from('event-images').upload(fileName, file, { upsert: true, contentType: file.type });
+    .from('event-heros').upload(fileName, file, { upsert: true, contentType: file.type });
   if (error) throw error;
-  const { data } = supabase.storage.from('event-images').getPublicUrl(fileName);
+  const { data } = supabase.storage.from('event-heros').getPublicUrl(fileName);
   return data.publicUrl;
 };
 

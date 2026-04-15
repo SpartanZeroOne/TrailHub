@@ -140,6 +140,8 @@ export const ORGANIZER_IDS = [
 export const STATUS_OPTIONS = [
   { value: 'upcoming',  label: 'Upcoming' },
   { value: 'past',      label: 'Past' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'sold_out',  label: 'Sold Out' },
   { value: 'permanent', label: 'Permanent' },
 ];
 
@@ -198,4 +200,5 @@ export const AI_PROMPT_TEMPLATES = {
   DE: `Erstelle eine prägnante 2-3 Sätze lange Zusammenfassung für folgendes Offroad-Motorrad-Event auf Deutsch. Fokus: Was macht das Event besonders, für wen ist es geeignet, was erwartet die Teilnehmer?`,
   EN: `Create a concise 2-3 sentence summary for the following offroad motorcycle event in English. Focus: What makes this event special, who is it suited for, what can participants expect?`,
   FR: `Créez un résumé concis de 2-3 phrases pour l'événement de moto tout-terrain suivant en français. Focus: Qu'est-ce qui rend cet événement spécial, pour qui est-il adapté, qu'est-ce que les participants peuvent attendre?`,
+  NL: `Maak een beknopte samenvatting van 2-3 zinnen voor het volgende offroad motorfiets evenement in het Nederlands. Focus: Wat maakt dit evenement bijzonder, voor wie is het geschikt, wat kunnen deelnemers verwachten?`,
 };

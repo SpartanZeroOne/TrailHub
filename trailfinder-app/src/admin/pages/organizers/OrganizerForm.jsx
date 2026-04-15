@@ -5,7 +5,7 @@ import { supabase } from '../../../services/supabaseClient';
 
 const DEFAULTS = {
   id: '', name: '', email: '', phone: '', website: '',
-  logo: '', description: '', verified: false, status: 'active',
+  logo: '', logo_bg_color: 'black', description: '', verified: false, status: 'active',
 };
 
 function Field({ label, required, hint, children }) {
@@ -94,9 +94,9 @@ export default function OrganizerForm({ organizerId, onNavigate, toast }) {
   };
 
   const handleLogoUpload = async (file) => {
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (!['jpg','jpeg','png','webp'].includes(ext)) { toast?.error('Nur JPG/PNG/WebP'); return; }
+    if (!file.type.startsWith('image/')) { toast?.error('Nur Bilddateien erlaubt'); return; }
     if (file.size > 5 * 1024 * 1024) { toast?.error('Max. 5 MB'); return; }
+    const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
     setLogoUploading(true);
     try {
       const fileName = `organizers/${Date.now()}.${ext}`;
@@ -136,15 +136,16 @@ export default function OrganizerForm({ organizerId, onNavigate, toast }) {
         {/* Logo */}
         <div className="flex items-start gap-5">
           <div
-            className="w-20 h-20 rounded-xl border-2 border-stone-700 bg-stone-800 flex items-center justify-center overflow-hidden flex-shrink-0 cursor-pointer hover:border-orange-500/50 transition-colors"
+            className="organizer-logo-bg w-20 h-20 rounded-xl border-2 border-stone-700 flex items-center justify-center flex-shrink-0 cursor-pointer hover:border-orange-500/50 transition-colors"
+            style={{ '--org-logo-bg': form.logo_bg_color || 'black' }}
             onClick={() => fileRef.current?.click()}
           >
             {form.logo
-              ? <img src={form.logo} alt="Logo" className="w-full h-full object-cover"/>
-              : <span className="text-stone-600 text-3xl">{form.name?.[0]?.toUpperCase() ?? '?'}</span>
+              ? <img src={form.logo} alt="Logo" className="w-full h-full object-contain p-1"/>
+              : <span className="text-stone-400 text-3xl">{form.name?.[0]?.toUpperCase() ?? '?'}</span>
             }
           </div>
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 space-y-3">
             <Field label="Logo" hint="URL eingeben oder Datei hochladen (JPG, PNG, WebP – max. 5 MB)">
               <div className="flex gap-2">
                 <Input value={form.logo} onChange={v => setField('logo', v)} placeholder="https://..." />
@@ -157,6 +158,27 @@ export default function OrganizerForm({ organizerId, onNavigate, toast }) {
                   {logoUploading ? <span className="w-4 h-4 border border-stone-400 border-t-transparent rounded-full animate-spin block"/> : '↑'}
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && handleLogoUpload(e.target.files[0])} />
+              </div>
+            </Field>
+            <Field label="Hintergrundfarbe" hint="Für weiße / transparente Logos">
+              <div className="flex items-center gap-2 flex-wrap">
+                {['black', 'white', '#1c1917', '#78350f', '#292524', '#0f172a'].map(color => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setField('logo_bg_color', color)}
+                    className={`w-7 h-7 rounded-lg border-2 transition-all ${form.logo_bg_color === color ? 'border-orange-500 scale-110' : 'border-stone-600'}`}
+                    style={{ background: color }}
+                    title={color}
+                  />
+                ))}
+                <input
+                  type="text"
+                  value={form.logo_bg_color ?? ''}
+                  onChange={e => setField('logo_bg_color', e.target.value)}
+                  placeholder="#000000"
+                  className="w-28 px-2 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-xs focus:outline-none focus:border-orange-500/60"
+                />
               </div>
             </Field>
           </div>

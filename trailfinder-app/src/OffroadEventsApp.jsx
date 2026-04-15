@@ -448,6 +448,8 @@ const translations = {
     old: 'Alt',
     newValue: 'Neu',
     pastLabel: 'VERGANGEN',
+    soldOutLabel: 'AUSVERKAUFT',
+    cancelledLabel: 'ABGESAGT',
     archived: 'ARCHIVIERT',
     eventArchived: 'Dieses Event ist archiviert',
     eventEnded: 'Event beendet',
@@ -753,6 +755,8 @@ const translations = {
     old: 'Old',
     newValue: 'New',
     pastLabel: 'PAST',
+    soldOutLabel: 'SOLD OUT',
+    cancelledLabel: 'CANCELLED',
     archived: 'ARCHIVED',
     eventArchived: 'This event is archived',
     eventEnded: 'Event ended',
@@ -1058,6 +1062,8 @@ const translations = {
     old: 'Ancien',
     newValue: 'Nouveau',
     pastLabel: 'PASSÉ',
+    soldOutLabel: 'COMPLET',
+    cancelledLabel: 'ANNULÉ',
     archived: 'ARCHIVÉ',
     eventArchived: 'Cet événement est archivé',
     eventEnded: 'Événement terminé',
@@ -1363,6 +1369,8 @@ const translations = {
     old: 'Oud',
     newValue: 'Nieuw',
     pastLabel: 'AFGELOPEN',
+    soldOutLabel: 'UITVERKOCHT',
+    cancelledLabel: 'GEANNULEERD',
     archived: 'GEARCHIVEERD',
     eventArchived: 'Dit evenement is gearchiveerd',
     eventEnded: 'Evenement beëindigd',
@@ -3233,6 +3241,8 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
   const { isRegistered, isFavorite, toggleFavorite, friendsPerEvent } = useUserState();
   const registeredFriends = friendsPerEvent.get(event.id) ?? [];
   const [showChangeTooltip, setShowChangeTooltip] = useState(false);
+  const isSoldOut   = event.status === 'sold_out';
+  const isCancelled = event.status === 'cancelled';
   const [isHovered, setIsHovered] = useState(false);
   const [shareStatus, setShareStatus] = useState(null); // null, 'copied', 'shared'
   const isPast = event.status === 'past';
@@ -3297,7 +3307,7 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
 
   return (
     <div
-      className={`group relative bg-stone-900 rounded-2xl overflow-hidden border border-stone-800 hover:border-amber-500/50 transition-all duration-300 cursor-pointer ${isPast ? 'opacity-50' : ''}`}
+      className={`group relative bg-stone-900 rounded-2xl overflow-hidden border border-stone-800 hover:border-amber-500/50 transition-all duration-300 cursor-pointer ${isPast || isCancelled ? 'opacity-50' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onEventClick && onEventClick(event, origin)}
@@ -3363,6 +3373,26 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
           {isPast && (
             <span className="px-2 py-1 bg-stone-700 text-stone-300 text-xs font-medium rounded-md">
               {t('pastLabel')}
+            </span>
+          )}
+          {isSoldOut && (
+            <span
+              className="px-2.5 py-1 text-white text-xs font-black rounded-lg tracking-widest uppercase"
+              style={{
+                background: '#111',
+                border: '1.5px solid #ef4444',
+                boxShadow: '0 0 6px #ef4444, 0 0 14px rgba(239,68,68,0.5), inset 0 0 6px rgba(239,68,68,0.15)',
+                transform: 'rotate(-4deg)',
+                display: 'inline-block',
+                textShadow: '0 0 4px rgba(255,255,255,0.6)',
+              }}
+            >
+              {t('soldOutLabel') || 'SOLD OUT'}
+            </span>
+          )}
+          {isCancelled && (
+            <span className="px-2 py-1 bg-stone-900 text-red-400 text-xs font-bold rounded-md border border-red-700/60 tracking-wide">
+              {t('cancelledLabel') || 'CANCELLED'}
             </span>
           )}
         </div>
@@ -5911,6 +5941,8 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
   const { t, language } = useTranslation();
   const { isRegistered, isFavorite, toggleFavorite, friendsPerEvent } = useUserState();
   const registeredFriends = friendsPerEvent.get(event.id) ?? [];
+  const isSoldOut   = event.status === 'sold_out';
+  const isCancelled = event.status === 'cancelled';
   const [showChangeTooltip, setShowChangeTooltip] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [shareStatus, setShareStatus] = useState(null);
@@ -5973,7 +6005,7 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
 
   return (
     <div
-      className={`group relative bg-stone-900 rounded-2xl overflow-hidden border border-stone-800 hover:border-amber-500/50 transition-all duration-300 cursor-pointer ${isPast ? 'opacity-50' : ''}`}
+      className={`group relative bg-stone-900 rounded-2xl overflow-hidden border border-stone-800 hover:border-amber-500/50 transition-all duration-300 cursor-pointer ${isPast || isCancelled ? 'opacity-50' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onEventClick && onEventClick(event, origin)}
@@ -9332,8 +9364,9 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
   const locationCity = translatedLocation.split(',')[0];
   const locationCountry = translatedLocation.split(',').slice(1).join(',').trim();
 
-  // Get organizer data
-  const organizer = organizers[event.organizerId] || organizers['enduro-events'];
+  // Get organizer data – prefer the snapshot joined with the event (includes logo_bg_color),
+  // fall back to the module-level organizers map, then to the mock placeholder.
+  const organizer = event.organizerSnap || organizers[event.organizerId] || organizers['enduro-events'];
 
   // Get all events from this organizer
   const organizerEvents = mockEvents.filter(e => e.organizerId === event.organizerId && e.id !== event.id);
@@ -9361,14 +9394,19 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
       <div className="bg-stone-900 rounded-2xl border border-stone-700 p-6 max-w-lg w-full shadow-2xl max-h-[80vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <img
-            src={organizer.logo}
-            alt={organizer.name}
-            className="w-16 h-16 rounded-xl object-cover border-2 border-amber-500/30"
-            onError={(e) => { e.target.style.display='none'; e.target.nextSibling?.style && (e.target.nextSibling.style.display='flex'); }}
-          />
-          <div style={{display:'none'}} className="w-16 h-16 rounded-xl border-2 border-amber-500/30 bg-stone-700 flex items-center justify-center text-amber-500 font-bold text-xl">
-            {organizer.name?.[0] ?? '?'}
+          <div
+            className="organizer-logo-bg w-16 h-16 rounded-xl border-2 border-amber-500/30 flex-shrink-0 flex items-center justify-center"
+            style={{ '--org-logo-bg': organizer.logoBgColor || 'transparent' }}
+          >
+            <img
+              src={organizer.logo}
+              alt={organizer.name}
+              className="w-full h-full object-contain p-1"
+              onError={(e) => { e.target.style.display='none'; e.target.nextSibling?.style && (e.target.nextSibling.style.display='flex'); }}
+            />
+            <div style={{display:'none'}} className="w-full h-full flex items-center justify-center text-amber-500 font-bold text-xl">
+              {organizer.name?.[0] ?? '?'}
+            </div>
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
@@ -9892,14 +9930,19 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
               className="flex items-center gap-3 py-2 border-t border-stone-800/30 pt-5 cursor-pointer hover:bg-stone-800/30 -mx-2 px-2 rounded-lg transition-colors"
               onClick={() => setShowOrganizerPopup(true)}
             >
-              <img
-                src={organizer.logo}
-                alt={organizer.name}
-                className="w-10 h-10 rounded-full object-cover border-2 border-amber-500/30"
-                onError={(e) => { e.target.style.display='none'; e.target.nextSibling?.style && (e.target.nextSibling.style.display='flex'); }}
-              />
-              <div style={{display:'none'}} className="w-10 h-10 rounded-full border-2 border-amber-500/30 bg-stone-700 flex items-center justify-center text-amber-500 font-bold text-sm">
-                {organizer.name?.[0] ?? '?'}
+              <div
+                className="organizer-logo-bg w-10 h-10 rounded-full border-2 border-amber-500/30 flex-shrink-0 flex items-center justify-center"
+                style={{ '--org-logo-bg': organizer.logoBgColor || 'transparent' }}
+              >
+                <img
+                  src={organizer.logo}
+                  alt={organizer.name}
+                  className="w-full h-full object-contain p-0.5"
+                  onError={(e) => { e.target.style.display='none'; e.target.nextSibling?.style && (e.target.nextSibling.style.display='flex'); }}
+                />
+                <div style={{display:'none'}} className="w-full h-full flex items-center justify-center text-amber-500 font-bold text-sm">
+                  {organizer.name?.[0] ?? '?'}
+                </div>
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-1.5">
@@ -10445,6 +10488,7 @@ export default function OffroadEventsApp() {
               id:            r.id,
               name:          r.name,
               logo:          r.logo          ?? null,
+              logoBgColor:   r.logo_bg_color ?? null,
               verified:      r.verified      ?? false,
               since:         r.since         ?? null,
               eventsHosted:  r.events_hosted ?? 0,
@@ -10455,6 +10499,7 @@ export default function OffroadEventsApp() {
             };
           });
           organizers = merged;
+          _forceRender();
         }
       })
       .catch(err => console.error('[TrailHub] Organizers fetch error:', err));
@@ -10505,6 +10550,19 @@ export default function OffroadEventsApp() {
           eventDates:            r.event_dates            ?? null,
           festivalType:          r.festival_type          ?? null,
           isFeatured:            r.is_featured            ?? false,
+          organizerSnap:         r.organizers ? {
+            id:           r.organizers.id,
+            name:         r.organizers.name,
+            logo:         r.organizers.logo          ?? null,
+            logoBgColor:  r.organizers.logo_bg_color ?? null,
+            verified:     r.organizers.verified      ?? false,
+            description:  r.organizers.description   ?? '',
+            website:      r.organizers.website       ?? null,
+            since:        r.organizers.since         ?? null,
+            eventsHosted: r.organizers.events_hosted ?? 0,
+            rating:       r.organizers.rating        ?? 0,
+            specialties:  r.organizers.specialties   ?? [],
+          } : null,
         }));
         _forceRender();
       })

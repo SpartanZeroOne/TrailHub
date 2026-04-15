@@ -64,6 +64,9 @@ export default defineConfig({
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB (bundle is ~2.4 MiB)
+        skipWaiting: true,       // activate new SW immediately, don't wait for tabs to close
+        clientsClaim: true,      // new SW takes control of all open tabs instantly
+        cleanupOutdatedCaches: true, // remove stale caches from previous builds
         // Don't cache Supabase or Mapbox API calls
         navigateFallback: '/index.html',
         runtimeCaching: [

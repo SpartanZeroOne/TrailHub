@@ -20,20 +20,18 @@ const DEFAULTS = {
   name: '', category: '', subcategory: '', status: 'upcoming',
   organizer_id: '', is_featured: false, is_new: false, has_changes: false,
   start_date: '', end_date: '',
-  location: '', coordinates: '', route_url: '',
+  location: '', coordinates: '',
   price_value: '', beginner_friendly: false, difficulty: '',
-  max_participants: '', group_size: '',
+  group_size: '',
   rallye_region: '', rallye_level: '', trip_type: '', trip_level: '',
   skill_level: '', bike_type: '', festival_type: '', bike_requirements: '',
-  description_de: '', description_en: '', description_fr: '',
-  long_description_de: '', long_description_en: '', long_description_fr: '',
-  ai_summary_de: '', ai_summary_en: '', ai_summary_fr: '',
+  ai_summary_de: '', ai_summary_en: '', ai_summary_fr: '', ai_summary_nl: '',
   ai_prompt_de: AI_PROMPT_TEMPLATES.DE,
   ai_prompt_en: AI_PROMPT_TEMPLATES.EN,
   ai_prompt_fr: AI_PROMPT_TEMPLATES.FR,
-  image: '', gallery_images: '',
-  image_bg_color: 'black',
-  slug: '', meta_title: '', meta_description: '', keywords: '', event_url: '',
+  ai_prompt_nl: AI_PROMPT_TEMPLATES.NL,
+  image: '',
+  slug: '', event_url: '',
 };
 
 // ─── UI Components ────────────────────────────────────────────────────────────
@@ -102,72 +100,6 @@ function Toggle({ value, onChange, label }) {
       </div>
       <span className="text-sm text-stone-300">{label}</span>
     </label>
-  );
-}
-
-// ─── Markdown Editor with Preview ─────────────────────────────────────────────
-function MarkdownEditor({ value, onChange, placeholder, onGenerateAI, aiLoading, onTranslate, translateLoading }) {
-  const [preview, setPreview] = useState(false);
-
-  const renderMarkdown = (text) => {
-    if (!text) return '';
-    return text
-      .replace(/^### (.+)$/gm, '<h3 class="text-stone-200 font-semibold mt-3 mb-1">$1</h3>')
-      .replace(/^## (.+)$/gm, '<h2 class="text-stone-100 font-bold mt-4 mb-2 text-lg">$1</h2>')
-      .replace(/^# (.+)$/gm, '<h1 class="text-stone-100 font-bold mt-4 mb-2 text-xl">$1</h1>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong class="text-stone-100">$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/^- (.+)$/gm, '<li class="text-stone-300 ml-4">$1</li>')
-      .replace(/\n/g, '<br/>');
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex rounded-lg overflow-hidden border border-stone-700">
-          <button
-            type="button"
-            onClick={() => setPreview(false)}
-            className={`px-3 py-1.5 text-xs font-medium transition-colors ${!preview ? 'bg-stone-700 text-stone-200' : 'text-stone-500 hover:text-stone-300'}`}
-          >Bearbeiten</button>
-          <button
-            type="button"
-            onClick={() => setPreview(true)}
-            className={`px-3 py-1.5 text-xs font-medium transition-colors ${preview ? 'bg-stone-700 text-stone-200' : 'text-stone-500 hover:text-stone-300'}`}
-          >Vorschau</button>
-        </div>
-        {onGenerateAI && (
-          <button
-            type="button"
-            onClick={onGenerateAI}
-            disabled={aiLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-medium hover:bg-purple-500/30 disabled:opacity-50 transition-colors"
-          >
-            {aiLoading ? <span className="w-3 h-3 border border-purple-400 border-t-transparent rounded-full animate-spin"/> : '✨'}
-            KI-Zusammenfassung
-          </button>
-        )}
-        {onTranslate && (
-          <button
-            type="button"
-            onClick={onTranslate}
-            disabled={translateLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-300 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-50 transition-colors"
-          >
-            {translateLoading ? <span className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin"/> : '🌐'}
-            Aus DE übersetzen
-          </button>
-        )}
-      </div>
-      {preview ? (
-        <div
-          className="min-h-[160px] px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm"
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(value) || '<span class="text-stone-600 italic">Vorschau leer</span>' }}
-        />
-      ) : (
-        <Textarea value={value} onChange={onChange} placeholder={placeholder} rows={7} />
-      )}
-    </div>
   );
 }
 
@@ -398,8 +330,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!isNew);
   const [organizers, setOrganizers] = useState([]);
-  const [aiLoading, setAiLoading] = useState({ DE: false, EN: false, FR: false });
-  const [translateLoading, setTranslateLoading] = useState({ EN: false, FR: false });
+  const [aiLoading, setAiLoading] = useState({ DE: false, EN: false, FR: false, NL: false });
   const [imgUploading, setImgUploading] = useState(false);
 
   const setField = (key, val) => setFormState(f => ({ ...f, [key]: val }));
@@ -408,8 +339,8 @@ export default function EventForm({ eventId, onNavigate, toast }) {
   const daysBetween = (() => {
     if (!form.start_date || !form.end_date) return null;
     const d1 = new Date(form.start_date), d2 = new Date(form.end_date);
-    const diff = Math.round((d2 - d1) / 86400000);
-    return diff > 0 ? diff : null;
+    const diff = Math.round((d2 - d1) / 86400000) + 1;
+    return diff >= 1 ? diff : null;
   })();
 
   // Load organizers & event data
@@ -425,7 +356,6 @@ export default function EventForm({ eventId, onNavigate, toast }) {
           ...DEFAULTS,
           ...event,
           coordinates: event.coordinates ? JSON.stringify(event.coordinates) : '',
-          gallery_images: Array.isArray(event.gallery_images) ? event.gallery_images.join('\n') : (event.gallery_images ?? ''),
         });
       }).catch(err => {
         toast?.error('Event konnte nicht geladen werden: ' + err.message);
@@ -465,6 +395,15 @@ export default function EventForm({ eventId, onNavigate, toast }) {
       else if (errors.location) setActiveTab('location');
       return;
     }
+    // DEBUG – remove once ghost-data issue is resolved
+    console.group('[handleSave] form snapshot');
+    console.log('eventId (type):', eventId, typeof eventId);
+    console.log('ai_summary_de:', form.ai_summary_de);
+    console.log('ai_summary_en:', form.ai_summary_en);
+    console.log('ai_summary_fr:', form.ai_summary_fr);
+    console.log('ai_summary_nl:', form.ai_summary_nl);
+    console.groupEnd();
+
     setSaving(true);
     try {
       if (isNew) {
@@ -509,23 +448,6 @@ export default function EventForm({ eventId, onNavigate, toast }) {
     }
   };
 
-  const handleTranslate = async (targetLang) => {
-    setTranslateLoading(l => ({ ...l, [targetLang]: true }));
-    try {
-      const summary = await adminGenerateAiSummary(
-        { ...form, translateFrom: 'DE', translateTo: targetLang },
-        targetLang,
-        `Übersetze die deutschen Beschreibungen ins ${targetLang === 'EN' ? 'Englische' : 'Französische'}. Behalte Markdown-Formatierung bei.`
-      );
-      if (summary) {
-        setField(`description_${targetLang.toLowerCase()}`, summary);
-      }
-    } catch {
-      // Translation failed silently
-    } finally {
-      setTranslateLoading(l => ({ ...l, [targetLang]: false }));
-    }
-  };
 
   const cfg = CATEGORY_FIELDS[form.category] ?? null;
   const categoryNamePlaceholder = cfg?.namePlaceholder ?? 'z.B. Black Forest Enduro 2026';
@@ -706,13 +628,6 @@ export default function EventForm({ eventId, onNavigate, toast }) {
             <Field label="Koordinaten" hint="Lat/Lng – auf Karte klicken oder JSON eingeben">
               <CoordinateEditor value={form.coordinates} onChange={v => setField('coordinates', v)} />
             </Field>
-            <Field label="Route-URL" hint="Link zu GPX, Komoot oder Wikiloc">
-              <Input
-                value={form.route_url}
-                onChange={v => setField('route_url', v)}
-                placeholder="https://www.komoot.com/tour/..."
-              />
-            </Field>
           </div>
         )}
 
@@ -720,31 +635,20 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         {activeTab === 'details' && (
           <div className="space-y-5">
             <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">Details & Preis</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Field label="Preis (€)" hint="Nur Zahl ohne €-Zeichen (z.B. 185 oder 49.90)">
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">€</span>
-                  <Input
-                    type="number"
-                    value={form.price_value}
-                    onChange={v => setField('price_value', v)}
-                    placeholder="185"
-                    className="pl-7"
-                    min={0}
-                    step={0.01}
-                  />
-                </div>
-              </Field>
-              <Field label="Max. Teilnehmer" hint="z.B. 12 oder 8">
+            <Field label="Preis (€)" hint="Nur Zahl ohne €-Zeichen (z.B. 185 oder 49.90)">
+              <div className="relative max-w-xs">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">€</span>
                 <Input
                   type="number"
-                  value={form.max_participants}
-                  onChange={v => setField('max_participants', v)}
-                  placeholder="12"
-                  min={1}
+                  value={form.price_value}
+                  onChange={v => setField('price_value', v)}
+                  placeholder="185"
+                  className="pl-7"
+                  min={0}
+                  step={0.01}
                 />
-              </Field>
-            </div>
+              </div>
+            </Field>
             <div className="border-t border-stone-800 pt-4">
               <h3 className="text-stone-400 text-sm font-medium mb-3">Flags</h3>
               <div className="flex flex-wrap gap-4">
@@ -756,80 +660,47 @@ export default function EventForm({ eventId, onNavigate, toast }) {
 
         {/* TAB 5: Mehrsprachige Beschreibungen */}
         {activeTab === 'descriptions' && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">Mehrsprachige Beschreibungen</h2>
-            {['DE', 'EN', 'FR'].map(lang => (
-              <div key={lang} className="space-y-4 pb-6 border-b border-stone-800 last:border-0">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-lg bg-stone-800 text-stone-300 text-sm font-bold border border-stone-700">{lang}</span>
-                  <span className="text-stone-400 text-sm">{{ DE: 'Deutsch', EN: 'English', FR: 'Français' }[lang]}</span>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {[
+                { code: 'DE', label: 'Deutsch' },
+                { code: 'EN', label: 'English' },
+                { code: 'FR', label: 'Français' },
+                { code: 'NL', label: 'Nederlands' },
+              ].map(({ code, label }) => (
+                <div key={code} className="bg-stone-800/40 rounded-xl border border-stone-700 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-lg bg-stone-700 text-stone-200 text-sm font-bold border border-stone-600">{code}</span>
+                    <span className="text-stone-300 text-sm font-medium">{label}</span>
+                  </div>
 
-                <Field label={`Kurze Beschreibung ${lang}`} hint="1-2 Sätze, max. 160 Zeichen (für Event-Cards)">
-                  <div className="relative">
+                  <Field label="Beschreibung" hint={`→ ai_summary_${code.toLowerCase()}`}>
                     <Textarea
-                      value={form[`description_${lang.toLowerCase()}`]}
-                      onChange={v => setField(`description_${lang.toLowerCase()}`, v)}
+                      value={form[`ai_summary_${code.toLowerCase()}`]}
+                      onChange={v => setField(`ai_summary_${code.toLowerCase()}`, v)}
                       placeholder={
-                        lang === 'DE' ? 'z.B. 2-Tages Enduro-Wochenende durch den Schwarzwald mit professionellen Guides' :
-                        lang === 'EN' ? 'e.g. 2-day enduro weekend through the Black Forest with professional guides' :
-                        'ex. Weekend enduro de 2 jours à travers la Forêt-Noire avec des guides professionnels'
+                        code === 'DE' ? 'Manuell eingeben oder per KI generieren...' :
+                        code === 'EN' ? 'Enter manually or generate via AI...' :
+                        code === 'FR' ? 'Saisir manuellement ou générer via IA...' :
+                        'Handmatig invoeren of genereren via AI...'
                       }
-                      rows={2}
+                      rows={5}
                     />
-                    <span className={`absolute bottom-2 right-2 text-xs ${(form[`description_${lang.toLowerCase()}`]?.length ?? 0) > 160 ? 'text-red-400' : 'text-stone-600'}`}>
-                      {form[`description_${lang.toLowerCase()}`]?.length ?? 0}/160
-                    </span>
-                  </div>
-                </Field>
+                  </Field>
 
-                <Field label={`Lange Beschreibung ${lang}`} hint="Markdown-Formatierung unterstützt">
-                  <MarkdownEditor
-                    value={form[`long_description_${lang.toLowerCase()}`]}
-                    onChange={v => setField(`long_description_${lang.toLowerCase()}`, v)}
-                    placeholder={
-                      lang === 'DE' ? 'Erlebe ein aufregendes 2-Tages Enduro-Wochenende...' :
-                      lang === 'EN' ? 'Experience an exciting 2-day enduro weekend...' :
-                      'Découvrez un week-end enduro passionnant de 2 jours...'
-                    }
-                    lang={lang}
-                    onGenerateAI={lang !== 'DE' ? undefined : () => handleGenerateAI(lang)}
-                    aiLoading={aiLoading[lang]}
-                    onTranslate={lang !== 'DE' ? () => handleTranslate(lang) : undefined}
-                    translateLoading={translateLoading[lang]}
-                  />
-                </Field>
-
-                <Field label={`KI-Zusammenfassung ${lang}`} hint="Automatisch generierte 2-3 Satz Zusammenfassung">
-                  <div className="space-y-2">
-                    <Textarea
-                      value={form[`ai_summary_${lang.toLowerCase()}`]}
-                      onChange={v => setField(`ai_summary_${lang.toLowerCase()}`, v)}
-                      placeholder="KI-Zusammenfassung (automatisch generiert oder manuell eingeben)"
-                      rows={3}
-                    />
-                    <div className="space-y-1">
-                      <label className="text-xs text-stone-500">KI-Prompt für {lang} (anpassbar)</label>
-                      <Textarea
-                        value={form[`ai_prompt_${lang.toLowerCase()}`]}
-                        onChange={v => setField(`ai_prompt_${lang.toLowerCase()}`, v)}
-                        rows={2}
-                        className="text-xs"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleGenerateAI(lang)}
-                      disabled={aiLoading[lang]}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm hover:bg-purple-500/30 disabled:opacity-50 transition-colors"
-                    >
-                      {aiLoading[lang] ? <span className="w-4 h-4 border border-purple-400 border-t-transparent rounded-full animate-spin"/> : '✨'}
-                      KI-Zusammenfassung generieren ({lang})
-                    </button>
-                  </div>
-                </Field>
-              </div>
-            ))}
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateAI(code)}
+                    disabled={aiLoading[code]}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm hover:bg-purple-500/30 disabled:opacity-50 transition-colors"
+                  >
+                    {aiLoading[code] ? <span className="w-4 h-4 border border-purple-400 border-t-transparent rounded-full animate-spin"/> : '✨'}
+                    KI-Zusammenfassung
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -848,50 +719,6 @@ export default function EventForm({ eventId, onNavigate, toast }) {
               />
             </Field>
 
-            <Field label="Hintergrundfarbe (für Logo mit Transparenz)">
-              <div className="flex gap-2 flex-wrap">
-                {['black', 'white', '#1c1917', '#78350f', '#292524'].map(color => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setField('image_bg_color', color)}
-                    className={`w-8 h-8 rounded-lg border-2 transition-all ${form.image_bg_color === color ? 'border-orange-500 scale-110' : 'border-stone-600'}`}
-                    style={{ background: color }}
-                    title={color}
-                  />
-                ))}
-                <Input
-                  value={form.image_bg_color}
-                  onChange={v => setField('image_bg_color', v)}
-                  placeholder="#000000"
-                  className="w-32"
-                />
-              </div>
-            </Field>
-
-            <Field label="Galerie-Bilder" hint="Eine URL pro Zeile">
-              <Textarea
-                value={form.gallery_images}
-                onChange={v => setField('gallery_images', v)}
-                placeholder={"https://images.unsplash.com/photo-1...\nhttps://images.unsplash.com/photo-2..."}
-                rows={5}
-              />
-            </Field>
-
-            {/* Gallery Preview */}
-            {form.gallery_images && (
-              <div className="flex gap-2 flex-wrap">
-                {form.gallery_images.split('\n').filter(Boolean).map((url, i) => (
-                  <img
-                    key={i}
-                    src={url.trim()}
-                    alt={`Galerie ${i + 1}`}
-                    className="w-20 h-20 rounded-lg object-cover border border-stone-700"
-                    onError={e => { e.target.style.display = 'none'; }}
-                  />
-                ))}
-              </div>
-            )}
           </div>
         )}
 
@@ -916,48 +743,6 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                 placeholder="https://enduro-events.eu/black-forest"
               />
             </Field>
-            <Field label="Meta-Title" hint="max. 60 Zeichen">
-              <div className="relative">
-                <Input
-                  value={form.meta_title}
-                  onChange={v => setField('meta_title', v)}
-                  placeholder="z.B. Black Forest Enduro 2026 | TrailHub"
-                />
-                <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs ${(form.meta_title?.length ?? 0) > 60 ? 'text-red-400' : 'text-stone-600'}`}>
-                  {form.meta_title?.length ?? 0}/60
-                </span>
-              </div>
-            </Field>
-            <Field label="Meta-Description" hint="max. 160 Zeichen">
-              <div className="relative">
-                <Textarea
-                  value={form.meta_description}
-                  onChange={v => setField('meta_description', v)}
-                  placeholder="z.B. 2-Tages Enduro-Wochenende im Schwarzwald. Professionelle Guides, anspruchsvolle Trails."
-                  rows={3}
-                />
-                <span className={`absolute bottom-2 right-2 text-xs ${(form.meta_description?.length ?? 0) > 160 ? 'text-red-400' : 'text-stone-600'}`}>
-                  {form.meta_description?.length ?? 0}/160
-                </span>
-              </div>
-            </Field>
-            <Field label="Keywords / Tags" hint="Kommaseparierte Keywords">
-              <Input
-                value={form.keywords}
-                onChange={v => setField('keywords', v)}
-                placeholder="z.B. enduro, schwarzwald, wochenende, trail"
-              />
-            </Field>
-
-            {/* SEO Preview */}
-            {(form.meta_title || form.meta_description) && (
-              <div className="rounded-lg border border-stone-700 p-4 bg-stone-950">
-                <p className="text-xs text-stone-500 mb-2">Google Vorschau</p>
-                <p className="text-blue-400 text-sm truncate">{form.event_url || 'https://trailhub.de/events/' + (form.slug || '...')}</p>
-                <p className="text-green-400 text-base font-medium mt-1">{form.meta_title || form.name || 'Event-Titel'}</p>
-                <p className="text-stone-400 text-sm mt-1 line-clamp-2">{form.meta_description || 'Meta-Description...'}</p>
-              </div>
-            )}
           </div>
         )}
       </div>

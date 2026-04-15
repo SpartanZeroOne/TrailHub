@@ -43,3 +43,11 @@ Thumbs.db
 
 # OS
 .DS_Store
+
+# Claude Code settings (may contain API tokens)
+.claude/settings.json
+.claude/settings.local.json
+
+# Netlify build artifacts (contain bundled secrets)
+trailfinder-app/netlify/index-*.js
+trailfinder-app/netlify/index-*.css

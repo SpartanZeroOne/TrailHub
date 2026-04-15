@@ -32,7 +32,9 @@ export const getCurrentUser = async () => {
 
 // ─── EVENTS ───────────────────────────────────────────────────────────────────
 export const fetchEvents = async ({ category, status } = {}) => {
-    let query = supabase.from('events').select('*').order('start_date', { ascending: true });
+    let query = supabase.from('events')
+        .select('*, organizers(id, name, logo, logo_bg_color, verified, description, website, since, events_hosted, rating, specialties)')
+        .order('start_date', { ascending: true });
     if (category) query = query.eq('category', category);
     if (status) query = query.eq('status', status);
     const { data, error } = await query;

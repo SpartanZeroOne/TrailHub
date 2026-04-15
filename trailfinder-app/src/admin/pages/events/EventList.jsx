@@ -24,10 +24,19 @@ function StatusBadge({ status }) {
     upcoming:  'bg-green-500/15 text-green-400 border border-green-500/20',
     past:      'bg-stone-700 text-stone-400 border border-stone-600',
     permanent: 'bg-blue-500/15 text-blue-400 border border-blue-500/20',
+    sold_out:  'bg-orange-500/15 text-orange-400 border border-orange-500/30',
+    cancelled: 'bg-red-500/15 text-red-400 border border-red-500/30',
+  };
+  const labels = {
+    upcoming:  'upcoming',
+    past:      'past',
+    permanent: 'permanent',
+    sold_out:  'sold out',
+    cancelled: 'cancelled',
   };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${map[status] ?? map.past}`}>
-      {status}
+      {labels[status] ?? status}
     </span>
   );
 }
@@ -130,6 +139,12 @@ export default function EventList({ onNavigate, toast }) {
       } else if (bulkAction === 'deactivate') {
         await adminBulkUpdateEvents(ids, { status: 'past' });
         toast?.success(`${ids.length} Event(s) auf "past" gesetzt.`);
+      } else if (bulkAction === 'sold_out') {
+        await adminBulkUpdateEvents(ids, { status: 'sold_out' });
+        toast?.success(`${ids.length} Event(s) als "Ausverkauft" markiert.`);
+      } else if (bulkAction === 'cancelled') {
+        await adminBulkUpdateEvents(ids, { status: 'cancelled' });
+        toast?.success(`${ids.length} Event(s) als "Abgesagt" markiert.`);
       }
       setBulkAction('');
       load();
@@ -239,6 +254,8 @@ export default function EventList({ onNavigate, toast }) {
             <option value="">Aktion wählen...</option>
             <option value="activate">Aktivieren (upcoming)</option>
             <option value="deactivate">Deaktivieren (past)</option>
+            <option value="sold_out">Als Ausverkauft markieren</option>
+            <option value="cancelled">Als Abgesagt markieren</option>
             <option value="delete">Löschen</option>
           </select>
           <button
@@ -262,6 +279,10 @@ export default function EventList({ onNavigate, toast }) {
             <p className="text-stone-400 text-sm mb-5">
               {bulkAction === 'delete'
                 ? `${selected.size} Event(s) endgültig löschen?`
+                : bulkAction === 'sold_out'
+                ? `${selected.size} Event(s) als "Ausverkauft" markieren?`
+                : bulkAction === 'cancelled'
+                ? `${selected.size} Event(s) als "Abgesagt" markieren?`
                 : `${selected.size} Event(s) auf "${bulkAction === 'activate' ? 'upcoming' : 'past'}" setzen?`}
             </p>
             <div className="flex gap-3">

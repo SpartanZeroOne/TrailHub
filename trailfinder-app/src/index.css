@@ -43,6 +43,13 @@ body {
   transform: translateY(-2px);
 }
 
+/* Organizer logo background – forced via CSS custom property so it wins in
+   Brave Shields mode and Android WebView without relying on inline style priority */
+.organizer-logo-bg {
+  background-color: var(--org-logo-bg, transparent) !important;
+  overflow: hidden !important;
+}
+
 /* Animation for badges */
 @keyframes badge-pulse {
   0%, 100% { opacity: 1; }

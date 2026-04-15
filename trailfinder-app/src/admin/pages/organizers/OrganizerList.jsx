@@ -115,13 +115,16 @@ export default function OrganizerList({ onNavigate, toast }) {
                 ) : organizers.map(org => (
                   <tr key={org.id} className="hover:bg-stone-800/40 transition-colors">
                     <td className="px-4 py-3">
-                      {org.logo ? (
-                        <img src={org.logo} alt="" className="w-10 h-10 rounded-full object-cover border border-stone-700"/>
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center text-stone-500 font-bold text-sm">
-                          {org.name?.[0]?.toUpperCase() ?? '?'}
-                        </div>
-                      )}
+                      <div
+                        className="organizer-logo-bg w-10 h-10 rounded-full border border-stone-700 flex items-center justify-center flex-shrink-0"
+                        style={{ '--org-logo-bg': org.logo_bg_color || 'transparent' }}
+                      >
+                        {org.logo ? (
+                          <img src={org.logo} alt="" className="w-full h-full object-contain p-0.5"/>
+                        ) : (
+                          <span className="text-stone-500 font-bold text-sm">{org.name?.[0]?.toUpperCase() ?? '?'}</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <p className="text-stone-200 text-sm font-medium">{org.name}</p>
