@@ -338,6 +338,7 @@ const translations = {
     verifiedOrganizer: 'Verifizierter Veranstalter',
     allEventsFromOrganizer: 'Alle Events von diesem Veranstalter',
     price: 'Preis',
+    freeLabel: 'Kostenlos',
     date: 'Datum',
     location: 'Ort',
     duration: 'Dauer',
@@ -645,6 +646,7 @@ const translations = {
     verifiedOrganizer: 'Verified Organizer',
     allEventsFromOrganizer: 'All events from this organizer',
     price: 'Price',
+    freeLabel: 'Free',
     date: 'Date',
     location: 'Location',
     duration: 'Duration',
@@ -952,6 +954,7 @@ const translations = {
     verifiedOrganizer: 'Organisateur vérifié',
     allEventsFromOrganizer: 'Tous les événements de cet organisateur',
     price: 'Prix',
+    freeLabel: 'Gratuit',
     date: 'Date',
     location: 'Lieu',
     duration: 'Durée',
@@ -1259,6 +1262,7 @@ const translations = {
     verifiedOrganizer: 'Geverifieerde Organisator',
     allEventsFromOrganizer: 'Alle evenementen van deze organisator',
     price: 'Prijs',
+    freeLabel: 'Gratis',
     date: 'Datum',
     location: 'Locatie',
     duration: 'Duur',
@@ -2805,7 +2809,7 @@ function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, lang
                 : 'text-stone-400 hover:text-white hover:bg-stone-800'
                 }`}
             >
-              {t('events')}
+              Events
             </button>
             <button
               onClick={handleMapClick}
@@ -2814,7 +2818,7 @@ function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, lang
                 : 'text-stone-400 hover:text-white hover:bg-stone-800'
                 }`}
             >
-              {t('map')}
+              Map
             </button>
           </div>
 
@@ -2828,7 +2832,7 @@ function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, lang
                   : 'text-stone-400'
                   }`}
               >
-                {t('events')}
+                Events
               </button>
               <button
                 onClick={handleMapClick}
@@ -2837,7 +2841,7 @@ function Navigation({ currentView, setCurrentView, isLoggedIn, onShowLogin, lang
                   : 'text-stone-400'
                   }`}
               >
-                {t('map')}
+                Map
               </button>
             </div>
           </div>
@@ -3130,7 +3134,7 @@ function FeaturedEvents({ onViewAll, onViewEvent }) {
                   <span className="truncate">{event.location.split(',')[0]}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-base font-bold text-amber-400">{event.price}</span>
+                  <span className="text-base font-bold text-amber-400">{event.isFree ? t('freeLabel') : event.price}</span>
                   <span className="text-xs text-stone-500">{calculateDuration(event.startDate, event.endDate, t)}</span>
                 </div>
               </div>
@@ -3488,7 +3492,7 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
         </div>
 
         <div className="mt-3 pt-3 border-t border-stone-800/50 flex items-center justify-between">
-          <span className="text-lg font-bold text-amber-400">{event.price}</span>
+          <span className="text-lg font-bold text-amber-400">{event.isFree ? t('freeLabel') : event.price}</span>
 
           {/* Friends & Registration */}
           <div className="flex items-center gap-2">
@@ -3811,6 +3815,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
           priceInfo: r.price_info ?? r.priceInfo ?? '',
           priceValue: r.price_value ?? r.priceValue ?? 0,
           price: r.price_info ? r.price_info : (r.price_value ? `€${r.price_value}` : r.price ?? ''),
+          isFree: r.is_free ?? r.isFree ?? false,
           organizerId: r.organizer_id ?? r.organizerId,
           mxType: 'mx-track',
           category: 'trail-adventures',
@@ -5934,7 +5939,7 @@ function MXTrackCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
         )}
 
         <div className="mt-3 pt-3 border-t border-stone-800/50 flex items-center justify-between">
-          <span className="text-lg font-bold text-amber-400">{event.price}</span>
+          <span className="text-lg font-bold text-amber-400">{event.isFree ? t('freeLabel') : event.price}</span>
 
           {/* Friends avatars if any */}
           {isLoggedIn && registeredFriends.length > 0 && (
@@ -6198,7 +6203,7 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
         </div>
 
         <div className="mt-3 pt-3 border-t border-stone-800/50 flex items-center justify-between">
-          <span className="text-lg font-bold text-amber-400">{event.price}</span>
+          <span className="text-lg font-bold text-amber-400">{event.isFree ? t('freeLabel') : event.price}</span>
 
           <div className="flex items-center gap-2">
             {/* Clickable Friend Avatars */}
@@ -6835,7 +6840,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
               </div>
             )}
             <div className="flex items-center justify-between pt-2 border-t border-stone-800/50">
-              <span className="text-lg font-bold text-amber-400">{event.price}</span>
+              <span className="text-lg font-bold text-amber-400">{event.isFree ? t('freeLabel') : event.price}</span>
               <div className="flex items-center gap-2">
                 {/* Registration indicator – non-interactive */}
                 {isReg && (
@@ -9874,8 +9879,8 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
 
             {/* Price - prominent like on cards */}
             <div className="pb-5 border-b border-stone-800/30">
-              <p className="text-3xl font-bold text-amber-400">{event.price}</p>
-              <p className="text-stone-600 text-xs mt-1">{t('perPerson')}</p>
+              <p className="text-3xl font-bold text-amber-400">{event.isFree ? t('freeLabel') : event.price}</p>
+              {!event.isFree && <p className="text-stone-600 text-xs mt-1">{t('perPerson')}</p>}
             </div>
 
             {/* Date / Opening Hours */}
@@ -10193,7 +10198,7 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
                   <div className="p-3">
                     <h4 className="text-white font-medium text-sm truncate">{e.name}</h4>
                     <p className="text-stone-500 text-xs mt-1">{formatDate(e.startDate)}</p>
-                    <p className="text-amber-400 font-semibold text-sm mt-2">{e.price}</p>
+                    <p className="text-amber-400 font-semibold text-sm mt-2">{e.isFree ? t('freeLabel') : e.price}</p>
                   </div>
                 </div>
               ))}
@@ -10577,6 +10582,7 @@ export default function OffroadEventsApp() {
           })(),
           price:            r.price              ?? null,
           priceValue:       r.price_value        ?? null,
+          isFree:           r.is_free            ?? false,
           image:            r.image              ?? null,
           status:           r.status             ?? 'upcoming',
           difficulty:       r.difficulty         ?? null,
