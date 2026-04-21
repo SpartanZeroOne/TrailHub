@@ -548,6 +548,13 @@ const translations = {
     privacyPolicy: 'Datenschutz',
     contact: 'Kontakt',
     allRightsReserved: 'Alle Rechte vorbehalten',
+
+    // Flexible / On-Demand events
+    flexibleBadge: 'Nach Vereinbarung',
+    flexibleDateLabel: 'Nach Vereinbarung',
+    flexibleFilterLabel: 'Flexibel',
+    requestDateBtn: 'Termin anfragen',
+    showFlexibleMap: 'On Demand',
   },
   en: {
     // Navigation
@@ -856,6 +863,13 @@ const translations = {
     privacyPolicy: 'Privacy Policy',
     contact: 'Contact',
     allRightsReserved: 'All rights reserved',
+
+    // Flexible / On-Demand events
+    flexibleBadge: 'By Arrangement',
+    flexibleDateLabel: 'By Arrangement',
+    flexibleFilterLabel: 'Flexible',
+    requestDateBtn: 'Request Date',
+    showFlexibleMap: 'On Demand',
   },
   fr: {
     // Navigation
@@ -1164,6 +1178,13 @@ const translations = {
     privacyPolicy: 'Politique de confidentialité',
     contact: 'Contact',
     allRightsReserved: 'Tous droits réservés',
+
+    // Flexible / On-Demand events
+    flexibleBadge: 'Sur réservation',
+    flexibleDateLabel: 'Sur réservation',
+    flexibleFilterLabel: 'Flexible',
+    requestDateBtn: 'Demander une date',
+    showFlexibleMap: 'Sur demande',
   },
   nl: {
     // Navigation
@@ -1473,6 +1494,13 @@ const translations = {
     privacyPolicy: 'Privacybeleid',
     contact: 'Contact',
     allRightsReserved: 'Alle rechten voorbehouden',
+
+    // Flexible / On-Demand events
+    flexibleBadge: 'Naar afspraak',
+    flexibleDateLabel: 'Naar afspraak',
+    flexibleFilterLabel: 'Flexibel',
+    requestDateBtn: 'Datum aanvragen',
+    showFlexibleMap: 'Op aanvraag',
   },
 };
 
@@ -3340,6 +3368,12 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
         {/* Badges */}
         <div className="absolute top-3 left-3 flex items-center gap-2">
           <DisciplineBadge event={event} />
+          {/* Flexible date badge */}
+          {event.isFlexibleDate && (
+            <span className="px-2 py-1 bg-amber-500/90 text-stone-900 text-xs font-bold rounded-md shadow-lg">
+              {t('flexibleBadge')}
+            </span>
+          )}
           {/* MX-Track badge - for mx-track events */}
           {event.mxType === 'mx-track' && (
             <span className="px-2 py-1 bg-amber-500/90 text-stone-900 text-xs font-bold rounded-md shadow-lg">{t('mxTrack')}</span>
@@ -3479,9 +3513,15 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
             <svg className="w-3.5 h-3.5 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-xs">{formatDateRange(event.startDate, event.endDate)}</span>
-            <span className="text-stone-600 text-xs">•</span>
-            <span className="text-stone-500 text-xs">{calculateDuration(event.startDate, event.endDate, t)}</span>
+            {event.isFlexibleDate ? (
+              <span className="text-xs text-amber-400 font-medium">{t('flexibleDateLabel')}</span>
+            ) : (
+              <>
+                <span className="text-xs">{formatDateRange(event.startDate, event.endDate)}</span>
+                <span className="text-stone-600 text-xs">•</span>
+                <span className="text-stone-500 text-xs">{calculateDuration(event.startDate, event.endDate, t)}</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <svg className="w-3.5 h-3.5 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3589,6 +3629,9 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
   );
   const [filterFriendsOnly, setFilterFriendsOnly] = useState(() =>
     shouldRestoreState ? eventsView.savedState.filters?.filterFriendsOnly || false : false
+  );
+  const [filterFlexible, setFilterFlexible] = useState(() =>
+    shouldRestoreState ? eventsView.savedState.filters?.filterFlexible || false : false
   );
 
   // Trail Adventures filters - restore from saved state if POP navigation
@@ -3700,6 +3743,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     filterCountries.length > 0,
     filterFriendsOnly,
     filterOnlyNew,
+    filterFlexible,
     trailDifficulty !== 'all',
     trailPrice !== 'all',
     trailDuration !== 'all',
@@ -3856,6 +3900,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
           filterShowPast,
           filterOnlyNew,
           filterFriendsOnly,
+          filterFlexible,
           searchQuery,
           // Trail Adventures filters
           trailTime,
@@ -3894,7 +3939,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
   }), [
     eventsView, filterCategory, trailSubcategory,
     filterCountries, filterRegions, filterShowPast, filterOnlyNew,
-    filterFriendsOnly, searchQuery,
+    filterFriendsOnly, filterFlexible, searchQuery,
     trailTime, trailDuration, trailDifficulty, trailRadius, trailInArea, trailPrice,
     tripType, tripTime, tripDuration, tripRadius, tripPrice,
     rallyeRegion, rallyePrice, rallyeTime, rallyeLevel, rallyeDuration,
@@ -4010,6 +4055,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
           filterShowPast,
           filterOnlyNew,
           filterFriendsOnly,
+          filterFlexible,
           searchQuery,
           // Trail Adventures filters
           trailTime,
@@ -4050,7 +4096,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
   }, [
     onViewEvent, filterCategory, trailSubcategory, eventsView,
     filterCountries, filterRegions, filterShowPast, filterOnlyNew,
-    filterFriendsOnly, trailTime, trailDuration, trailDifficulty,
+    filterFriendsOnly, filterFlexible, trailTime, trailDuration, trailDifficulty,
     trailRadius, trailInArea, trailPrice, searchQuery,
     tripType, tripTime, tripDuration, tripRadius, tripPrice,
     rallyeRegion, rallyePrice, rallyeTime, rallyeLevel, rallyeDuration,
@@ -4524,6 +4570,12 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
 
     if (filterOnlyNew && !event.isNew) return false;
     if (filterFriendsOnly && (friendsPerEvent.get(event.id) ?? []).length === 0) return false;
+    if (filterFlexible && !event.isFlexibleDate) return false;
+    // Flexible events bypass date-based time/duration filters
+    if (event.isFlexibleDate && !filterFlexible) {
+      // When not explicitly filtering for flexible, skip date-based checks for flexible events
+      // but still allow them through (they appear at end via sort)
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const inName      = event.name?.toLowerCase().includes(q);
@@ -4579,8 +4631,8 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
 
       if (trailSubcategory !== 'all' && event.subcategory !== trailSubcategory) return false;
 
-      // Skip time/duration filters for MX-Tracks (permanent locations)
-      if (event.mxType !== 'mx-track') {
+      // Skip time/duration filters for MX-Tracks and flexible events (no fixed date)
+      if (event.mxType !== 'mx-track' && !event.isFlexibleDate) {
         if (!isInTimeRange(event.startDate, trailTime)) return false;
         if (!isInDuration(event.startDate, event.endDate, trailDuration)) return false;
       }
@@ -4650,7 +4702,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     // === SKILLS-CAMPS ===
     if (filterCategory === 'skills-camps') {
       if (skillLevel !== 'all' && event.skillLevel !== skillLevel) return false;
-      if (!isInDuration(event.startDate, event.endDate, skillDuration)) return false;
+      if (!event.isFlexibleDate && !isInDuration(event.startDate, event.endDate, skillDuration)) return false;
 
       // Price filter
       if (skillPrice !== 'all') {
@@ -4702,7 +4754,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
 
     // === OFFROAD FESTIVALS ===
     if (filterCategory === 'offroad-festivals') {
-      if (!isInTimeRange(event.startDate, festivalTime)) return false;
+      if (!event.isFlexibleDate && !isInTimeRange(event.startDate, festivalTime)) return false;
       if (festivalType !== 'all' && event.festivalType !== festivalType) return false;
       // Radius filter
       if (festivalRadius !== 'all' && festivalRadius !== 'eu' && userLocation && event.coordinates) {
@@ -4712,7 +4764,17 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     }
 
     return true;
-  }).sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  }).sort((a, b) => {
+    // Flexible events (no fixed date) always appear after fixed-date events
+    const aFlex = a.isFlexibleDate ? 1 : 0;
+    const bFlex = b.isFlexibleDate ? 1 : 0;
+    if (aFlex !== bFlex) return aFlex - bFlex;
+    // Both fixed: sort by start date ascending
+    if (!a.startDate && !b.startDate) return 0;
+    if (!a.startDate) return 1;
+    if (!b.startDate) return -1;
+    return new Date(a.startDate) - new Date(b.startDate);
+  });
 
   // Push exact filtered event list to map whenever it changes
   // Map uses this list as its base when filters are active
@@ -5432,6 +5494,13 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
           </button>
         )}
         <div className="flex-1"></div>
+        <button
+          onClick={() => setFilterFlexible(!filterFlexible)}
+          className={`px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 ${filterFlexible ? 'bg-amber-500/15 text-amber-400' : 'bg-stone-700/50 text-stone-500 hover:text-stone-400'
+            }`}
+        >
+          <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>{t('flexibleFilterLabel')}
+        </button>
         <button
           onClick={() => setFilterOnlyNew(!filterOnlyNew)}
           className={`px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 ${filterOnlyNew ? 'bg-emerald-500/15 text-emerald-400' : 'bg-stone-700/50 text-stone-500 hover:text-stone-400'
@@ -6261,6 +6330,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
   const [shareStatus, setShareStatus] = useState(null); // For map popup share feedback
   const [popupPosition, setPopupPosition] = useState(null); // Pixel position for event popup
   const [filterWithin10Days, setFilterWithin10Days] = useState(false); // Toggle filter for events within 10 days
+  const [showFlexible, setShowFlexible] = useState(false); // Show on-demand / flexible events on map
   const [selectedFriend, setSelectedFriend] = useState(null); // Friend profile popup
 
   // Category filters with subcategories
@@ -6419,8 +6489,11 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
     return mockEvents.filter(event => {
       if (event.status === 'past') return false;
 
-      // Within 10 days filter
-      if (filterWithin10Days && !isWithin10Days(event.startDate)) return false;
+      // Flexible events are hidden by default; shown only when showFlexible is toggled
+      if (event.isFlexibleDate && !showFlexible) return false;
+
+      // Within 10 days filter — skip for flexible events (no fixed date)
+      if (filterWithin10Days && !event.isFlexibleDate && !isWithin10Days(event.startDate)) return false;
 
       // Friends filter FIRST - MUST have friends if enabled
       if (showFriendsOnly) {
@@ -6458,12 +6531,14 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
         if (!event.name?.toLowerCase().includes(q) && !event.location?.toLowerCase().includes(q)) return false;
       }
 
-      // Date filter - rolling window from today to +dateRange months
-      const eventDate = new Date(event.startDate);
-      if (eventDate < today) return false;
-      const maxDate = new Date(today);
-      maxDate.setMonth(maxDate.getMonth() + dateRange);
-      if (eventDate > maxDate) return false;
+      // Date filter - rolling window from today to +dateRange months (skip for flexible events)
+      if (!event.isFlexibleDate) {
+        const eventDate = new Date(event.startDate);
+        if (eventDate < today) return false;
+        const maxDate = new Date(today);
+        maxDate.setMonth(maxDate.getMonth() + dateRange);
+        if (eventDate > maxDate) return false;
+      }
 
       // Price filter — dual range
       const minPriceVal = PRICE_STEPS[minPrice];
@@ -6477,7 +6552,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
 
       return true;
     });
-  }, [categoryFilters, searchQuery, dateRange, minPrice, maxPrice, showOnlyFavorites, showFriendsOnly, showMyEventsOnly, isFavorite, registeredEventIds, filterWithin10Days, friendsPerEvent, sharedHasActive, sharedEventIds]); // eslint-disable-line
+  }, [categoryFilters, searchQuery, dateRange, minPrice, maxPrice, showOnlyFavorites, showFriendsOnly, showMyEventsOnly, showFlexible, isFavorite, registeredEventIds, filterWithin10Days, friendsPerEvent, sharedHasActive, sharedEventIds]); // eslint-disable-line
 
   // Initialize Mapbox GL map
   useEffect(() => {
@@ -6804,9 +6879,15 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
                 <svg className="w-3.5 h-3.5 text-stone-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span>{formatDateRange(event.startDate, event.endDate)}</span>
-                <span className="text-stone-600">•</span>
-                <span className="text-stone-500">{calculateDuration(event.startDate, event.endDate, t)}</span>
+                {event.isFlexibleDate ? (
+                  <span className="text-amber-400 font-medium">{t('flexibleDateLabel')}</span>
+                ) : (
+                  <>
+                    <span>{formatDateRange(event.startDate, event.endDate)}</span>
+                    <span className="text-stone-600">•</span>
+                    <span className="text-stone-500">{calculateDuration(event.startDate, event.endDate, t)}</span>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-1.5">
                 <svg className="w-3.5 h-3.5 text-stone-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -7168,17 +7249,32 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
           </div>
 
           {/* Soon events indicator - clickable toggle filter (always visible) */}
-          <button
-            onClick={() => setFilterWithin10Days(prev => !prev)}
-            className={`controls absolute top-3 left-3 backdrop-blur-sm rounded-lg px-2.5 py-1.5 z-20 flex items-center gap-2 transition-all cursor-pointer ${
-              filterWithin10Days
-                ? 'bg-emerald-500/15 border border-emerald-500/40'
-                : 'bg-amber-500/10 border border-amber-500/25'
-            }`}
-          >
-            <div className={`w-2 h-2 rounded-full ${filterWithin10Days ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
-            <span className={`text-[11px] font-medium ${filterWithin10Days ? 'text-emerald-400' : 'text-amber-400'}`}>{eventsWithin10Days} {eventsWithin10Days === 1 ? 'Event' : 'Events'} in 10 {t('days') || 'Tagen'}</span>
-          </button>
+          <div className="controls absolute top-3 left-3 flex flex-col gap-1.5 z-20">
+            <button
+              onClick={() => setFilterWithin10Days(prev => !prev)}
+              className={`backdrop-blur-sm rounded-lg px-2.5 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${
+                filterWithin10Days
+                  ? 'bg-emerald-500/15 border border-emerald-500/40'
+                  : 'bg-amber-500/10 border border-amber-500/25'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full ${filterWithin10Days ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+              <span className={`text-[11px] font-medium ${filterWithin10Days ? 'text-emerald-400' : 'text-amber-400'}`}>{eventsWithin10Days} {eventsWithin10Days === 1 ? 'Event' : 'Events'} in 10 {t('days') || 'Tagen'}</span>
+            </button>
+            <button
+              onClick={() => setShowFlexible(prev => !prev)}
+              className={`backdrop-blur-sm rounded-lg px-2.5 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${
+                showFlexible
+                  ? 'bg-amber-500/15 border border-amber-500/40'
+                  : 'bg-stone-900/80 border border-stone-700'
+              }`}
+            >
+              <svg className={`w-3 h-3 ${showFlexible ? 'text-amber-400' : 'text-stone-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className={`text-[11px] font-medium ${showFlexible ? 'text-amber-400' : 'text-stone-500'}`}>{t('showFlexibleMap') || 'On Demand'}</span>
+            </button>
+          </div>
 
           {/* No results message when filters yield nothing */}
           {filteredEvents.length === 0 && (
@@ -10608,6 +10704,9 @@ export default function OffroadEventsApp() {
           eventDates:            r.event_dates            ?? null,
           festivalType:          r.festival_type          ?? null,
           isFeatured:            r.is_featured            ?? false,
+          isFlexibleDate:        r.is_flexible_date       ?? false,
+          bookingType:           r.booking_type           ?? 'fixed',
+          flexibleDateInfo:      r.flexible_date_info     ?? null,
           organizerSnap:         r.organizers ? {
             id:           r.organizers.id,
             name:         r.organizers.name,

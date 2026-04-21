@@ -1,27 +1,22 @@
 // ─── TrailHub Admin – Event Form (Multi-Tab) ──────────────────────────────────
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { adminFetchEventById, adminCreateEvent, adminUpdateEvent, adminUploadEventImage, adminGenerateAiSummary } from '../../services/adminSupabase';
 import { adminFetchOrganizers } from '../../services/adminSupabase';
 import { CATEGORY_FIELDS, CATEGORIES, STATUS_OPTIONS, AI_PROMPT_TEMPLATES } from '../../utils/adminConfig';
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
-const TABS = [
-  { id: 'basics',      label: '1. Basis' },
-  { id: 'datetime',    label: '2. Datum & Zeit' },
-  { id: 'location',    label: '3. Ort & Route' },
-  { id: 'details',     label: '4. Details & Preis' },
-  { id: 'descriptions',label: '5. Beschreibungen' },
-  { id: 'media',       label: '6. Medien' },
-  { id: 'seo',         label: '7. SEO' },
-];
+const TAB_IDS = ['basics', 'datetime', 'location', 'details', 'descriptions', 'media', 'seo'];
 
 // ─── Default form values ──────────────────────────────────────────────────────
 const DEFAULTS = {
   name: '', category: '', subcategory: '', status: 'upcoming',
   organizer_id: '', is_featured: false, is_new: false, has_changes: false,
+  is_flexible_date: false, booking_type: 'fixed', flexible_date_info: '',
   start_date: '', end_date: '',
+  event_dates: [],
   location: '', coordinates: '',
-  price_value: '', beginner_friendly: false, difficulty: '',
+  price_value: '', is_free: false, beginner_friendly: false, difficulty: '',
   group_size: '',
   rallye_region: '', rallye_level: '', trip_type: '', trip_level: '',
   skill_level: '', bike_type: '', festival_type: '', bike_requirements: '',
@@ -199,92 +194,93 @@ function CoordinateEditor({ value, onChange }) {
 
 // ─── Category-specific fields ─────────────────────────────────────────────────
 function CategoryFields({ form, setField, cfg }) {
+  const { t } = useTranslation();
   if (!cfg) return null;
 
   return (
     <div className="space-y-4 pt-1">
       {cfg.showSubcategory && (
-        <Field label="Subkategorie">
+        <Field label={t('eventForm.subcategory')}>
           <Select
             value={form.subcategory}
             onChange={v => setField('subcategory', v)}
             options={cfg.subcategoryOptions ?? []}
-            placeholder="Wähle Subkategorie ▼"
+            placeholder={t('eventForm.subcategorySelect')}
           />
         </Field>
       )}
       {cfg.showRallyeRegion && (
-        <Field label="Region">
+        <Field label={t('eventForm.region')}>
           <Select
             value={form.rallye_region}
             onChange={v => setField('rallye_region', v)}
             options={cfg.rallyeRegionOptions ?? []}
-            placeholder="Wähle Region ▼"
+            placeholder={t('eventForm.regionSelect')}
           />
         </Field>
       )}
       {cfg.showRallyeLevel && (
-        <Field label="Level">
+        <Field label={t('eventForm.level')}>
           <Select
             value={form.rallye_level}
             onChange={v => setField('rallye_level', v)}
             options={cfg.rallyeLevelOptions ?? []}
-            placeholder="Wähle Level ▼"
+            placeholder={t('eventForm.levelSelect')}
           />
         </Field>
       )}
       {cfg.showTripType && (
-        <Field label="Fahr-Typ">
+        <Field label={t('eventForm.driveType')}>
           <Select
             value={form.trip_type}
             onChange={v => setField('trip_type', v)}
             options={cfg.tripTypeOptions ?? []}
-            placeholder="Wähle Fahr-Typ ▼"
+            placeholder={t('eventForm.driveTypeSelect')}
           />
         </Field>
       )}
       {cfg.showTripLevel && (
-        <Field label="Level (Adventure)">
+        <Field label={t('eventForm.level')}>
           <Select
             value={form.trip_level}
             onChange={v => setField('trip_level', v)}
             options={cfg.tripLevelOptions ?? []}
-            placeholder="Wähle Level ▼"
+            placeholder={t('eventForm.levelSelect')}
           />
         </Field>
       )}
       {cfg.showSkillLevel && (
-        <Field label="Skill-Level">
+        <Field label={t('eventForm.skillLevel')}>
           <Select
             value={form.skill_level}
             onChange={v => setField('skill_level', v)}
             options={cfg.skillLevelOptions ?? []}
-            placeholder="Wähle Level ▼"
+            placeholder={t('eventForm.levelSelect')}
           />
         </Field>
       )}
       {cfg.showBikeType && (
-        <Field label="Bike-Typ">
+        <Field label={t('eventForm.bikeType')}>
           <Select
             value={form.bike_type}
             onChange={v => setField('bike_type', v)}
             options={cfg.bikeTypeOptions ?? []}
-            placeholder="Wähle Bike-Typ ▼"
+            placeholder={t('eventForm.bikeTypeSelect')}
           />
         </Field>
       )}
       {cfg.showFestivalType && (
-        <Field label="Festival-Typ">
+        <Field label={t('eventForm.festivalType')}>
           <Select
             value={form.festival_type}
             onChange={v => setField('festival_type', v)}
             options={cfg.festivalTypeOptions ?? []}
-            placeholder="Wähle Festival-Typ ▼"
+            placeholder={t('eventForm.festivalTypeSelect')}
           />
         </Field>
       )}
       {cfg.showBikeRequirements && (
-        <Field label="Bike-Anforderungen" hint="z.B. Enduro, Trail-Bike, Minimale PS">
+        <Field label={t('eventForm.bikeRequirements')}>
           <Input
             value={form.bike_requirements}
             onChange={v => setField('bike_requirements', v)}
@@ -293,7 +289,7 @@ function CategoryFields({ form, setField, cfg }) {
         </Field>
       )}
       {cfg.showGroupSize && (
-        <Field label="Gruppengröße" hint="Anzahl Teilnehmer pro Gruppe">
+        <Field label={t('eventForm.groupSize')} hint={t('eventForm.groupSizeHint')}>
           <Input
             value={form.group_size}
             onChange={v => setField('group_size', v)}
@@ -304,16 +300,16 @@ function CategoryFields({ form, setField, cfg }) {
         </Field>
       )}
       {cfg.showDifficulty && (
-        <Field label="Schwierigkeit (1-3)" hint="1 = Leicht, 2 = Mittel, 3 = Schwer">
+        <Field label={t('eventForm.difficultySelect')} hint={t('eventForm.difficultyHint')}>
           <Select
             value={form.difficulty}
             onChange={v => setField('difficulty', v)}
             options={[
-              { value: '1', label: '1 – Leicht ★☆☆' },
-              { value: '2', label: '2 – Mittel ★★☆' },
-              { value: '3', label: '3 – Schwer ★★★' },
+              { value: '1', label: t('eventForm.difficulty1') },
+              { value: '2', label: t('eventForm.difficulty2') },
+              { value: '3', label: t('eventForm.difficulty3') },
             ]}
-            placeholder="Wähle Schwierigkeit"
+            placeholder={t('eventForm.difficultySelect')}
           />
         </Field>
       )}
@@ -323,6 +319,7 @@ function CategoryFields({ form, setField, cfg }) {
 
 // ─── Main EventForm Component ─────────────────────────────────────────────────
 export default function EventForm({ eventId, onNavigate, toast }) {
+  const { t } = useTranslation();
   const isNew = !eventId || eventId === 'new';
   const [activeTab, setActiveTab] = useState('basics');
   const [form, setFormState] = useState({ ...DEFAULTS });
@@ -332,8 +329,49 @@ export default function EventForm({ eventId, onNavigate, toast }) {
   const [organizers, setOrganizers] = useState([]);
   const [aiLoading, setAiLoading] = useState({ DE: false, EN: false, FR: false, NL: false });
   const [imgUploading, setImgUploading] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
 
   const setField = (key, val) => setFormState(f => ({ ...f, [key]: val }));
+
+  // ─── Multi-date helpers (Skills-Camps) ──────────────────────────────────────
+  const addEventDate = () => {
+    if (!tempStartDate || !tempEndDate) return;
+    if (tempEndDate < tempStartDate) return;
+    const isDuplicate = (form.event_dates ?? []).some(
+      d => d.start_date === tempStartDate && d.end_date === tempEndDate
+    );
+    if (isDuplicate) return;
+    setFormState(f => {
+      const newDates = [...(f.event_dates ?? []), { start_date: tempStartDate, end_date: tempEndDate }];
+      // Auto-populate primary dates from the first entry
+      const updates = { event_dates: newDates };
+      if (!f.start_date) updates.start_date = tempStartDate;
+      if (!f.end_date) updates.end_date = tempEndDate;
+      return { ...f, ...updates };
+    });
+    setTempStartDate('');
+    setTempEndDate('');
+  };
+
+  const removeEventDate = (index) => {
+    setFormState(f => ({
+      ...f,
+      event_dates: (f.event_dates ?? []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const formatEventDateRange = (start, end) => {
+    if (!start) return '';
+    const s = new Date(start + 'T00:00:00');
+    const e = end ? new Date(end + 'T00:00:00') : null;
+    const days = e ? Math.round((e - s) / 86400000) + 1 : 1;
+    const locale = 'de-DE';
+    if (!e || start === end) return `${s.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })} (1 Tag)`;
+    const sStr = s.toLocaleDateString(locale, { day: 'numeric', month: 'long' });
+    const eStr = e.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
+    return `${sStr} – ${eStr} (${days} Tag${days !== 1 ? 'e' : ''})`;
+  };
 
   // Calculate days between dates
   const daysBetween = (() => {
@@ -356,9 +394,10 @@ export default function EventForm({ eventId, onNavigate, toast }) {
           ...DEFAULTS,
           ...event,
           coordinates: event.coordinates ? JSON.stringify(event.coordinates) : '',
+          event_dates: Array.isArray(event.event_dates) ? event.event_dates : [],
         });
       }).catch(err => {
-        toast?.error('Event konnte nicht geladen werden: ' + err.message);
+        toast?.error(t('eventForm.errorLoad', { msg: err.message }));
       }).finally(() => setLoading(false));
     }
   }, [eventId]);
@@ -375,12 +414,12 @@ export default function EventForm({ eventId, onNavigate, toast }) {
 
   const validate = () => {
     const e = {};
-    if (!form.name?.trim()) e.name = 'Name ist erforderlich';
-    if (!form.category) e.category = 'Kategorie ist erforderlich';
-    if (!form.start_date) e.start_date = 'Start-Datum ist erforderlich';
-    if (!form.location?.trim()) e.location = 'Ort ist erforderlich';
-    if (form.end_date && form.start_date && form.end_date < form.start_date) {
-      e.end_date = 'End-Datum muss nach dem Start-Datum liegen';
+    if (!form.name?.trim()) e.name = t('eventForm.errName');
+    if (!form.category) e.category = t('eventForm.errCategory');
+    if (!form.is_flexible_date && !form.start_date) e.start_date = t('eventForm.errStartDate');
+    if (!form.location?.trim()) e.location = t('eventForm.errLocation');
+    if (!form.is_flexible_date && form.end_date && form.start_date && form.end_date < form.start_date) {
+      e.end_date = t('eventForm.errEndDate');
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -388,7 +427,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
 
   const handleSave = async () => {
     if (!validate()) {
-      toast?.error('Bitte alle Pflichtfelder ausfüllen.');
+      toast?.error(t('eventForm.errorRequired'));
       // Jump to first tab with errors
       if (errors.name || errors.category) setActiveTab('basics');
       else if (errors.start_date) setActiveTab('datetime');
@@ -399,14 +438,14 @@ export default function EventForm({ eventId, onNavigate, toast }) {
     try {
       if (isNew) {
         await adminCreateEvent(form);
-        toast?.success('Event erfolgreich erstellt!');
+        toast?.success(t('eventForm.successCreate'));
       } else {
         await adminUpdateEvent(eventId, form);
-        toast?.success('Event erfolgreich gespeichert!');
+        toast?.success(t('eventForm.successSave'));
       }
       onNavigate('/admin/events');
     } catch (err) {
-      toast?.error('Speichern fehlgeschlagen: ' + err.message);
+      toast?.error(t('eventForm.errorLoad', { msg: err.message }));
     } finally {
       setSaving(false);
     }
@@ -417,9 +456,9 @@ export default function EventForm({ eventId, onNavigate, toast }) {
     try {
       const url = await adminUploadEventImage(file, eventId ?? 'new');
       setField('image', url);
-      toast?.success('Bild hochgeladen!');
+      toast?.success(t('eventForm.successImageUpload'));
     } catch (err) {
-      toast?.error('Upload fehlgeschlagen: ' + err.message);
+      toast?.error(t('eventForm.errorImageUpload', { msg: err.message }));
     } finally {
       setImgUploading(false);
     }
@@ -431,9 +470,9 @@ export default function EventForm({ eventId, onNavigate, toast }) {
       const summary = await adminGenerateAiSummary(form, lang, form[`ai_prompt_${lang.toLowerCase()}`]);
       const key = `ai_summary_${lang.toLowerCase()}`;
       setField(key, summary);
-      toast?.success(`KI-Zusammenfassung (${lang}) generiert!`);
+      toast?.success(t('eventForm.successAi', { lang }));
     } catch (err) {
-      toast?.error(`KI-Fehler (${lang}): ${err.message}`);
+      toast?.error(t('eventForm.errAi', { lang, msg: err.message }));
     } finally {
       setAiLoading(l => ({ ...l, [lang]: false }));
     }
@@ -456,15 +495,15 @@ export default function EventForm({ eventId, onNavigate, toast }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-stone-100">{isNew ? 'Neues Event erstellen' : 'Event bearbeiten'}</h1>
-          {!isNew && <p className="text-stone-500 text-sm mt-1">ID: {eventId}</p>}
+          <h1 className="text-2xl font-bold text-stone-100">{isNew ? t('eventForm.titleNew') : t('eventForm.titleEdit')}</h1>
+          {!isNew && <p className="text-stone-500 text-sm mt-1">{t('eventForm.idLabel')} {eventId}</p>}
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => onNavigate('/admin/events')}
             className="px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm border border-stone-700 transition-colors"
           >
-            Abbrechen
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -472,24 +511,24 @@ export default function EventForm({ eventId, onNavigate, toast }) {
             className="flex items-center gap-2 px-5 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium disabled:opacity-50 transition-colors"
           >
             {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>}
-            {isNew ? 'Event erstellen' : 'Speichern'}
+            {isNew ? t('eventForm.saveCreate') : t('eventForm.saveEdit')}
           </button>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 flex-wrap mb-6 bg-stone-900 p-1 rounded-xl border border-stone-800">
-        {TABS.map(tab => (
+        {TAB_IDS.map((id, idx) => (
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            key={id}
+            onClick={() => setActiveTab(id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-1 min-w-fit ${
-              activeTab === tab.id
+              activeTab === id
                 ? 'bg-orange-500 text-white shadow'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
             }`}
           >
-            {tab.label}
+            {t(`eventForm.tab${idx + 1}`)}
           </button>
         ))}
       </div>
@@ -500,12 +539,12 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         {/* TAB 1: Basis */}
         {activeTab === 'basics' && (
           <div className="space-y-5">
-            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">Basis-Informationen</h2>
+            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionBasis')}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="md:col-span-2">
-                <Field label="Event-Name" required error={errors.name}
-                  hint="Vollständiger Name des Events inkl. Jahr">
+                <Field label={t('eventForm.eventName')} required error={errors.name}
+                  hint={t('eventForm.eventNameHint')}>
                   <Input
                     value={form.name}
                     onChange={v => setField('name', v)}
@@ -514,7 +553,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                 </Field>
               </div>
 
-              <Field label="Kategorie" required error={errors.category}>
+              <Field label={t('common.category')} required error={errors.category}>
                 <Select
                   value={form.category}
                   onChange={v => {
@@ -527,34 +566,34 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                     setField('festival_type', '');
                   }}
                   options={CATEGORIES}
-                  placeholder="Wähle Kategorie ▼"
+                  placeholder={t('eventForm.categoryHint')}
                 />
               </Field>
 
-              <Field label="Status">
+              <Field label={t('common.status')}>
                 <Select
                   value={form.status}
                   onChange={v => setField('status', v)}
                   options={STATUS_OPTIONS}
-                  placeholder="Status wählen ▼"
+                  placeholder={t('eventForm.statusHint')}
                 />
               </Field>
 
-              <Field label="Organizer" hint="Veranstalter des Events">
+              <Field label={t('common.organizer')} hint={t('eventForm.organizerHint')}>
                 <Select
                   value={form.organizer_id}
                   onChange={v => setField('organizer_id', v)}
                   options={[
                     ...organizers.map(o => ({ value: o.id, label: o.name })),
                   ]}
-                  placeholder="Wähle Organizer ▼"
+                  placeholder={t('eventForm.organizerSelect')}
                 />
               </Field>
 
               <div className="flex flex-col gap-3 justify-end">
-                <Toggle value={form.is_new} onChange={v => setField('is_new', v)} label='Als "NEU" markieren' />
-                <Toggle value={form.is_featured} onChange={v => setField('is_featured', v)} label="Featured Event (★)" />
-                <Toggle value={form.beginner_friendly} onChange={v => setField('beginner_friendly', v)} label="Einsteiger-geeignet" />
+                <Toggle value={form.is_new} onChange={v => setField('is_new', v)} label={t('eventForm.markAsNew')} />
+                <Toggle value={form.is_featured} onChange={v => setField('is_featured', v)} label={t('eventForm.featuredEvent')} />
+                <Toggle value={form.beginner_friendly} onChange={v => setField('beginner_friendly', v)} label={t('eventForm.beginnerFriendly')} />
               </div>
             </div>
 
@@ -563,7 +602,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
               <>
                 <div className="border-t border-stone-800 pt-4">
                   <h3 className="text-stone-300 text-sm font-medium mb-3 text-orange-400">
-                    {CATEGORIES.find(c => c.value === form.category)?.label ?? ''}-spezifische Felder
+                    {CATEGORIES.find(c => c.value === form.category)?.label ?? ''} {t('eventForm.specificFields')}
                   </h3>
                   <CategoryFields form={form} setField={setField} cfg={cfg} />
                 </div>
@@ -575,17 +614,47 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         {/* TAB 2: Datum & Zeit */}
         {activeTab === 'datetime' && (
           <div className="space-y-5">
-            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">Datum & Zeit</h2>
+            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionDateTime')}</h2>
+
+            {/* Flexible date toggle */}
+            <div className="px-4 py-3 rounded-xl bg-amber-500/8 border border-amber-500/20 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-amber-300">{t('eventForm.flexibleDate')}</p>
+                <p className="text-xs text-stone-500 mt-0.5">{t('eventForm.flexibleDateHint')}</p>
+              </div>
+              <Toggle
+                value={form.is_flexible_date}
+                onChange={v => {
+                  setFormState(f => ({
+                    ...f,
+                    is_flexible_date: v,
+                    booking_type: v ? 'flexible' : 'fixed',
+                    ...(v ? { start_date: '', end_date: '' } : {}),
+                  }));
+                }}
+                label=""
+              />
+            </div>
+
+            {form.is_flexible_date ? (
+              <Field label={t('eventForm.bookingInstructions')} hint={t('eventForm.bookingInstructionsHint')}>
+                <Input
+                  value={form.flexible_date_info}
+                  onChange={v => setField('flexible_date_info', v)}
+                  placeholder={t('eventForm.bookingInstructionsPlaceholder')}
+                />
+              </Field>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Field label="Start-Datum" required error={errors.start_date} hint="Format: YYYY-MM-DD">
+              <Field label={t('eventForm.startDate')} required error={errors.start_date} hint={t('eventForm.startDateHint')}>
                 <Input
                   type="date"
                   value={form.start_date}
                   onChange={v => setField('start_date', v)}
-                  placeholder="2026-08-14"
+                  placeholder={t('eventForm.startDatePlaceholder')}
                 />
               </Field>
-              <Field label="End-Datum" error={errors.end_date} hint="Leer lassen für eintägige Events">
+              <Field label={t('eventForm.endDate')} error={errors.end_date} hint={t('eventForm.endDateHint')}>
                 <Input
                   type="date"
                   value={form.end_date}
@@ -594,12 +663,100 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                 />
               </Field>
             </div>
-            {daysBetween !== null && (
+            )}
+            {!form.is_flexible_date && daysBetween !== null && (
               <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
                 <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span className="text-orange-300 text-sm font-medium">Dauer: {daysBetween} Tag{daysBetween !== 1 ? 'e' : ''}</span>
+                <span className="text-orange-300 text-sm font-medium">{t('eventForm.duration', { days: daysBetween })}</span>
+              </div>
+            )}
+
+            {/* ── Verfügbare Termine (Skills-Camps & Adventure Trips) ── */}
+            {!form.is_flexible_date && (form.category === 'skills-camps' || form.category === 'adventure-trips') && (
+              <div className="mt-2 p-5 rounded-xl border border-orange-500/20 bg-orange-500/5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <h3 className="text-stone-200 font-semibold">{t('eventForm.availableDates')}</h3>
+                  {(form.event_dates ?? []).length > 0 && (
+                    <span className="ml-auto px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-xs font-medium border border-orange-500/30">
+                      {form.event_dates.length} Termin{form.event_dates.length !== 1 ? 'e' : ''}
+                    </span>
+                  )}
+                </div>
+
+                {/* Add date row */}
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-medium text-stone-400">Start-Datum</label>
+                    <input
+                      type="date"
+                      value={tempStartDate}
+                      onChange={e => setTempStartDate(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm focus:outline-none focus:border-orange-500/60 transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-medium text-stone-400">End-Datum</label>
+                    <input
+                      type="date"
+                      value={tempEndDate}
+                      min={tempStartDate || undefined}
+                      onChange={e => setTempEndDate(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm focus:outline-none focus:border-orange-500/60 transition-colors"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addEventDate}
+                    disabled={!tempStartDate || !tempEndDate || tempEndDate < tempStartDate}
+                    className="px-4 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                  >
+                    {t('eventForm.addDate')}
+                  </button>
+                </div>
+
+                {/* Date list */}
+                <div className="space-y-2">
+                  {(form.event_dates ?? []).length === 0 ? (
+                    <p className="text-stone-500 text-sm py-2 text-center">{t('eventForm.noDates')}</p>
+                  ) : (
+                    (form.event_dates ?? [])
+                      .slice()
+                      .sort((a, b) => a.start_date.localeCompare(b.start_date))
+                      .map((date, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between px-4 py-3 rounded-lg bg-stone-800 border border-stone-700 group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span className="text-stone-200 text-sm">
+                              {formatEventDateRange(date.start_date, date.end_date)}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeEventDate(
+                              (form.event_dates ?? []).indexOf(date)
+                            )}
+                            className="opacity-0 group-hover:opacity-100 px-2 py-1 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs transition-all"
+                          >
+                            {t('eventForm.removeDate')}
+                          </button>
+                        </div>
+                      ))
+                  )}
+                </div>
+
+                <p className="text-xs text-stone-600">
+                  {t('eventForm.dateNote')}
+                </p>
               </div>
             )}
           </div>
@@ -608,15 +765,15 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         {/* TAB 3: Ort & Route */}
         {activeTab === 'location' && (
           <div className="space-y-5">
-            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">Ort & Route</h2>
-            <Field label="Ort / Location" required error={errors.location} hint="Stadt, Land">
+            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionLocation')}</h2>
+            <Field label={t('eventForm.locationLabel')} required error={errors.location} hint={t('eventForm.locationHint')}>
               <Input
                 value={form.location}
                 onChange={v => setField('location', v)}
-                placeholder="z.B. Freudenstadt, Deutschland"
+                placeholder={t('eventForm.locationPlaceholder')}
               />
             </Field>
-            <Field label="Koordinaten" hint="Lat/Lng – auf Karte klicken oder JSON eingeben">
+            <Field label={t('eventForm.coordinates')} hint={t('eventForm.coordinatesHint')}>
               <CoordinateEditor value={form.coordinates} onChange={v => setField('coordinates', v)} />
             </Field>
           </div>
@@ -625,25 +782,38 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         {/* TAB 4: Details & Preis */}
         {activeTab === 'details' && (
           <div className="space-y-5">
-            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">Details & Preis</h2>
-            <Field label="Preis (€)" hint="Nur Zahl ohne €-Zeichen (z.B. 185 oder 49.90)">
-              <div className="relative max-w-xs">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">€</span>
-                <Input
-                  type="number"
-                  value={form.price_value}
-                  onChange={v => setField('price_value', v)}
-                  placeholder="185"
-                  className="pl-7"
-                  min={0}
-                  step={0.01}
+            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionDetails')}</h2>
+            <div className="flex items-start gap-6">
+              <Field label={t('eventForm.priceLabel')} hint={t('eventForm.priceHint')}>
+                <div className="relative max-w-xs">
+                  <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm transition-colors ${form.is_free ? 'text-stone-600' : 'text-stone-500'}`}>€</span>
+                  <Input
+                    type="number"
+                    value={form.is_free ? '' : form.price_value}
+                    onChange={v => setField('price_value', v)}
+                    placeholder={form.is_free ? '—' : '185'}
+                    className={`pl-7 ${form.is_free ? 'opacity-40 pointer-events-none' : ''}`}
+                    disabled={form.is_free}
+                    min={0}
+                    step={0.01}
+                  />
+                </div>
+              </Field>
+              <div className="pt-7">
+                <Toggle
+                  value={form.is_free}
+                  onChange={v => {
+                    setField('is_free', v);
+                    if (v) setField('price_value', '');
+                  }}
+                  label={t('common.free')}
                 />
               </div>
-            </Field>
+            </div>
             <div className="border-t border-stone-800 pt-4">
-              <h3 className="text-stone-400 text-sm font-medium mb-3">Flags</h3>
+              <h3 className="text-stone-400 text-sm font-medium mb-3">{t('eventForm.flagsSection')}</h3>
               <div className="flex flex-wrap gap-4">
-                <Toggle value={form.has_changes} onChange={v => setField('has_changes', v)} label="Änderungen vorhanden" />
+                <Toggle value={form.has_changes} onChange={v => setField('has_changes', v)} label={t('eventForm.hasChanges')} />
               </div>
             </div>
           </div>
@@ -652,7 +822,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         {/* TAB 5: Mehrsprachige Beschreibungen */}
         {activeTab === 'descriptions' && (
           <div className="space-y-5">
-            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">Mehrsprachige Beschreibungen</h2>
+            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionDescriptions')}</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {[
                 { code: 'DE', label: 'Deutsch' },
@@ -666,7 +836,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                     <span className="text-stone-300 text-sm font-medium">{label}</span>
                   </div>
 
-                  <Field label="Beschreibung" hint={`→ ai_summary_${code.toLowerCase()}`}>
+                  <Field label={t('eventForm.descriptionLabel')} hint={`→ ai_summary_${code.toLowerCase()}`}>
                     <Textarea
                       value={form[`ai_summary_${code.toLowerCase()}`]}
                       onChange={v => setField(`ai_summary_${code.toLowerCase()}`, v)}
@@ -687,7 +857,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm hover:bg-purple-500/30 disabled:opacity-50 transition-colors"
                   >
                     {aiLoading[code] ? <span className="w-4 h-4 border border-purple-400 border-t-transparent rounded-full animate-spin"/> : '✨'}
-                    KI-Zusammenfassung
+                    {t('eventForm.aiButton')}
                   </button>
                 </div>
               ))}
@@ -698,13 +868,13 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         {/* TAB 6: Medien */}
         {activeTab === 'media' && (
           <div className="space-y-5">
-            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">Medien</h2>
+            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionMedia')}</h2>
 
-            <Field label="Hauptbild" hint="URL oder Upload (800×600px empfohlen, JPG/PNG/WebP)">
+            <Field label={t('eventForm.mainImage')} hint={t('eventForm.mainImageHint')}>
               <ImageUpload
                 value={form.image}
                 onChange={v => setField('image', v)}
-                label="Hauptbild"
+                label={t('eventForm.mainImage')}
                 onUpload={handleImageUpload}
                 uploading={imgUploading}
               />
@@ -716,8 +886,8 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         {/* TAB 7: SEO */}
         {activeTab === 'seo' && (
           <div className="space-y-5">
-            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">SEO & Metadata</h2>
-            <Field label="Slug (URL)" hint="Automatisch aus Name generiert – kann manuell angepasst werden">
+            <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionSeo')}</h2>
+            <Field label={t('eventForm.slug')} hint={t('eventForm.slugHint')}>
               <div className="flex items-center gap-2">
                 <span className="text-stone-500 text-sm flex-shrink-0">/events/</span>
                 <Input
@@ -727,11 +897,11 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                 />
               </div>
             </Field>
-            <Field label="Event-URL" hint="Link zur offiziellen Event-Website">
+            <Field label={t('eventForm.eventUrl')} hint={t('eventForm.eventUrlHint')}>
               <Input
                 value={form.event_url}
                 onChange={v => setField('event_url', v)}
-                placeholder="https://enduro-events.eu/black-forest"
+                placeholder={t('eventForm.eventUrlPlaceholder')}
               />
             </Field>
           </div>
@@ -743,7 +913,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         <div className="flex items-center gap-2 text-stone-500 text-sm">
           {Object.keys(errors).length > 0 && (
             <span className="text-red-400 flex items-center gap-1">
-              <span>⚠</span> {Object.keys(errors).length} Fehler – bitte korrigieren
+              {t('eventForm.errorsCount', { count: Object.keys(errors).length })}
             </span>
           )}
         </div>
@@ -752,7 +922,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
             onClick={() => onNavigate('/admin/events')}
             className="px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm border border-stone-700 transition-colors"
           >
-            Abbrechen
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -760,7 +930,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
             className="flex items-center gap-2 px-6 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium disabled:opacity-50 transition-colors"
           >
             {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>}
-            {isNew ? 'Event erstellen' : 'Änderungen speichern'}
+            {isNew ? t('eventForm.saveCreate') : t('eventForm.saveChanges')}
           </button>
         </div>
       </div>

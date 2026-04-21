@@ -69,7 +69,7 @@ const EVENTS_DB_COLUMNS = new Set([
   'name', 'category', 'subcategory', 'mx_type',
   'start_date', 'end_date',
   'location', 'coordinates',
-  'price', 'price_value',
+  'price', 'price_value', 'is_free',
   'image', 'status', 'difficulty',
   'beginner_friendly', 'organizer_id',
   'registered_friends',
@@ -83,6 +83,8 @@ const EVENTS_DB_COLUMNS = new Set([
   'festival_type',
   // Event-URL (external registration / info link)
   'event_url',
+  // Migration 19: Flexible / on-demand booking
+  'is_flexible_date', 'booking_type', 'flexible_date_info',
 ]);
 
 // Normalise form values → DB columns
@@ -92,8 +94,11 @@ function normalizeEventPayload(form) {
   if (typeof p.coordinates === 'string') {
     try { p.coordinates = JSON.parse(p.coordinates); } catch { p.coordinates = null; }
   }
-  // Ensure numeric price
-  if (p.price_value !== undefined && p.price_value !== '') {
+  // Ensure numeric price; override to 0 when free
+  if (p.is_free) {
+    p.price_value = 0;
+    p.price = null;
+  } else if (p.price_value !== undefined && p.price_value !== '') {
     p.price_value = parseFloat(p.price_value) || null;
     p.price = p.price_value != null ? `€${p.price_value}` : null;
   }
@@ -236,6 +241,18 @@ export const adminFetchDashboardStats = async () => {
     totalOrganizers: totalOrganizers ?? 0,
     recentEvents: recentEvents ?? [],
   };
+};
+
+export const adminFetchPastEvents = async (limit = 10) => {
+  const today = new Date().toISOString().split('T')[0];
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, name, category, status, start_date, end_date')
+    .or(`status.eq.past,end_date.lt.${today}`)
+    .order('end_date', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
 };
 
 export const adminFetchEventsByCategory = async () => {
