@@ -556,6 +556,7 @@ const translations = {
     requestDateBtn: 'Termin anfragen',
     showFlexibleMap: 'Auf Anfrage',
     eventDuration: 'Eventdauer',
+    contactOrganizer: 'Veranstalter Kontaktieren',
   },
   en: {
     // Navigation
@@ -872,6 +873,7 @@ const translations = {
     requestDateBtn: 'Request Date',
     showFlexibleMap: 'On Demand',
     eventDuration: 'Event Duration',
+    contactOrganizer: 'Contact Organizer',
   },
   fr: {
     // Navigation
@@ -1188,6 +1190,7 @@ const translations = {
     requestDateBtn: 'Demander une date',
     showFlexibleMap: 'Sur demande',
     eventDuration: 'Durée de l\'événement',
+    contactOrganizer: 'Contacter l\'organisateur',
   },
   nl: {
     // Navigation
@@ -1505,6 +1508,7 @@ const translations = {
     requestDateBtn: 'Datum aanvragen',
     showFlexibleMap: 'Op aanvraag',
     eventDuration: 'Eventduur',
+    contactOrganizer: 'Organisator contacteren',
   },
 };
 
@@ -3161,13 +3165,17 @@ function FeaturedEvents({ onViewAll, onViewEvent }) {
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    {formatDate(event.startDate)}
+                    {event.isFlexibleDate ? (
+                      <span className="text-amber-400 font-medium">{t('flexibleDateLabel')}</span>
+                    ) : formatDate(event.startDate)}
                   </span>
                   <span className="truncate">{event.location.split(',')[0]}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-base font-bold text-amber-400">{event.isFree ? t('freeLabel') : event.price}</span>
-                  <span className="text-xs text-stone-500">{calculateDuration(event.startDate, event.endDate, t)}</span>
+                  {!event.isFlexibleDate && (
+                    <span className="text-xs text-stone-500">{calculateDuration(event.startDate, event.endDate, t)}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -6263,9 +6271,15 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
             <svg className="w-3.5 h-3.5 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-xs">{formatDateRange(event.startDate, event.endDate)}</span>
-            <span className="text-stone-600 text-xs">•</span>
-            <span className="text-stone-500 text-xs">{calculateDuration(event.startDate, event.endDate, t)}</span>
+            {event.isFlexibleDate ? (
+              <span className="text-xs text-amber-400 font-medium">{t('flexibleDateLabel')}</span>
+            ) : (
+              <>
+                <span className="text-xs">{formatDateRange(event.startDate, event.endDate)}</span>
+                <span className="text-stone-600 text-xs">•</span>
+                <span className="text-stone-500 text-xs">{calculateDuration(event.startDate, event.endDate, t)}</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <svg className="w-3.5 h-3.5 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -9926,7 +9940,9 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
                 </svg>
                 <span>{event.mxType === 'mx-track'
                   ? `${event.seasonStart || ''} – ${event.seasonEnd || ''} • ${formatMxTrackDaysShort(event, language)}`
-                  : formatDateRange(event.startDate, event.endDate)}</span>
+                  : event.isFlexibleDate
+                    ? t('flexibleDateLabel')
+                    : formatDateRange(event.startDate, event.endDate)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -10059,8 +10075,19 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
                   </svg>
                 </div>
                 <div>
-                  <p className="text-white font-medium">{formatDate(displayStartDate)}</p>
-                  <p className="text-stone-500 text-sm">{calculateDuration(displayStartDate, displayEndDate, t)}</p>
+                  {event.isFlexibleDate ? (
+                    <>
+                      <p className="text-amber-400 font-medium">{t('flexibleDateLabel')}</p>
+                      {event.flexibleDateInfo && (
+                        <p className="text-stone-500 text-sm">{event.flexibleDateInfo}</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-white font-medium">{formatDate(displayStartDate)}</p>
+                      <p className="text-stone-500 text-sm">{calculateDuration(displayStartDate, displayEndDate, t)}</p>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -10157,7 +10184,7 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
                   className="w-full py-4 rounded-xl text-base font-semibold bg-amber-500 text-stone-950 hover:bg-amber-400 transition-all text-center block"
                   style={{ boxShadow: '0 0 30px rgba(245, 158, 11, 0.2)' }}
                 >
-                  {event.mxType === 'mx-track' ? t('showTrack') : t('registerNow')} →
+                  {event.mxType === 'mx-track' ? t('showTrack') : event.isFlexibleDate ? t('contactOrganizer') : t('registerNow')} →
                 </a>
                 <p className="text-center text-stone-600 text-xs mt-2">
                   {t('forwardToOrganizer')}
