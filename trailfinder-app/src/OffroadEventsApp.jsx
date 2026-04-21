@@ -6507,6 +6507,8 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
   const [popupPosition, setPopupPosition] = useState(null); // Pixel position for event popup
   const [filterWithin10Days, setFilterWithin10Days] = useState(false); // Toggle filter for events within 10 days
   const [flexibleState, setFlexibleState] = useState(0); // 0=hide flexible, 1=show all, 2=flexible only
+  const flexibleStateBeforeOverride = React.useRef(null); // state saved before auto-override
+  const isAutoOverridden = React.useRef(false); // true while auto-override is active
   const [selectedFriend, setSelectedFriend] = useState(null); // Friend profile popup
 
   // Category filters with subcategories
@@ -6659,6 +6661,30 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
     if (!sharedHasActive || !sharedEvents) return null;
     return new Set(sharedEvents.map(e => String(e.id)));
   }, [sharedHasActive, sharedEvents]);
+
+  // Does My Events / Favorites selection contain any flexible events?
+  const personalHasFlexible = React.useMemo(() => {
+    if (!showMyEventsOnly && !showOnlyFavorites) return false;
+    return mockEvents.some(e =>
+      e.isFlexibleDate &&
+      ((showMyEventsOnly && registeredEventIds.includes(e.id)) ||
+       (showOnlyFavorites && isFavorite(e.id)))
+    );
+  }, [showMyEventsOnly, showOnlyFavorites, registeredEventIds, isFavorite]);
+
+  // Auto-override: force State 1 when personal filters would hide registered/favorite flexible events
+  React.useEffect(() => {
+    const personalActive = showMyEventsOnly || showOnlyFavorites;
+    if (personalActive && personalHasFlexible && !isAutoOverridden.current) {
+      flexibleStateBeforeOverride.current = flexibleState;
+      isAutoOverridden.current = true;
+      setFlexibleState(1);
+    } else if (!personalActive && isAutoOverridden.current) {
+      isAutoOverridden.current = false;
+      setFlexibleState(flexibleStateBeforeOverride.current ?? 0);
+      flexibleStateBeforeOverride.current = null;
+    }
+  }, [showMyEventsOnly, showOnlyFavorites, personalHasFlexible]); // eslint-disable-line
 
   // Filter events
   const filteredEvents = React.useMemo(() => {
@@ -7450,7 +7476,13 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
               <span className={`text-[11px] font-medium ${filterWithin10Days ? 'text-emerald-400' : 'text-amber-400'}`}>{eventsWithin10Days} {eventsWithin10Days === 1 ? 'Event' : 'Events'} in 10 {t('days') || 'Tagen'}</span>
             </button>
             <button
-              onClick={() => setFlexibleState(prev => (prev + 1) % 3)}
+              onClick={() => {
+                if (isAutoOverridden.current) {
+                  isAutoOverridden.current = false;
+                  flexibleStateBeforeOverride.current = null;
+                }
+                setFlexibleState(prev => (prev + 1) % 3);
+              }}
               className={`backdrop-blur-sm rounded-lg px-2.5 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${
                 flexibleState === 0
                   ? 'bg-stone-900/80 border border-stone-700'
