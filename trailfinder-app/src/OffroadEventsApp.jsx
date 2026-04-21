@@ -3646,7 +3646,7 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
       {/* Content */}
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <h3 className={`text-base font-semibold text-white group-hover:text-amber-400 transition-colors leading-tight flex-1 ${isLoggedIn ? 'cursor-pointer' : ''}`}>
+          <h3 className={`text-base font-semibold text-white group-hover:text-amber-400 transition-colors leading-tight flex-1 min-w-0 truncate ${isLoggedIn ? 'cursor-pointer' : ''}`}>
             {event.name}
           </h3>
           {/* Difficulty Helmets - in content area */}
@@ -6127,7 +6127,7 @@ function MXTrackCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
       {/* Content */}
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="text-base font-semibold text-white group-hover:text-amber-400 transition-colors leading-tight flex-1">
+          <h3 className="text-base font-semibold text-white group-hover:text-amber-400 transition-colors leading-tight flex-1 min-w-0 truncate">
             {event.name}
           </h3>
           {event.difficulty && (
@@ -6409,7 +6409,7 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
       {/* Content */}
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <h3 className={`text-base font-semibold text-white group-hover:text-amber-400 transition-colors leading-tight flex-1 ${isLoggedIn ? 'cursor-pointer' : ''}`}>
+          <h3 className={`text-base font-semibold text-white group-hover:text-amber-400 transition-colors leading-tight flex-1 min-w-0 truncate ${isLoggedIn ? 'cursor-pointer' : ''}`}>
             {event.name}
           </h3>
           {event.difficulty && <div className="ml-2 flex-shrink-0"><DifficultyIcon level={event.difficulty} /></div>}
@@ -6506,7 +6506,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
   const [shareStatus, setShareStatus] = useState(null); // For map popup share feedback
   const [popupPosition, setPopupPosition] = useState(null); // Pixel position for event popup
   const [filterWithin10Days, setFilterWithin10Days] = useState(false); // Toggle filter for events within 10 days
-  const [showFlexible, setShowFlexible] = useState(false); // Show on-demand / flexible events on map
+  const [flexibleState, setFlexibleState] = useState(0); // 0=hide flexible, 1=show all, 2=flexible only
   const [selectedFriend, setSelectedFriend] = useState(null); // Friend profile popup
 
   // Category filters with subcategories
@@ -6665,8 +6665,9 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
     return mockEvents.filter(event => {
       if (event.status === 'past') return false;
 
-      // Flexible events are hidden by default; shown only when showFlexible is toggled
-      if (event.isFlexibleDate && !showFlexible) return false;
+      // flexibleState 0: hide flexible, 1: show all, 2: flexible only
+      if (flexibleState === 0 && event.isFlexibleDate) return false;
+      if (flexibleState === 2 && !event.isFlexibleDate) return false;
 
       // Within 10 days filter — skip for flexible events (no fixed date)
       if (filterWithin10Days && !event.isFlexibleDate && !isWithin10Days(event.startDate)) return false;
@@ -6728,7 +6729,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
 
       return true;
     });
-  }, [categoryFilters, searchQuery, dateRange, minPrice, maxPrice, showOnlyFavorites, showFriendsOnly, showMyEventsOnly, showFlexible, isFavorite, registeredEventIds, filterWithin10Days, friendsPerEvent, sharedHasActive, sharedEventIds]); // eslint-disable-line
+  }, [categoryFilters, searchQuery, dateRange, minPrice, maxPrice, showOnlyFavorites, showFriendsOnly, showMyEventsOnly, flexibleState, isFavorite, registeredEventIds, filterWithin10Days, friendsPerEvent, sharedHasActive, sharedEventIds]); // eslint-disable-line
 
   // Initialize Mapbox GL map
   useEffect(() => {
@@ -7449,17 +7450,19 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
               <span className={`text-[11px] font-medium ${filterWithin10Days ? 'text-emerald-400' : 'text-amber-400'}`}>{eventsWithin10Days} {eventsWithin10Days === 1 ? 'Event' : 'Events'} in 10 {t('days') || 'Tagen'}</span>
             </button>
             <button
-              onClick={() => setShowFlexible(prev => !prev)}
+              onClick={() => setFlexibleState(prev => (prev + 1) % 3)}
               className={`backdrop-blur-sm rounded-lg px-2.5 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${
-                showFlexible
+                flexibleState === 0
+                  ? 'bg-stone-900/80 border border-stone-700'
+                  : flexibleState === 1
                   ? 'bg-amber-500/15 border border-amber-500/40'
-                  : 'bg-stone-900/80 border border-stone-700'
+                  : 'bg-emerald-500/15 border border-emerald-500/40'
               }`}
             >
-              <svg className={`w-3 h-3 ${showFlexible ? 'text-amber-400' : 'text-stone-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg className={`w-3 h-3 ${flexibleState === 0 ? 'text-stone-500' : flexibleState === 1 ? 'text-amber-400' : 'text-emerald-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z" />
               </svg>
-              <span className={`text-[11px] font-medium ${showFlexible ? 'text-amber-400' : 'text-stone-500'}`}>{t('showFlexibleMap') || 'On Demand'}</span>
+              <span className={`text-[11px] font-medium ${flexibleState === 0 ? 'text-stone-500' : flexibleState === 1 ? 'text-amber-400' : 'text-emerald-400'}`}>{t('showFlexibleMap') || 'On Demand'}</span>
             </button>
           </div>
 
