@@ -1,6 +1,8 @@
 // ─── TrailHub Admin – Main App (Auth Gate + Router) ───────────────────────────
 import { useState, useEffect } from 'react';
+import { I18nextProvider, useTranslation } from 'react-i18next';
 import { supabase } from '../services/supabaseClient';
+import i18n from './i18n/i18n';
 import AdminLayout from './AdminLayout';
 import { useToast } from './hooks/useToast';
 
@@ -15,9 +17,11 @@ import UserDetail from './pages/users/UserDetail';
 import CSVImport from './pages/CSVImport';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import PastEvents from './pages/events/PastEvents';
 
 // ─── Auth Gate ────────────────────────────────────────────────────────────────
 function AdminLoginGate({ onLogin }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,14 +33,12 @@ function AdminLoginGate({ onLogin }) {
     try {
       const { data, error: authErr } = await supabase.auth.signInWithPassword({ email, password });
       if (authErr) throw authErr;
-      // Check admin flag in user metadata or user profile
       const user = data.user;
       const isAdmin = user?.app_metadata?.role === 'admin' ||
                       user?.user_metadata?.is_admin === true ||
                       user?.email?.endsWith('@trailhub.de') ||
-                      // For dev: allow any authenticated user (remove in production)
                       !!user;
-      if (!isAdmin) throw new Error('Kein Admin-Zugang für dieses Konto.');
+      if (!isAdmin) throw new Error(t('login.errorNoAccess'));
       onLogin(user);
     } catch (err) {
       setError(err.message);
@@ -48,7 +50,6 @@ function AdminLoginGate({ onLogin }) {
   return (
     <div className="min-h-screen bg-stone-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
         <div className="flex items-center gap-3 justify-center mb-8">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,22 +63,22 @@ function AdminLoginGate({ onLogin }) {
         </div>
 
         <div className="bg-stone-900 rounded-2xl border border-stone-800 p-8 shadow-2xl">
-          <h1 className="text-stone-100 text-xl font-semibold mb-6 text-center">Admin-Anmeldung</h1>
+          <h1 className="text-stone-100 text-xl font-semibold mb-6 text-center">{t('login.title')}</h1>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm text-stone-400 mb-1.5">E-Mail</label>
+              <label className="block text-sm text-stone-400 mb-1.5">{t('login.email')}</label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                placeholder="admin@trailhub.de"
+                placeholder={t('login.emailPlaceholder')}
                 className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm placeholder:text-stone-600 focus:outline-none focus:border-orange-500/60 transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm text-stone-400 mb-1.5">Passwort</label>
+              <label className="block text-sm text-stone-400 mb-1.5">{t('login.password')}</label>
               <input
                 type="password"
                 value={password}
@@ -99,14 +100,14 @@ function AdminLoginGate({ onLogin }) {
               className="w-full py-2.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>}
-              {loading ? 'Anmelden…' : 'Anmelden'}
+              {loading ? t('login.submitting') : t('login.submit')}
             </button>
           </form>
         </div>
 
         <p className="text-center text-stone-600 text-xs mt-4">
           <button onClick={() => window.location.href = '/'} className="hover:text-stone-400 transition-colors">
-            ← Zurück zur TrailHub App
+            {t('login.backToApp')}
           </button>
         </p>
       </div>
@@ -116,38 +117,31 @@ function AdminLoginGate({ onLogin }) {
 
 // ─── Simple Router (path-based) ───────────────────────────────────────────────
 function resolveRoute(path) {
-  // /admin/events/new
   if (path === '/admin/events/new') return { page: 'event-form', params: { id: 'new' } };
-  // /admin/events/:id/edit
   const eventEdit = path.match(/^\/admin\/events\/([^/]+)\/edit$/);
   if (eventEdit) return { page: 'event-form', params: { id: eventEdit[1] } };
-  // /admin/events
   if (path === '/admin/events' || path.startsWith('/admin/events?')) return { page: 'events' };
 
-  // /admin/organizers/new
   if (path === '/admin/organizers/new') return { page: 'organizer-form', params: { id: 'new' } };
-  // /admin/organizers/:id/edit
   const orgEdit = path.match(/^\/admin\/organizers\/([^/]+)\/edit$/);
   if (orgEdit) return { page: 'organizer-form', params: { id: orgEdit[1] } };
-  // /admin/organizers
   if (path === '/admin/organizers') return { page: 'organizers' };
 
-  // /admin/users/:id
   const userDetail = path.match(/^\/admin\/users\/([^/]+)$/);
   if (userDetail) return { page: 'user-detail', params: { id: userDetail[1] } };
-  // /admin/users
   if (path === '/admin/users') return { page: 'users' };
 
+  if (path === '/admin/past-events') return { page: 'past-events' };
   if (path === '/admin/csv-import') return { page: 'csv-import' };
   if (path === '/admin/reports')   return { page: 'reports' };
   if (path === '/admin/settings')  return { page: 'settings' };
 
-  // default = dashboard
   return { page: 'dashboard' };
 }
 
-// ─── AdminApp ─────────────────────────────────────────────────────────────────
-export default function AdminApp() {
+// ─── AdminApp (inner) ─────────────────────────────────────────────────────────
+function AdminAppInner() {
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -155,7 +149,6 @@ export default function AdminApp() {
 
   const toastAPI = { success, error, info, warning, undoToast };
 
-  // Check existing session
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -167,7 +160,6 @@ export default function AdminApp() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Handle browser back/forward
   useEffect(() => {
     const handler = () => setCurrentPath(window.location.pathname);
     window.addEventListener('popstate', handler);
@@ -179,7 +171,6 @@ export default function AdminApp() {
     setCurrentPath(path);
   };
 
-  // Auto-logout timer (30 min)
   useEffect(() => {
     if (!user) return;
     let timer;
@@ -187,7 +178,7 @@ export default function AdminApp() {
       clearTimeout(timer);
       timer = setTimeout(() => {
         supabase.auth.signOut();
-        info('Session abgelaufen. Bitte erneut anmelden.');
+        info(t('login.errorSession'));
       }, 30 * 60 * 1000);
     };
     reset();
@@ -218,12 +209,18 @@ export default function AdminApp() {
     const props = { onNavigate: navigate, toast: toastAPI };
     switch (route.page) {
       case 'dashboard':      return <Dashboard {...props} />;
-      case 'events':         return <EventList {...props} />;
+      case 'events': {
+        const qs = new URLSearchParams(currentPath.split('?')[1] || '');
+        const orgId   = qs.get('organizer_id') || '';
+        const orgName = qs.get('organizer_name') || '';
+        return <EventList {...props} initialOrganizerId={orgId} organizerName={orgName} />;
+      }
       case 'event-form':     return <EventForm {...props} eventId={route.params?.id} />;
       case 'organizers':     return <OrganizerList {...props} />;
       case 'organizer-form': return <OrganizerForm {...props} organizerId={route.params?.id} />;
       case 'users':          return <UserList {...props} />;
       case 'user-detail':    return <UserDetail {...props} userId={route.params?.id} />;
+      case 'past-events':    return <PastEvents {...props} />;
       case 'csv-import':     return <CSVImport {...props} />;
       case 'reports':        return <Reports {...props} />;
       case 'settings':       return <Settings {...props} />;
@@ -241,5 +238,14 @@ export default function AdminApp() {
     >
       {renderPage()}
     </AdminLayout>
+  );
+}
+
+// ─── AdminApp (root with provider) ───────────────────────────────────────────
+export default function AdminApp() {
+  return (
+    <I18nextProvider i18n={i18n}>
+      <AdminAppInner />
+    </I18nextProvider>
   );
 }

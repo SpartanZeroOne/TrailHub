@@ -8,7 +8,8 @@
     "reports": "Reports",
     "settings": "Settings",
     "backToApp": "Back to App",
-    "superAdmin": "Super Admin"
+    "superAdmin": "Super Admin",
+    "pastEvents": "Past Events"
   },
   "search": {
     "placeholder": "Search...",
@@ -483,6 +484,21 @@
     "endSession": "End admin session & sign out",
     "successSave": "Settings saved!",
     "errorSave": "Save failed: {{msg}}"
+  },
+  "archive": {
+    "title": "Past Events",
+    "subtitle": "{{count}} past events",
+    "noEvents": "No past events found.",
+    "statusPast": "Ended",
+    "renewBtn": "Renew for Next Year",
+    "renewHelper": "Dates will shift forward by 12 months",
+    "renewConfirmTitle": "Renew event?",
+    "renewConfirmMsg": "A new draft will be created with all dates shifted forward by 12 months. The original remains untouched.",
+    "renewSuccess": "Event renewed! Please review and publish.",
+    "renewError": "Renewal failed: {{msg}}",
+    "recentPast": "Recently ended",
+    "viewArchive": "View all past events →",
+    "moreInArchive": "{{count}} more past events in archive →"
   },
   "lang": {
     "de": "Deutsch",

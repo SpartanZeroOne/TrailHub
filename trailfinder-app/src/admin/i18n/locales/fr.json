@@ -8,7 +8,8 @@
     "reports": "Rapports",
     "settings": "Paramètres",
     "backToApp": "Retour à l'app",
-    "superAdmin": "Super Admin"
+    "superAdmin": "Super Admin",
+    "pastEvents": "Événements passés"
   },
   "search": {
     "placeholder": "Rechercher...",
@@ -483,6 +484,21 @@
     "endSession": "Terminer la session admin & se déconnecter",
     "successSave": "Paramètres enregistrés !",
     "errorSave": "Échec de l'enregistrement : {{msg}}"
+  },
+  "archive": {
+    "title": "Événements passés",
+    "subtitle": "{{count}} événements passés",
+    "noEvents": "Aucun événement passé trouvé.",
+    "statusPast": "Terminé",
+    "renewBtn": "Renouveler pour l'année prochaine",
+    "renewHelper": "Les dates seront avancées de 12 mois",
+    "renewConfirmTitle": "Renouveler l'événement ?",
+    "renewConfirmMsg": "Un nouveau brouillon sera créé avec toutes les dates avancées de 12 mois. L'original reste inchangé.",
+    "renewSuccess": "Événement renouvelé ! Veuillez vérifier et publier.",
+    "renewError": "Échec du renouvellement : {{msg}}",
+    "recentPast": "Récemment terminés",
+    "viewArchive": "Voir tous les événements passés →",
+    "moreInArchive": "{{count}} événements passés supplémentaires dans l'archive →"
   },
   "lang": {
     "de": "Deutsch",

@@ -8,7 +8,8 @@
     "reports": "Berichte",
     "settings": "Einstellungen",
     "backToApp": "Zurück zur App",
-    "superAdmin": "Super-Admin"
+    "superAdmin": "Super-Admin",
+    "pastEvents": "Vergangene Events"
   },
   "search": {
     "placeholder": "Suchen...",
@@ -483,6 +484,21 @@
     "endSession": "Admin-Session beenden & abmelden",
     "successSave": "Einstellungen gespeichert!",
     "errorSave": "Speichern fehlgeschlagen: {{msg}}"
+  },
+  "archive": {
+    "title": "Vergangene Events",
+    "subtitle": "{{count}} vergangene Events",
+    "noEvents": "Keine vergangenen Events gefunden.",
+    "statusPast": "Beendet",
+    "renewBtn": "Für nächstes Jahr erneuern",
+    "renewHelper": "Termine werden um 12 Monate verschoben",
+    "renewConfirmTitle": "Event erneuern?",
+    "renewConfirmMsg": "Ein neuer Entwurf wird erstellt und alle Daten um 12 Monate verschoben. Das Original bleibt unverändert.",
+    "renewSuccess": "Event erneuert! Bitte überprüfen und veröffentlichen.",
+    "renewError": "Fehler beim Erneuern: {{msg}}",
+    "recentPast": "Zuletzt beendet",
+    "viewArchive": "Alle vergangenen Events →",
+    "moreInArchive": "{{count}} weitere vergangene Events im Archiv →"
   },
   "lang": {
     "de": "Deutsch",

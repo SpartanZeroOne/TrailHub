@@ -5,6 +5,7 @@ import { supabase } from '../../services/supabaseClient';
 
 export const adminFetchEvents = async ({
   page = 1, perPage = 25, category, status, organizerId, search, sortBy = 'start_date', sortDir = 'asc',
+  excludeStatuses = [],
 } = {}) => {
   let q = supabase.from('events').select('*, organizers(id, name)', { count: 'exact' });
 
@@ -12,6 +13,7 @@ export const adminFetchEvents = async ({
   if (status)      q = q.eq('status', status);
   if (organizerId) q = q.eq('organizer_id', organizerId);
   if (search)      q = q.or(`name.ilike.%${search}%,location.ilike.%${search}%`);
+  for (const s of excludeStatuses) q = q.neq('status', s);
 
   q = q.order(sortBy, { ascending: sortDir === 'asc' });
   q = q.range((page - 1) * perPage, page * perPage - 1);
@@ -246,6 +248,46 @@ export const adminFetchDashboardStats = async () => {
     totalOrganizers: totalOrganizers ?? 0,
     recentEvents: recentEvents ?? [],
   };
+};
+
+export const adminFetchArchivedEvents = async ({
+  page = 1, perPage = 25, category, search, sortBy = 'end_date', sortDir = 'desc',
+} = {}) => {
+  let q = supabase.from('events')
+    .select('*, organizers(id, name)', { count: 'exact' })
+    .eq('status', 'past');
+  if (category) q = q.eq('category', category);
+  if (search)   q = q.or(`name.ilike.%${search}%,location.ilike.%${search}%`);
+  q = q.order(sortBy, { ascending: sortDir === 'asc' });
+  q = q.range((page - 1) * perPage, page * perPage - 1);
+  const { data, error, count } = await q;
+  if (error) throw error;
+  return { data: data ?? [], count: count ?? 0 };
+};
+
+export const adminRenewEvent = async (eventId) => {
+  const original = await adminFetchEventById(eventId);
+  const shiftDate = (d) => {
+    if (!d) return null;
+    const date = new Date(d);
+    date.setFullYear(date.getFullYear() + 1);
+    return date.toISOString().split('T')[0];
+  };
+  const payload = {
+    ...original,
+    status: 'upcoming',
+    start_date: shiftDate(original.start_date),
+    end_date: shiftDate(original.end_date),
+    is_new: false,
+    event_dates: Array.isArray(original.event_dates)
+      ? original.event_dates.map(d => ({
+          ...d,
+          start_date: shiftDate(d.start_date),
+          end_date: shiftDate(d.end_date),
+        }))
+      : original.event_dates,
+  };
+  return adminCreateEvent(payload);
 };
 
 export const adminFetchPastEvents = async (limit = 10) => {
