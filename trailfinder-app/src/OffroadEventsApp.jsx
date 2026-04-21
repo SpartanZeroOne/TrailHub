@@ -2623,6 +2623,14 @@ function calculateDuration(start, end, t = null) {
   return days === 1 ? '1 Tag' : `${days} Tage`;
 }
 
+function formatFlexibleDuration(value, t) {
+  if (!value) return null;
+  if (value === '7+') return t ? `7+ ${t('days')}` : '7+ Tage';
+  const n = parseInt(value, 10);
+  if (!isNaN(n)) return n === 1 ? (t ? t('day1') : '1 Tag') : `${n} ${t ? t('days') : 'Tage'}`;
+  return value; // legacy free-text fallback
+}
+
 function calculateDistance(lat1, lng1, lat2, lng2) {
   const R = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -3526,7 +3534,15 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             {event.isFlexibleDate ? (
-              <span className="text-xs text-amber-400 font-medium">{t('flexibleDateLabel')}</span>
+              <>
+                <span className="text-xs text-amber-400 font-medium">{t('flexibleDateLabel')}</span>
+                {event.flexibleDateInfo && (
+                  <>
+                    <span className="text-stone-600 text-xs">•</span>
+                    <span className="text-stone-500 text-xs">{formatFlexibleDuration(event.flexibleDateInfo, t)}</span>
+                  </>
+                )}
+              </>
             ) : (
               <>
                 <span className="text-xs">{formatDateRange(event.startDate, event.endDate)}</span>
@@ -6272,7 +6288,15 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             {event.isFlexibleDate ? (
-              <span className="text-xs text-amber-400 font-medium">{t('flexibleDateLabel')}</span>
+              <>
+                <span className="text-xs text-amber-400 font-medium">{t('flexibleDateLabel')}</span>
+                {event.flexibleDateInfo && (
+                  <>
+                    <span className="text-stone-600 text-xs">•</span>
+                    <span className="text-stone-500 text-xs">{formatFlexibleDuration(event.flexibleDateInfo, t)}</span>
+                  </>
+                )}
+              </>
             ) : (
               <>
                 <span className="text-xs">{formatDateRange(event.startDate, event.endDate)}</span>
@@ -6906,7 +6930,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
                     {event.flexibleDateInfo && (
                       <>
                         <span className="text-stone-600">•</span>
-                        <span className="text-stone-400">{event.flexibleDateInfo}</span>
+                        <span className="text-stone-400">{formatFlexibleDuration(event.flexibleDateInfo, t)}</span>
                       </>
                     )}
                   </>
@@ -10079,7 +10103,7 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
                     <>
                       <p className="text-amber-400 font-medium">{t('flexibleDateLabel')}</p>
                       {event.flexibleDateInfo && (
-                        <p className="text-stone-500 text-sm">{event.flexibleDateInfo}</p>
+                        <p className="text-stone-500 text-sm">{formatFlexibleDuration(event.flexibleDateInfo, t)}</p>
                       )}
                     </>
                   ) : (

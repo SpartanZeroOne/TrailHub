@@ -240,9 +240,12 @@
     "errorImageUpload": "Upload fehlgeschlagen: {{msg}}",
     "flexibleDate": "Flexibles Datum",
     "flexibleDateHint": "Kein festes Datum – Buchung nach Absprache mit dem Veranstalter",
-    "bookingInstructions": "Buchungsinformationen",
-    "bookingInstructionsHint": "Verfügbarkeit und Buchungshinweise für Interessenten",
-    "bookingInstructionsPlaceholder": "z.B. Ganzjährig buchbar, Mo–Fr nach Absprache"
+    "eventDurationLabel": "Dauer des Events",
+    "eventDurationHint": "Wie viele Tage dauert das Event ungefähr?",
+    "eventDurationPlaceholder": "Dauer wählen",
+    "day1": "1 Tag",
+    "days": "Tage",
+    "days7plus": "7+ Tage"
   },
   "organizers": {
     "title": "Organizer",

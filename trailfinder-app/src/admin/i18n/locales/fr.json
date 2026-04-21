@@ -240,9 +240,12 @@
     "errorImageUpload": "Échec de l'upload : {{msg}}",
     "flexibleDate": "Date flexible",
     "flexibleDateHint": "Pas de date fixe – réservation à arranger avec l'organisateur",
-    "bookingInstructions": "Informations de réservation",
-    "bookingInstructionsHint": "Disponibilités et modalités de réservation pour les participants",
-    "bookingInstructionsPlaceholder": "Ex. : Disponible toute l'année, lun.–ven. sur demande"
+    "eventDurationLabel": "Durée de l'événement",
+    "eventDurationHint": "Nombre de jours approximatif pour cet événement",
+    "eventDurationPlaceholder": "Sélectionner la durée",
+    "day1": "1 Jour",
+    "days": "Jours",
+    "days7plus": "7+ Jours"
   },
   "organizers": {
     "title": "Organisateurs",

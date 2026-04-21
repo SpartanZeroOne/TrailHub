@@ -637,11 +637,20 @@ export default function EventForm({ eventId, onNavigate, toast }) {
             </div>
 
             {form.is_flexible_date ? (
-              <Field label={t('eventForm.bookingInstructions')} hint={t('eventForm.bookingInstructionsHint')}>
-                <Input
+              <Field label={t('eventForm.eventDurationLabel')} hint={t('eventForm.eventDurationHint')}>
+                <Select
                   value={form.flexible_date_info}
                   onChange={v => setField('flexible_date_info', v)}
-                  placeholder={t('eventForm.bookingInstructionsPlaceholder')}
+                  placeholder={t('eventForm.eventDurationPlaceholder')}
+                  options={[
+                    { value: '1', label: t('eventForm.day1') },
+                    { value: '2', label: `2 ${t('eventForm.days')}` },
+                    { value: '3', label: `3 ${t('eventForm.days')}` },
+                    { value: '4', label: `4 ${t('eventForm.days')}` },
+                    { value: '5', label: `5 ${t('eventForm.days')}` },
+                    { value: '6', label: `6 ${t('eventForm.days')}` },
+                    { value: '7+', label: t('eventForm.days7plus') },
+                  ]}
                 />
               </Field>
             ) : (
