@@ -304,17 +304,29 @@ export const fetchFlexibleRegistrations = async (userId) => {
     return data ?? [];
 };
 export const saveFlexibleRegistration = async (userId, eventId, confirmedStart, confirmedEnd) => {
+    // Write to dedicated table
     const { data, error } = await supabase
         .from('flexible_registrations')
         .upsert([{ user_id: userId, event_id: eventId, confirmed_start: confirmedStart || null, confirmed_end: confirmedEnd || null }])
         .select().single();
     if (error) throw error;
+    // Also denormalize onto users.flex_confirmed_dates so friends can read it
+    const profile = await fetchUserProfile(userId);
+    const current = profile?.flex_confirmed_dates ?? {};
+    const updated = { ...current, [String(eventId)]: { start: confirmedStart || null, end: confirmedEnd || null } };
+    await upsertUserProfile({ id: userId, flex_confirmed_dates: updated });
     return data;
 };
 export const deleteFlexibleRegistration = async (userId, eventId) => {
     const { error } = await supabase
         .from('flexible_registrations').delete().eq('user_id', userId).eq('event_id', eventId);
     if (error) throw error;
+    // Remove from users.flex_confirmed_dates too
+    const profile = await fetchUserProfile(userId);
+    const current = profile?.flex_confirmed_dates ?? {};
+    const updated = { ...current };
+    delete updated[String(eventId)];
+    await upsertUserProfile({ id: userId, flex_confirmed_dates: updated });
 };
 
 // ─── STORAGE: AVATAR UPLOAD ───────────────────────────────────────────────────

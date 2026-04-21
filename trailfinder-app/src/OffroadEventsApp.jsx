@@ -2651,6 +2651,22 @@ function calculateDuration(start, end, t = null) {
   return days === 1 ? '1 Tag' : `${days} Tage`;
 }
 
+// Returns a dispEvent with confirmed fixed dates applied when a flex reg exists.
+// flexMap: { event_id_string: { start, end } }  OR  array of {event_id, confirmed_start, confirmed_end}
+function applyFlexConfirmedDates(event, flexSource, selEntry = null) {
+  if (selEntry) return { ...event, startDate: selEntry.start_date || selEntry.start || event.startDate, endDate: selEntry.end_date || selEntry.end || null };
+  if (!event.isFlexibleDate || !flexSource) return event;
+  let rec;
+  if (Array.isArray(flexSource)) {
+    rec = flexSource.find(r => String(r.event_id) === String(event.id));
+    if (rec?.confirmed_start) return { ...event, startDate: rec.confirmed_start, endDate: rec.confirmed_end || rec.confirmed_start, isFlexibleDate: false };
+  } else {
+    rec = flexSource[String(event.id)];
+    if (rec?.start) return { ...event, startDate: rec.start, endDate: rec.end || rec.start, isFlexibleDate: false };
+  }
+  return event;
+}
+
 function formatFlexibleDuration(value, t) {
   if (!value) return null;
   if (value === '15+') return t ? `15+ ${t('days')}` : '15+ Tage';
@@ -7519,7 +7535,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
 // Profile Dashboard - Mein Offroad-Dashboard
 function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, setCurrentView, userPreferredDiscipline = 'none', onPreferredDisciplineChange, activeTab, onActiveTabChange }) {
   const { t, language } = useTranslation();
-  const { registeredEventIds, favoriteEventIds, userProfile, setUserProfile, saveProfile, eventDateSelections, getFlexibleReg } = useUserState();
+  const { registeredEventIds, favoriteEventIds, userProfile, setUserProfile, saveProfile, eventDateSelections, flexibleRegistrations } = useUserState();
   const auth = useAuth();
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -7738,24 +7754,13 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
             {upcomingEvents.map(event => {
               const selIdx = eventDateSelections[String(event.id)];
               const selEntry = (event.category === 'skills-camps' && event.eventDates && selIdx !== undefined) ? event.eventDates[selIdx] : null;
-              // For flexible events: use user-confirmed dates if available
-              const flexReg = event.isFlexibleDate ? getFlexibleReg(event.id) : null;
-              const dispEvent = flexReg?.confirmed_start
-                ? { ...event, startDate: flexReg.confirmed_start, endDate: flexReg.confirmed_end, isFlexibleDate: false }
-                : selEntry
-                  ? { ...event, startDate: selEntry.start_date || selEntry.start || event.startDate, endDate: selEntry.end_date || selEntry.end || null }
-                  : event;
+              const dispEvent = applyFlexConfirmedDates(event, flexibleRegistrations, selEntry);
               return (
                 <div key={event.id} className="relative">
                   <EventCard event={dispEvent} isLoggedIn={isLoggedIn} onEventClick={onViewEvent} origin="profile" />
                   <div className="absolute top-14 right-3 px-2 py-1 bg-emerald-500 text-white text-xs font-bold rounded shadow-lg">
                     {t('registered')}
                   </div>
-                  {event.isFlexibleDate && flexReg?.confirmed_start && (
-                    <div className="absolute bottom-16 left-3 right-3 px-2 py-1 bg-amber-500/20 border border-amber-500/30 rounded text-amber-400 text-[10px] font-medium text-center">
-                      {t('yourConfirmedDates')}: {formatDateRange(flexReg.confirmed_start, flexReg.confirmed_end)}
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -8682,18 +8687,25 @@ function FriendProfileView({ friend, onBack, onViewEvent, isLoggedIn }) {
     (friend.privacy_registration_visibility ?? 'friends') !== 'nobody';
   const friendRegisteredIds = privacyOk ? (friend.registered_event_ids ?? []) : [];
 
+  // Friend's confirmed dates map: { event_id_string: { start, end } }
+  const friendFlexDates = friend.flex_confirmed_dates ?? {};
+
   // Events the friend has registered for, split by upcoming / past
   const allFriendEvents = mockEvents
     .filter(e => friendRegisteredIds.includes(e.id))
-    .map(e => ({ ...e, pastStatus: getPastEventStatus(e.endDate ?? e.startDate) }));
+    .map(e => {
+      const disp = applyFlexConfirmedDates(e, friendFlexDates);
+      return { ...disp, pastStatus: getPastEventStatus(disp.endDate ?? disp.startDate) };
+    });
 
   // Events both the current user AND the friend are registered for
   const commonEvents = allFriendEvents.filter(e => registeredEventIds.includes(e.id));
   const commonEventIds = new Set(commonEvents.map(e => e.id));
 
-  // Friend-only upcoming (not shared with current user)
+  // Friend-only upcoming (not shared with current user); flexible always count as upcoming
   const upcomingFriendEvents = allFriendEvents.filter(e =>
-    e.status !== 'past' && !commonEventIds.has(e.id)
+    e.status !== 'past' && !commonEventIds.has(e.id) &&
+    (e.isFlexibleDate || !e.startDate || new Date(e.startDate) >= new Date())
   );
   // Friend-only past
   const pastFriendEvents = allFriendEvents.filter(e => e.status === 'past');
@@ -8847,7 +8859,7 @@ function FriendProfileView({ friend, onBack, onViewEvent, isLoggedIn }) {
             </h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {commonEvents.map(event => {
-                const fSelIdx = friend.event_date_selections ? friend.event_date_selections[String(event.id)] : undefined;
+                const fSelIdx = friend.event_date_selections?.[String(event.id)];
                 const fSelEntry = (event.category === 'skills-camps' && event.eventDates && fSelIdx !== undefined) ? event.eventDates[fSelIdx] : null;
                 const dispEvent = fSelEntry ? { ...event, startDate: fSelEntry.start_date || fSelEntry.start || event.startDate, endDate: fSelEntry.end_date || fSelEntry.end || null } : event;
                 return <EventCard key={event.id} event={dispEvent} isLoggedIn={isLoggedIn} onEventClick={onViewEvent} origin="friend-profile" />;
@@ -8864,12 +8876,9 @@ function FriendProfileView({ friend, onBack, onViewEvent, isLoggedIn }) {
               {t('upcomingEventsCount')} ({upcomingFriendEvents.length})
             </h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {upcomingFriendEvents.map(event => {
-                const fSelIdx = friend.event_date_selections ? friend.event_date_selections[String(event.id)] : undefined;
-                const fSelEntry = (event.category === 'skills-camps' && event.eventDates && fSelIdx !== undefined) ? event.eventDates[fSelIdx] : null;
-                const dispEvent = fSelEntry ? { ...event, startDate: fSelEntry.start_date || fSelEntry.start || event.startDate, endDate: fSelEntry.end_date || fSelEntry.end || null } : event;
-                return <EventCard key={event.id} event={dispEvent} isLoggedIn={isLoggedIn} onEventClick={onViewEvent} origin="friend-profile" />;
-              })}
+              {upcomingFriendEvents.map(event => (
+                <EventCard key={event.id} event={event} isLoggedIn={isLoggedIn} onEventClick={onViewEvent} origin="friend-profile" />
+              ))}
             </div>
           </div>
         )}
@@ -11246,8 +11255,13 @@ export default function OffroadEventsApp() {
       setRegisteredEventIds(auth.profile.registered_event_ids ?? []);
       setFavoriteEventIds(auth.profile.favorite_event_ids ?? []);
       setEventDateSelections(auth.profile.event_date_selections ?? {});
-      // Load flexible registrations (confirmed dates for on-demand events)
-      fetchFlexibleRegistrations(auth.user.id).then(setFlexibleRegistrations).catch(() => {});
+      // Load confirmed dates from users.flex_confirmed_dates (cross-device, friend-visible)
+      const flexMap = auth.profile.flex_confirmed_dates ?? {};
+      setFlexibleRegistrations(Object.entries(flexMap).map(([event_id, v]) => ({
+        event_id: parseInt(event_id, 10) || event_id,
+        confirmed_start: v?.start ?? null,
+        confirmed_end:   v?.end   ?? null,
+      })));
       // Restore saved language preference from profile (cross-device sync)
       if (auth.profile.preferred_language) {
         setLanguageState(auth.profile.preferred_language);
