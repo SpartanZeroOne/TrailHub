@@ -296,6 +296,27 @@ export const fetchOrganizerById = async (id) => {
     return data;
 };
 
+// ─── FLEXIBLE REGISTRATIONS ───────────────────────────────────────────────────
+export const fetchFlexibleRegistrations = async (userId) => {
+    const { data, error } = await supabase
+        .from('flexible_registrations').select('*').eq('user_id', userId);
+    if (error) return [];
+    return data ?? [];
+};
+export const saveFlexibleRegistration = async (userId, eventId, confirmedStart, confirmedEnd) => {
+    const { data, error } = await supabase
+        .from('flexible_registrations')
+        .upsert([{ user_id: userId, event_id: eventId, confirmed_start: confirmedStart || null, confirmed_end: confirmedEnd || null }])
+        .select().single();
+    if (error) throw error;
+    return data;
+};
+export const deleteFlexibleRegistration = async (userId, eventId) => {
+    const { error } = await supabase
+        .from('flexible_registrations').delete().eq('user_id', userId).eq('event_id', eventId);
+    if (error) throw error;
+};
+
 // ─── STORAGE: AVATAR UPLOAD ───────────────────────────────────────────────────
 export const uploadAvatar = async (userId, file) => {
     const ext = file.name.split('.').pop().toLowerCase();

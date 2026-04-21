@@ -33,7 +33,7 @@ class AppErrorBoundary extends Component {
 }
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { supabase, fetchEvents, fetchFeaturedEvents, fetchEventById, fetchOrganizers, isSupabaseConfigured, uploadAvatar, fetchFriendsWithStatus, fetchIncomingRequests, searchUsers, fetchUserById, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriendship, setHideMyEventsFromFriend, fetchMxTracks } from './services/supabaseClient';
+import { supabase, fetchEvents, fetchFeaturedEvents, fetchEventById, fetchOrganizers, isSupabaseConfigured, uploadAvatar, fetchFriendsWithStatus, fetchIncomingRequests, searchUsers, fetchUserById, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriendship, setHideMyEventsFromFriend, fetchMxTracks, fetchFlexibleRegistrations, saveFlexibleRegistration, deleteFlexibleRegistration } from './services/supabaseClient';
 import { useAuth } from './hooks/useAuth';
 import AuthModal from './components/Auth/AuthModal';
 import PasswordResetModal from './components/Auth/PasswordResetModal';
@@ -557,6 +557,12 @@ const translations = {
     showFlexibleMap: 'Auf Anfrage',
     eventDuration: 'Eventdauer',
     contactOrganizer: 'Veranstalter Kontaktieren',
+    enterConfirmedDates: 'Bestätigte Daten eingeben',
+    confirmedDatesNote: 'Gib die mit dem Veranstalter vereinbarten Daten ein.',
+    confirmedStart: 'Bestätigtes Startdatum',
+    confirmedEnd: 'Bestätigtes Enddatum',
+    skipDates: 'Ohne Datum fortfahren',
+    yourConfirmedDates: 'Dein bestätigter Termin',
   },
   en: {
     // Navigation
@@ -874,6 +880,12 @@ const translations = {
     showFlexibleMap: 'On Demand',
     eventDuration: 'Event Duration',
     contactOrganizer: 'Contact Organizer',
+    enterConfirmedDates: 'Enter Confirmed Dates',
+    confirmedDatesNote: 'Enter the dates you agreed upon with the organizer.',
+    confirmedStart: 'Confirmed Start Date',
+    confirmedEnd: 'Confirmed End Date',
+    skipDates: 'Continue without dates',
+    yourConfirmedDates: 'Your confirmed date',
   },
   fr: {
     // Navigation
@@ -1191,6 +1203,12 @@ const translations = {
     showFlexibleMap: 'Sur demande',
     eventDuration: 'Durée de l\'événement',
     contactOrganizer: 'Contacter l\'organisateur',
+    enterConfirmedDates: 'Entrer les dates confirmées',
+    confirmedDatesNote: 'Entrez les dates convenues avec l\'organisateur.',
+    confirmedStart: 'Date de début confirmée',
+    confirmedEnd: 'Date de fin confirmée',
+    skipDates: 'Continuer sans dates',
+    yourConfirmedDates: 'Votre date confirmée',
   },
   nl: {
     // Navigation
@@ -1509,6 +1527,12 @@ const translations = {
     showFlexibleMap: 'Op aanvraag',
     eventDuration: 'Eventduur',
     contactOrganizer: 'Organisator contacteren',
+    enterConfirmedDates: 'Bevestigde data invoeren',
+    confirmedDatesNote: 'Voer de met de organisator afgesproken datums in.',
+    confirmedStart: 'Bevestigde startdatum',
+    confirmedEnd: 'Bevestigde einddatum',
+    skipDates: 'Doorgaan zonder datums',
+    yourConfirmedDates: 'Jouw bevestigde datum',
   },
 };
 
@@ -1539,6 +1563,10 @@ const UserStateContext = createContext({
   friendsError: null,
   eventDateSelections: {},
   saveEventDateSelection: async () => { },
+  flexibleRegistrations: [],
+  getFlexibleReg: () => null,
+  saveFlexibleReg: async () => { },
+  removeFlexibleReg: async () => { },
 });
 
 // User State hook
@@ -3280,6 +3308,95 @@ function RegistrationConfirmPopup({ onConfirm, onCancel }) {
           <button
             onClick={onCancel}
             className="flex-1 py-3 px-4 bg-stone-800 border border-stone-700 text-stone-300 font-medium rounded-xl text-sm hover:bg-stone-700 transition-all focus:outline-none focus:ring-2 focus:ring-stone-500"
+          >
+            {t('regPopupCancel')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FlexibleDateConfirmPopup({ onConfirm, onSkip, onCancel }) {
+  const { t } = useTranslation();
+  const today = new Date().toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const canConfirm = startDate && endDate && endDate >= startDate;
+
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[300] flex items-center justify-center p-4"
+      onClick={onCancel}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="bg-stone-900 border border-stone-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-white font-semibold text-base">{t('enterConfirmedDates')}</h2>
+            <p className="text-stone-400 text-xs mt-0.5">{t('confirmedDatesNote')}</p>
+          </div>
+        </div>
+
+        {/* Date inputs */}
+        <div className="space-y-3 mb-5">
+          <div>
+            <label className="block text-xs font-medium text-stone-400 mb-1.5">{t('confirmedStart')}</label>
+            <input
+              type="date"
+              value={startDate}
+              min={today}
+              onChange={e => { setStartDate(e.target.value); if (endDate && e.target.value > endDate) setEndDate(''); }}
+              className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm focus:outline-none focus:border-amber-500/60 transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-stone-400 mb-1.5">{t('confirmedEnd')}</label>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate || today}
+              onChange={e => setEndDate(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm focus:outline-none focus:border-amber-500/60 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => canConfirm && onConfirm(startDate, endDate)}
+            disabled={!canConfirm}
+            className="w-full py-3 px-4 bg-gradient-to-r from-[#FF9500] to-[#FF6B00] text-white font-semibold rounded-xl text-sm shadow-md hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-orange-500"
+            autoFocus
+          >
+            {t('enterConfirmedDates')} →
+          </button>
+          <button
+            onClick={onSkip}
+            className="w-full py-2.5 px-4 bg-stone-800 border border-stone-700 text-stone-400 font-medium rounded-xl text-sm hover:bg-stone-700 hover:text-stone-300 transition-all"
+          >
+            {t('skipDates')}
+          </button>
+          <button
+            onClick={onCancel}
+            className="w-full py-2 text-stone-600 text-xs hover:text-stone-400 transition-colors"
           >
             {t('regPopupCancel')}
           </button>
@@ -7402,7 +7519,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
 // Profile Dashboard - Mein Offroad-Dashboard
 function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, setCurrentView, userPreferredDiscipline = 'none', onPreferredDisciplineChange, activeTab, onActiveTabChange }) {
   const { t, language } = useTranslation();
-  const { registeredEventIds, favoriteEventIds, userProfile, setUserProfile, saveProfile, eventDateSelections } = useUserState();
+  const { registeredEventIds, favoriteEventIds, userProfile, setUserProfile, saveProfile, eventDateSelections, getFlexibleReg } = useUserState();
   const auth = useAuth();
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -7603,7 +7720,8 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
   // Upcoming = registered events that are in the future and not marked as past
   const upcomingEvents = registeredEvents.filter(e => {
     if (e.status === 'past') return false;
-    return new Date(e.startDate) >= new Date();
+    if (e.isFlexibleDate) return true; // flexible events always appear in upcoming
+    return !e.startDate || new Date(e.startDate) >= new Date();
   });
 
   // Tab content renderers
@@ -7620,13 +7738,24 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
             {upcomingEvents.map(event => {
               const selIdx = eventDateSelections[String(event.id)];
               const selEntry = (event.category === 'skills-camps' && event.eventDates && selIdx !== undefined) ? event.eventDates[selIdx] : null;
-              const dispEvent = selEntry ? { ...event, startDate: selEntry.start_date || selEntry.start || event.startDate, endDate: selEntry.end_date || selEntry.end || null } : event;
+              // For flexible events: use user-confirmed dates if available
+              const flexReg = event.isFlexibleDate ? getFlexibleReg(event.id) : null;
+              const dispEvent = flexReg?.confirmed_start
+                ? { ...event, startDate: flexReg.confirmed_start, endDate: flexReg.confirmed_end, isFlexibleDate: false }
+                : selEntry
+                  ? { ...event, startDate: selEntry.start_date || selEntry.start || event.startDate, endDate: selEntry.end_date || selEntry.end || null }
+                  : event;
               return (
                 <div key={event.id} className="relative">
                   <EventCard event={dispEvent} isLoggedIn={isLoggedIn} onEventClick={onViewEvent} origin="profile" />
                   <div className="absolute top-14 right-3 px-2 py-1 bg-emerald-500 text-white text-xs font-bold rounded shadow-lg">
                     {t('registered')}
                   </div>
+                  {event.isFlexibleDate && flexReg?.confirmed_start && (
+                    <div className="absolute bottom-16 left-3 right-3 px-2 py-1 bg-amber-500/20 border border-amber-500/30 rounded text-amber-400 text-[10px] font-medium text-center">
+                      {t('yourConfirmedDates')}: {formatDateRange(flexReg.confirmed_start, flexReg.confirmed_end)}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -9411,7 +9540,7 @@ function Footer({ setCurrentView, onCategoryClick }) {
 // Event Detail Page
 function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, setCurrentView, onViewFriend, onCategoryClick }) {
   const { t, language } = useTranslation();
-  const { isRegistered, isFavorite, toggleRegistration, toggleFavorite, friendsPerEvent, eventDateSelections, saveEventDateSelection } = useUserState();
+  const { isRegistered, isFavorite, toggleRegistration, toggleFavorite, friendsPerEvent, eventDateSelections, saveEventDateSelection, getFlexibleReg, saveFlexibleReg, removeFlexibleReg } = useUserState();
 
   // Enrich event data on mount: if coordinates or AI summaries are missing (e.g. when
   // navigating from FeaturedEvents with a partial object), fetch the full record from Supabase.
@@ -9423,11 +9552,44 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
   const [showOrganizerPopup, setShowOrganizerPopup] = useState(false);
   const [shareStatus, setShareStatus] = useState(null); // null, 'copied', 'shared'
   const [pendingRegId, setPendingRegId] = useState(null);
+  const [showFlexDatePopup, setShowFlexDatePopup] = useState(false);
+  const [pendingFlexDates, setPendingFlexDates] = useState(null); // {start, end} | null
 
   const handleRegClick = () => {
-    if (isRegistered(event.id)) { toggleRegistration(event.id); return; }
+    if (isRegistered(event.id)) {
+      toggleRegistration(event.id);
+      if (event.isFlexibleDate) removeFlexibleReg(event.id);
+      return;
+    }
+    if (event.isFlexibleDate) {
+      setPendingRegId(event.id);
+      setShowFlexDatePopup(true);
+      return;
+    }
     if (localStorage.getItem(REG_POPUP_KEY) === 'true') { toggleRegistration(event.id); return; }
     setPendingRegId(event.id);
+  };
+
+  const handleFlexDateConfirm = (start, end) => {
+    setPendingFlexDates({ start, end });
+    setShowFlexDatePopup(false);
+    // Skip standard popup if user dismissed it before, otherwise show it
+    if (localStorage.getItem(REG_POPUP_KEY) === 'true') {
+      toggleRegistration(event.id);
+      saveFlexibleReg(event.id, start, end);
+      setPendingRegId(null);
+    }
+    // else pendingRegId is already set → RegistrationConfirmPopup renders
+  };
+
+  const handleFlexDateSkip = () => {
+    setPendingFlexDates(null);
+    setShowFlexDatePopup(false);
+    if (localStorage.getItem(REG_POPUP_KEY) === 'true') {
+      toggleRegistration(event.id);
+      setPendingRegId(null);
+    }
+    // else RegistrationConfirmPopup renders
   };
 
   // ── Multi-date selector state ──────────────────────────────────────────────
@@ -9943,14 +10105,25 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
                 <span>{t('registered')}</span>
               </button>
             )}
-            {pendingRegId !== null && (
+            {showFlexDatePopup && (
+              <FlexibleDateConfirmPopup
+                onConfirm={handleFlexDateConfirm}
+                onSkip={handleFlexDateSkip}
+                onCancel={() => { setShowFlexDatePopup(false); setPendingRegId(null); }}
+              />
+            )}
+            {!showFlexDatePopup && pendingRegId !== null && (
               <RegistrationConfirmPopup
                 onConfirm={(dontShow) => {
                   if (dontShow) localStorage.setItem(REG_POPUP_KEY, 'true');
                   toggleRegistration(pendingRegId);
+                  if (pendingFlexDates) {
+                    saveFlexibleReg(pendingRegId, pendingFlexDates.start, pendingFlexDates.end);
+                    setPendingFlexDates(null);
+                  }
                   setPendingRegId(null);
                 }}
-                onCancel={() => setPendingRegId(null)}
+                onCancel={() => { setPendingRegId(null); setPendingFlexDates(null); }}
               />
             )}
 
@@ -10923,6 +11096,7 @@ export default function OffroadEventsApp() {
   const [registeredEventIds, setRegisteredEventIds] = useState([]);
   const [favoriteEventIds, setFavoriteEventIds] = useState([]);
   const [eventDateSelections, setEventDateSelections] = useState({});
+  const [flexibleRegistrations, setFlexibleRegistrations] = useState([]); // [{event_id, confirmed_start, confirmed_end}]
 
   // Friends state
   const [friends, setFriends] = useState([]);
@@ -11072,6 +11246,8 @@ export default function OffroadEventsApp() {
       setRegisteredEventIds(auth.profile.registered_event_ids ?? []);
       setFavoriteEventIds(auth.profile.favorite_event_ids ?? []);
       setEventDateSelections(auth.profile.event_date_selections ?? {});
+      // Load flexible registrations (confirmed dates for on-demand events)
+      fetchFlexibleRegistrations(auth.user.id).then(setFlexibleRegistrations).catch(() => {});
       // Restore saved language preference from profile (cross-device sync)
       if (auth.profile.preferred_language) {
         setLanguageState(auth.profile.preferred_language);
@@ -11081,6 +11257,7 @@ export default function OffroadEventsApp() {
       setRegisteredEventIds([]);
       setFavoriteEventIds([]);
       setEventDateSelections({});
+      setFlexibleRegistrations([]);
     }
   }, [auth.profile, auth.user]);
 
@@ -11110,6 +11287,24 @@ export default function OffroadEventsApp() {
 
   const isRegistered = (eventId) => registeredEventIds.includes(eventId);
   const isFavorite = (eventId) => favoriteEventIds.includes(eventId);
+
+  const getFlexibleReg = (eventId) => flexibleRegistrations.find(r => String(r.event_id) === String(eventId)) ?? null;
+
+  const saveFlexibleReg = async (eventId, confirmedStart, confirmedEnd) => {
+    if (!auth.user) return;
+    const rec = { event_id: eventId, confirmed_start: confirmedStart || null, confirmed_end: confirmedEnd || null };
+    setFlexibleRegistrations(prev => {
+      const filtered = prev.filter(r => String(r.event_id) !== String(eventId));
+      return [...filtered, rec];
+    });
+    try { await saveFlexibleRegistration(auth.user.id, eventId, confirmedStart, confirmedEnd); } catch (e) { console.error('[TrailHub] saveFlexibleReg:', e); }
+  };
+
+  const removeFlexibleReg = async (eventId) => {
+    if (!auth.user) return;
+    setFlexibleRegistrations(prev => prev.filter(r => String(r.event_id) !== String(eventId)));
+    try { await deleteFlexibleRegistration(auth.user.id, eventId); } catch (e) { console.error('[TrailHub] removeFlexibleReg:', e); }
+  };
 
   const saveProfile = async (updates) => {
     if (auth.user) {
@@ -11166,6 +11361,10 @@ export default function OffroadEventsApp() {
     loadFriends,
     friendsPerEvent,
     friendsError,
+    flexibleRegistrations,
+    getFlexibleReg,
+    saveFlexibleReg,
+    removeFlexibleReg,
   };
 
   const handleCategoryClick = (categoryId) => {
