@@ -554,7 +554,8 @@ const translations = {
     flexibleDateLabel: 'Nach Vereinbarung',
     flexibleFilterLabel: 'Flexibel',
     requestDateBtn: 'Termin anfragen',
-    showFlexibleMap: 'On Demand',
+    showFlexibleMap: 'Auf Anfrage',
+    eventDuration: 'Eventdauer',
   },
   en: {
     // Navigation
@@ -870,6 +871,7 @@ const translations = {
     flexibleFilterLabel: 'Flexible',
     requestDateBtn: 'Request Date',
     showFlexibleMap: 'On Demand',
+    eventDuration: 'Event Duration',
   },
   fr: {
     // Navigation
@@ -1185,6 +1187,7 @@ const translations = {
     flexibleFilterLabel: 'Flexible',
     requestDateBtn: 'Demander une date',
     showFlexibleMap: 'Sur demande',
+    eventDuration: 'Durée de l\'événement',
   },
   nl: {
     // Navigation
@@ -1501,6 +1504,7 @@ const translations = {
     flexibleFilterLabel: 'Flexibel',
     requestDateBtn: 'Datum aanvragen',
     showFlexibleMap: 'Op aanvraag',
+    eventDuration: 'Eventduur',
   },
 };
 
@@ -6697,13 +6701,16 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
         const label = config?.label?.charAt(0) || 'E';
         const isFav = isFavorite(event.id);
         const isReg = isRegistered(event.id);
+        const pinInner = event.isFlexibleDate
+          ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          : `<span style="color:white;font-size:12px;font-weight:700;">${label}</span>`;
         const el = document.createElement('div');
         el.className = 'marker';
         el.style.cursor = 'pointer';
         el.innerHTML = `
           <div style="display:flex;flex-direction:column;align-items:center;">
             <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${color};border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.35);position:relative;">
-              <span style="color:white;font-size:12px;font-weight:700;">${label}</span>
+              ${pinInner}
               ${isFav ? '<div style="position:absolute;top:-2px;right:-2px;width:12px;height:12px;background:#ef4444;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid white;"><span style="color:white;font-size:6px;">♥</span></div>' : ''}
               ${isReg ? '<div style="position:absolute;bottom:-2px;left:-2px;width:12px;height:12px;background:#22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid white;"><span style="color:white;font-size:8px;font-weight:700;line-height:1;">+</span></div>' : ''}
             </div>
@@ -6880,7 +6887,15 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 {event.isFlexibleDate ? (
-                  <span className="text-amber-400 font-medium">{t('flexibleDateLabel')}</span>
+                  <>
+                    <span className="text-amber-400 font-medium">{t('flexibleDateLabel')}</span>
+                    {event.flexibleDateInfo && (
+                      <>
+                        <span className="text-stone-600">•</span>
+                        <span className="text-stone-400">{event.flexibleDateInfo}</span>
+                      </>
+                    )}
+                  </>
                 ) : (
                   <>
                     <span>{formatDateRange(event.startDate, event.endDate)}</span>
