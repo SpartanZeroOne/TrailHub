@@ -629,7 +629,7 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                     ...f,
                     is_flexible_date: v,
                     booking_type: v ? 'flexible' : 'fixed',
-                    ...(v ? { start_date: '', end_date: '' } : {}),
+                    ...(v ? { start_date: null, end_date: null } : {}),
                   }));
                 }}
                 label=""

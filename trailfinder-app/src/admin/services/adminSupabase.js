@@ -108,6 +108,11 @@ function normalizeEventPayload(form) {
       .replace(/[äöüß]/g, c => ({ ä:'ae', ö:'oe', ü:'ue', ß:'ss' }[c] || c))
       .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
+  // Flexible events must have null dates — never send an empty string to a date column
+  if (p.is_flexible_date) {
+    p.start_date = null;
+    p.end_date = null;
+  }
   // Only keep fields that exist in the DB schema (whitelist approach)
   const payload = {};
   for (const key of EVENTS_DB_COLUMNS) {
