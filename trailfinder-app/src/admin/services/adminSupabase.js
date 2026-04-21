@@ -1,26 +1,90 @@
 // ─── TrailHub Admin – Supabase Service Layer ──────────────────────────────────
 import { supabase } from '../../services/supabaseClient';
 
+// ─── COMPUTED STATUS ──────────────────────────────────────────────────────────
+// Statuses that are not date-driven and must never be auto-overridden.
+const DATE_IMMUNE_STATUSES = new Set(['permanent', 'cancelled', 'sold_out']);
+
+// Overrides status → 'past' for any event whose effective end date has passed.
+// When writeBack=true, stale records are batch-updated in the DB (fire-and-forget).
+function applyComputedStatus(events, { writeBack = false } = {}) {
+  const today = new Date().toISOString().split('T')[0];
+  const staleIds = [];
+
+  const result = events.map(event => {
+    if (event.status === 'past' || DATE_IMMUNE_STATUSES.has(event.status) || event.is_flexible_date) {
+      return event;
+    }
+    const effectiveDate = event.end_date ?? event.start_date;
+    if (effectiveDate && effectiveDate < today) {
+      if (writeBack && event.status !== 'past') staleIds.push(event.id);
+      return { ...event, status: 'past' };
+    }
+    return event;
+  });
+
+  if (writeBack && staleIds.length > 0) {
+    supabase.from('events').update({ status: 'past' }).in('id', staleIds)
+      .then(() => {}).catch(() => {});
+  }
+
+  return result;
+}
+
+// Proactively finds and writes back all events whose end_date has passed
+// but whose DB status is not yet 'past'. Call on page mount (fire-and-forget).
+// Returns the number of records updated.
+export const adminSyncExpiredEvents = async () => {
+  const today = new Date().toISOString().split('T')[0];
+  const { data } = await supabase.from('events')
+    .select('id')
+    .not('status', 'in', '(past,permanent,cancelled,sold_out)')
+    .not('is_flexible_date', 'is', true)
+    .or(`end_date.lt.${today},and(end_date.is.null,start_date.lt.${today})`);
+  if (!data || data.length === 0) return 0;
+  const ids = data.map(e => e.id);
+  await supabase.from('events').update({ status: 'past' }).in('id', ids);
+  return ids.length;
+};
+
 // ─── EVENTS ───────────────────────────────────────────────────────────────────
 
 export const adminFetchEvents = async ({
   page = 1, perPage = 25, category, status, organizerId, search, sortBy = 'start_date', sortDir = 'asc',
-  excludeStatuses = [],
 } = {}) => {
+  const today = new Date().toISOString().split('T')[0];
   let q = supabase.from('events').select('*, organizers(id, name)', { count: 'exact' });
 
   if (category)    q = q.eq('category', category);
   if (status)      q = q.eq('status', status);
   if (organizerId) q = q.eq('organizer_id', organizerId);
   if (search)      q = q.or(`name.ilike.%${search}%,location.ilike.%${search}%`);
-  for (const s of excludeStatuses) q = q.neq('status', s);
+
+  // When no explicit status filter: exclude past events and date-expired events at DB level.
+  // Show an event only when one of these conditions holds:
+  //   1. Status is non-date-driven (permanent / cancelled / sold_out)
+  //   2. It is a flexible/on-demand event (no fixed date)
+  //   3. Its end_date is today or later (active multi-day event)
+  //   4. It is a single-day event (end_date IS NULL) with start_date today or later
+  //   5. Both dates are NULL (edge case – don't hide)
+  if (!status) {
+    q = q.neq('status', 'past');
+    q = q.or(
+      `status.in.(permanent,cancelled,sold_out),` +
+      `is_flexible_date.eq.true,` +
+      `end_date.gte.${today},` +
+      `and(end_date.is.null,start_date.gte.${today}),` +
+      `and(end_date.is.null,start_date.is.null)`
+    );
+  }
 
   q = q.order(sortBy, { ascending: sortDir === 'asc' });
   q = q.range((page - 1) * perPage, page * perPage - 1);
 
   const { data, error, count } = await q;
   if (error) throw error;
-  return { data: data ?? [], count: count ?? 0 };
+  // Apply computed status as a safety net and persist any stragglers to DB
+  return { data: applyComputedStatus(data ?? [], { writeBack: true }), count: count ?? 0 };
 };
 
 export const adminFetchEventById = async (id) => {
@@ -253,16 +317,24 @@ export const adminFetchDashboardStats = async () => {
 export const adminFetchArchivedEvents = async ({
   page = 1, perPage = 25, category, search, sortBy = 'end_date', sortDir = 'desc',
 } = {}) => {
+  const today = new Date().toISOString().split('T')[0];
+  // Include both explicitly-past events AND date-expired events that haven't been
+  // written back yet (ensures archive is complete even before the write-back runs).
   let q = supabase.from('events')
     .select('*, organizers(id, name)', { count: 'exact' })
-    .eq('status', 'past');
+    .or(
+      `status.eq.past,` +
+      `and(is_flexible_date.neq.true,end_date.lt.${today},status.not.in.(past,permanent,cancelled,sold_out)),` +
+      `and(is_flexible_date.neq.true,end_date.is.null,start_date.lt.${today},status.not.in.(past,permanent,cancelled,sold_out))`
+    );
   if (category) q = q.eq('category', category);
   if (search)   q = q.or(`name.ilike.%${search}%,location.ilike.%${search}%`);
   q = q.order(sortBy, { ascending: sortDir === 'asc' });
   q = q.range((page - 1) * perPage, page * perPage - 1);
   const { data, error, count } = await q;
   if (error) throw error;
-  return { data: data ?? [], count: count ?? 0 };
+  // Apply computed status + persist any stragglers that weren't written back yet
+  return { data: applyComputedStatus(data ?? [], { writeBack: true }), count: count ?? 0 };
 };
 
 export const adminRenewEvent = async (eventId) => {

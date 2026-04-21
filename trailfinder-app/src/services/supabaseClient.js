@@ -30,6 +30,18 @@ export const getCurrentUser = async () => {
     return user;
 };
 
+// ─── COMPUTED STATUS (client-side, display-only) ──────────────────────────────
+const DATE_IMMUNE = new Set(['permanent', 'cancelled', 'sold_out']);
+function applyComputedStatus(events) {
+  const today = new Date().toISOString().split('T')[0];
+  return events.map(event => {
+    if (event.status === 'past' || DATE_IMMUNE.has(event.status) || event.is_flexible_date) return event;
+    const effectiveDate = event.end_date ?? event.start_date;
+    if (effectiveDate && effectiveDate < today) return { ...event, status: 'past' };
+    return event;
+  });
+}
+
 // ─── EVENTS ───────────────────────────────────────────────────────────────────
 export const fetchEvents = async ({ category, status } = {}) => {
     let query = supabase.from('events')
@@ -39,7 +51,7 @@ export const fetchEvents = async ({ category, status } = {}) => {
     if (status) query = query.eq('status', status);
     const { data, error } = await query;
     if (error) throw error;
-    return data ?? [];
+    return applyComputedStatus(data ?? []);
 };
 export const fetchFeaturedEvents = async ({ limit = 8 } = {}) => {
     const { data, error } = await supabase

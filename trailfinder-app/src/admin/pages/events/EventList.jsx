@@ -1,7 +1,7 @@
 // ─── TrailHub Admin – Event List ──────────────────────────────────────────────
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { adminFetchEvents, adminBulkUpdateEvents, adminBulkDeleteEvents, adminFetchArchivedEvents } from '../../services/adminSupabase';
+import { adminFetchEvents, adminBulkUpdateEvents, adminBulkDeleteEvents, adminFetchArchivedEvents, adminSyncExpiredEvents } from '../../services/adminSupabase';
 import { CATEGORIES, STATUS_OPTIONS, ITEMS_PER_PAGE_OPTIONS } from '../../utils/adminConfig';
 
 const CATEGORY_LABELS = {
@@ -83,7 +83,6 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
         status: filters.status || undefined,
         organizerId: filters.organizerId || undefined,
         search: filters.search || undefined,
-        excludeStatuses: !filters.status ? ['past'] : [],
       });
       setEvents(data);
       setTotal(count);
@@ -96,6 +95,11 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
   }, [page, perPage, sortBy, sortDir, filters]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    // Proactively write back any events whose dates have passed since last admin visit
+    adminSyncExpiredEvents().catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (filters.status) { setRecentPast([]); setPastTotal(0); return; }
