@@ -616,10 +616,41 @@ export default function EventForm({ eventId, onNavigate, toast }) {
           <div className="space-y-5">
             <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionDateTime')}</h2>
 
-            {/* Flexible date toggle */}
-            <div className="px-4 py-3 rounded-xl bg-amber-500/8 border border-amber-500/20 flex items-center justify-between gap-4">
+            {/* Date fields — always visible, greyed out when flexible */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Field label={t('eventForm.startDate')} required={!form.is_flexible_date} error={errors.start_date} hint={t('eventForm.startDateHint')}>
+                <Input
+                  type="date"
+                  value={form.start_date}
+                  onChange={v => setField('start_date', v)}
+                  placeholder={t('eventForm.startDatePlaceholder')}
+                  disabled={form.is_flexible_date}
+                />
+              </Field>
+              <Field label={t('eventForm.endDate')} error={errors.end_date} hint={t('eventForm.endDateHint')}>
+                <Input
+                  type="date"
+                  value={form.end_date}
+                  onChange={v => setField('end_date', v)}
+                  placeholder="2026-08-22"
+                  disabled={form.is_flexible_date}
+                />
+              </Field>
+            </div>
+
+            {!form.is_flexible_date && daysBetween !== null && (
+              <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span className="text-orange-300 text-sm font-medium">{t('eventForm.duration', { days: daysBetween })}</span>
+              </div>
+            )}
+
+            {/* Flexible date toggle — plain inline row */}
+            <div className="flex items-center justify-between gap-4 pt-1">
               <div>
-                <p className="text-sm font-medium text-amber-300">{t('eventForm.flexibleDate')}</p>
+                <p className="text-sm font-medium text-stone-300">{t('eventForm.flexibleDate')}</p>
                 <p className="text-xs text-stone-500 mt-0.5">{t('eventForm.flexibleDateHint')}</p>
               </div>
               <Toggle
@@ -636,53 +667,35 @@ export default function EventForm({ eventId, onNavigate, toast }) {
               />
             </div>
 
-            {form.is_flexible_date ? (
-              <Field label={t('eventForm.eventDurationLabel')} hint={t('eventForm.eventDurationHint')}>
+            {/* Duration dropdown — only shown when flexible */}
+            {form.is_flexible_date && (
+              <Field label={t('eventForm.eventDurationLabel')}>
                 <Select
                   value={form.flexible_date_info}
                   onChange={v => setField('flexible_date_info', v)}
                   placeholder={t('eventForm.eventDurationPlaceholder')}
                   options={[
-                    { value: '1', label: t('eventForm.day1') },
-                    { value: '2', label: `2 ${t('eventForm.days')}` },
-                    { value: '3', label: `3 ${t('eventForm.days')}` },
-                    { value: '4', label: `4 ${t('eventForm.days')}` },
-                    { value: '5', label: `5 ${t('eventForm.days')}` },
-                    { value: '6', label: `6 ${t('eventForm.days')}` },
-                    { value: '7+', label: t('eventForm.days7plus') },
+                    { value: '1',   label: t('eventForm.day1') },
+                    { value: '2',   label: `2 ${t('eventForm.days')}` },
+                    { value: '3',   label: `3 ${t('eventForm.days')}` },
+                    { value: '4',   label: `4 ${t('eventForm.days')}` },
+                    { value: '5',   label: `5 ${t('eventForm.days')}` },
+                    { value: '6',   label: `6 ${t('eventForm.days')}` },
+                    { value: '7',   label: `7 ${t('eventForm.days')}` },
+                    { value: '8',   label: `8 ${t('eventForm.days')}` },
+                    { value: '9',   label: `9 ${t('eventForm.days')}` },
+                    { value: '10',  label: `10 ${t('eventForm.days')}` },
+                    { value: '11',  label: `11 ${t('eventForm.days')}` },
+                    { value: '12',  label: `12 ${t('eventForm.days')}` },
+                    { value: '13',  label: `13 ${t('eventForm.days')}` },
+                    { value: '14',  label: `14 ${t('eventForm.days')}` },
+                    { value: '15+', label: t('eventForm.days15plus') },
                   ]}
                 />
               </Field>
-            ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Field label={t('eventForm.startDate')} required error={errors.start_date} hint={t('eventForm.startDateHint')}>
-                <Input
-                  type="date"
-                  value={form.start_date}
-                  onChange={v => setField('start_date', v)}
-                  placeholder={t('eventForm.startDatePlaceholder')}
-                />
-              </Field>
-              <Field label={t('eventForm.endDate')} error={errors.end_date} hint={t('eventForm.endDateHint')}>
-                <Input
-                  type="date"
-                  value={form.end_date}
-                  onChange={v => setField('end_date', v)}
-                  placeholder="2026-08-22"
-                />
-              </Field>
-            </div>
-            )}
-            {!form.is_flexible_date && daysBetween !== null && (
-              <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span className="text-orange-300 text-sm font-medium">{t('eventForm.duration', { days: daysBetween })}</span>
-              </div>
             )}
 
-            {/* ── Verfügbare Termine (Skills-Camps & Adventure Trips) ── */}
+            {/* ── Weiteres Datum hinzufügen (Skills-Camps & Adventure Trips) ── */}
             {!form.is_flexible_date && (form.category === 'skills-camps' || form.category === 'adventure-trips') && (
               <div className="mt-2 p-5 rounded-xl border border-orange-500/20 bg-orange-500/5 space-y-4">
                 <div className="flex items-center gap-2">

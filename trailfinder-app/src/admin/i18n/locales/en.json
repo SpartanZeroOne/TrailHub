@@ -169,7 +169,7 @@
     "endDateHint": "Leave empty for single-day events",
     "endDatePlaceholder": "2026-08-22",
     "duration": "Duration: {{days}} day(s)",
-    "availableDates": "Available Dates",
+    "availableDates": "Add Additional Date",
     "addDate": "+ Add Date",
     "noDates": "No dates added yet",
     "removeDate": "Remove",
@@ -245,7 +245,7 @@
     "eventDurationPlaceholder": "Select duration",
     "day1": "1 Day",
     "days": "Days",
-    "days7plus": "7+ Days"
+    "days15plus": "15+ Days"
   },
   "organizers": {
     "title": "Organizers",

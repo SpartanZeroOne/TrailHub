@@ -2625,7 +2625,8 @@ function calculateDuration(start, end, t = null) {
 
 function formatFlexibleDuration(value, t) {
   if (!value) return null;
-  if (value === '7+') return t ? `7+ ${t('days')}` : '7+ Tage';
+  if (value === '15+') return t ? `15+ ${t('days')}` : '15+ Tage';
+  if (value === '7+')  return t ? `7+ ${t('days')}` : '7+ Tage'; // legacy
   const n = parseInt(value, 10);
   if (!isNaN(n)) return n === 1 ? (t ? t('day1') : '1 Tag') : `${n} ${t ? t('days') : 'Tage'}`;
   return value; // legacy free-text fallback
