@@ -1,6 +1,7 @@
 // ─── TrailHub Admin – Dashboard ───────────────────────────────────────────────
 import { useState, useEffect } from 'react';
-import { adminFetchDashboardStats, adminFetchEventsByCategory, adminFetchEventsPerMonth } from '../services/adminSupabase';
+import { useTranslation } from 'react-i18next';
+import { adminFetchDashboardStats, adminFetchEventsByCategory, adminFetchEventsPerMonth, adminFetchPastEvents } from '../services/adminSupabase';
 
 const CATEGORY_LABELS = {
   'trail-adventures': 'Trail Adventures',
@@ -123,7 +124,8 @@ function MetricCard({ label, value, icon, color = 'orange', subtext, onClick }) 
 }
 
 // ─── Activity Feed ────────────────────────────────────────────────────────────
-function ActivityFeed({ events }) {
+function ActivityFeed({ events, onNavigate }) {
+  const { t } = useTranslation();
   const catColors = {
     'trail-adventures': 'bg-orange-500',
     'rallyes': 'bg-yellow-500',
@@ -133,23 +135,67 @@ function ActivityFeed({ events }) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {events.map(e => (
-        <div key={e.id} className="flex items-center gap-3">
+        <button
+          key={e.id}
+          onClick={() => onNavigate(`/admin/events/${e.id}/edit`)}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-stone-800 transition-colors text-left group"
+        >
           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${catColors[e.category] ?? 'bg-stone-500'}`} />
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-stone-300 truncate">{e.name}</p>
+            <p className="text-sm text-stone-300 truncate group-hover:text-stone-100 transition-colors">{e.name}</p>
             <p className="text-xs text-stone-500">{CATEGORY_LABELS[e.category] ?? e.category}</p>
           </div>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
+          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
             e.status === 'upcoming' ? 'bg-green-500/15 text-green-400' :
             e.status === 'past' ? 'bg-stone-700 text-stone-400' :
             'bg-blue-500/15 text-blue-400'
           }`}>{e.status}</span>
-        </div>
+        </button>
       ))}
       {events.length === 0 && (
-        <p className="text-stone-600 text-sm text-center py-4">Keine Aktivitäten</p>
+        <p className="text-stone-600 text-sm text-center py-4">{t('dashboard.noActivity')}</p>
+      )}
+    </div>
+  );
+}
+
+// ─── Past Events Feed ─────────────────────────────────────────────────────────
+function PastEventsFeed({ events, onNavigate }) {
+  const { t, i18n } = useTranslation();
+  const catColors = {
+    'trail-adventures': 'bg-orange-500',
+    'rallyes': 'bg-yellow-500',
+    'adventure-trips': 'bg-green-500',
+    'skills-camps': 'bg-blue-500',
+    'offroad-festivals': 'bg-purple-500',
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '–';
+    return new Date(dateStr).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  return (
+    <div className="space-y-2">
+      {events.map(e => (
+        <button
+          key={e.id}
+          onClick={() => onNavigate(`/admin/events/${e.id}/edit`)}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-stone-800 transition-colors text-left group"
+        >
+          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${catColors[e.category] ?? 'bg-stone-500'}`} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-stone-300 truncate group-hover:text-stone-100 transition-colors">{e.name}</p>
+            <p className="text-xs text-stone-500">{CATEGORY_LABELS[e.category] ?? e.category}</p>
+          </div>
+          <span className="text-xs text-stone-500 flex-shrink-0">{formatDate(e.end_date ?? e.start_date)}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-stone-700 text-stone-400 flex-shrink-0">past</span>
+        </button>
+      ))}
+      {events.length === 0 && (
+        <p className="text-stone-600 text-sm text-center py-4">{t('dashboard.noPastEvents')}</p>
       )}
     </div>
   );
@@ -157,9 +203,11 @@ function ActivityFeed({ events }) {
 
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 export default function Dashboard({ onNavigate, toast }) {
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [catData, setCatData] = useState([]);
   const [monthData, setMonthData] = useState([]);
+  const [pastEvents, setPastEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -168,13 +216,14 @@ export default function Dashboard({ onNavigate, toast }) {
       adminFetchDashboardStats(),
       adminFetchEventsByCategory(),
       adminFetchEventsPerMonth(),
-    ]).then(([s, c, m]) => {
+      adminFetchPastEvents(10),
+    ]).then(([s, c, m, p]) => {
       setStats(s);
       setCatData(c);
-      // Show last 8 months
       setMonthData(m.slice(-8));
+      setPastEvents(p);
     }).catch(err => {
-      toast?.error('Fehler beim Laden: ' + err.message);
+      toast?.error(t('common.error') + ': ' + err.message);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -183,7 +232,7 @@ export default function Dashboard({ onNavigate, toast }) {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"/>
-          <p className="text-stone-400 text-sm">Dashboard wird geladen...</p>
+          <p className="text-stone-400 text-sm">{t('dashboard.loading')}</p>
         </div>
       </div>
     );
@@ -194,8 +243,8 @@ export default function Dashboard({ onNavigate, toast }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-100">Dashboard</h1>
-          <p className="text-stone-500 text-sm mt-1">TrailHub Admin Übersicht</p>
+          <h1 className="text-2xl font-bold text-stone-100">{t('dashboard.title')}</h1>
+          <p className="text-stone-500 text-sm mt-1">{t('dashboard.subtitle')}</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -205,7 +254,7 @@ export default function Dashboard({ onNavigate, toast }) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
             </svg>
-            Event erstellen
+            {t('dashboard.createEvent')}
           </button>
           <button
             onClick={() => onNavigate('/admin/csv-import')}
@@ -214,7 +263,7 @@ export default function Dashboard({ onNavigate, toast }) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
             </svg>
-            CSV Import
+            {t('dashboard.csvImport')}
           </button>
         </div>
       </div>
@@ -222,10 +271,10 @@ export default function Dashboard({ onNavigate, toast }) {
       {/* Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          label="Gesamt Events"
+          label={t('dashboard.totalEvents')}
           value={stats?.totalEvents}
           color="orange"
-          subtext={`${stats?.upcomingEvents ?? 0} upcoming`}
+          subtext={`${stats?.upcomingEvents ?? 0} ${t('dashboard.upcomingSubtext')}`}
           onClick={() => onNavigate('/admin/events')}
           icon={
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,10 +283,10 @@ export default function Dashboard({ onNavigate, toast }) {
           }
         />
         <MetricCard
-          label="Aktive User"
+          label={t('dashboard.activeUsers')}
           value={stats?.totalUsers}
           color="blue"
-          subtext="Registrierte Nutzer"
+          subtext={t('dashboard.registeredUsers')}
           onClick={() => onNavigate('/admin/users')}
           icon={
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,10 +295,10 @@ export default function Dashboard({ onNavigate, toast }) {
           }
         />
         <MetricCard
-          label="Organizer"
+          label={t('dashboard.organizerLabel')}
           value={stats?.totalOrganizers}
           color="green"
-          subtext="Aktive Veranstalter"
+          subtext={t('dashboard.activeOrganizers')}
           onClick={() => onNavigate('/admin/organizers')}
           icon={
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,10 +307,10 @@ export default function Dashboard({ onNavigate, toast }) {
           }
         />
         <MetricCard
-          label="Upcoming Events"
+          label={t('dashboard.upcomingEvents')}
           value={stats?.upcomingEvents}
           color="purple"
-          subtext="Bevorstehende Events"
+          subtext={t('dashboard.upcomingEventsSubtext')}
           onClick={() => onNavigate('/admin/events?status=upcoming')}
           icon={
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,15 +322,12 @@ export default function Dashboard({ onNavigate, toast }) {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Events per Month */}
         <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
-          <h2 className="text-stone-200 font-semibold mb-4">Events pro Monat</h2>
+          <h2 className="text-stone-200 font-semibold mb-4">{t('dashboard.eventsPerMonth')}</h2>
           <BarChart data={monthData} labelKey="month" valueKey="count" color="#f97316" />
         </div>
-
-        {/* Events by Category */}
         <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
-          <h2 className="text-stone-200 font-semibold mb-4">Events nach Kategorie</h2>
+          <h2 className="text-stone-200 font-semibold mb-4">{t('dashboard.eventsByCategory')}</h2>
           <DonutChart data={catData} />
         </div>
       </div>
@@ -289,20 +335,31 @@ export default function Dashboard({ onNavigate, toast }) {
       {/* Recent Activity */}
       <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-stone-200 font-semibold">Zuletzt hinzugefügte Events</h2>
+          <h2 className="text-stone-200 font-semibold">{t('dashboard.recentEvents')}</h2>
           <button onClick={() => onNavigate('/admin/events')} className="text-orange-400 text-sm hover:text-orange-300">
-            Alle ansehen →
+            {t('common.allSeeAll')}
           </button>
         </div>
-        <ActivityFeed events={stats?.recentEvents ?? []} />
+        <ActivityFeed events={stats?.recentEvents ?? []} onNavigate={onNavigate} />
+      </div>
+
+      {/* Past Events */}
+      <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-stone-200 font-semibold">{t('dashboard.pastEvents')}</h2>
+          <button onClick={() => onNavigate('/admin/events?status=past')} className="text-orange-400 text-sm hover:text-orange-300">
+            {t('common.allSeeAll')}
+          </button>
+        </div>
+        <PastEventsFeed events={pastEvents} onNavigate={onNavigate} />
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Neues Event', sub: 'Event erstellen', icon: '📅', onClick: () => onNavigate('/admin/events/new'), color: 'hover:border-orange-500/50' },
-          { label: 'CSV Import', sub: 'Events importieren', icon: '📂', onClick: () => onNavigate('/admin/csv-import'), color: 'hover:border-blue-500/50' },
-          { label: 'Berichte', sub: 'Analytics anzeigen', icon: '📊', onClick: () => onNavigate('/admin/reports'), color: 'hover:border-green-500/50' },
+          { label: t('dashboard.quickNewEvent'), sub: t('dashboard.quickNewEventSub'), icon: '📅', onClick: () => onNavigate('/admin/events/new'), color: 'hover:border-orange-500/50' },
+          { label: t('dashboard.quickCsvImport'), sub: t('dashboard.quickCsvImportSub'), icon: '📂', onClick: () => onNavigate('/admin/csv-import'), color: 'hover:border-blue-500/50' },
+          { label: t('dashboard.quickReports'), sub: t('dashboard.quickReportsSub'), icon: '📊', onClick: () => onNavigate('/admin/reports'), color: 'hover:border-green-500/50' },
         ].map(a => (
           <button
             key={a.label}

@@ -7788,7 +7788,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {upcomingEvents.map(event => {
               const selIdx = eventDateSelections[String(event.id)];
-              const selEntry = (event.category === 'skills-camps' && event.eventDates && selIdx !== undefined) ? event.eventDates[selIdx] : null;
+              const selEntry = ((event.category === 'skills-camps' || event.category === 'adventure-trips') && event.eventDates && selIdx !== undefined) ? event.eventDates[selIdx] : null;
               const dispEvent = applyFlexConfirmedDates(event, flexibleRegistrations, selEntry);
               return (
                 <div key={event.id} className="relative">
@@ -8125,7 +8125,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {favorites.map(event => {
             const selIdx = eventDateSelections[String(event.id)];
-            const selEntry = (event.category === 'skills-camps' && event.eventDates && selIdx !== undefined) ? event.eventDates[selIdx] : null;
+            const selEntry = ((event.category === 'skills-camps' || event.category === 'adventure-trips') && event.eventDates && selIdx !== undefined) ? event.eventDates[selIdx] : null;
             const dispEvent = selEntry ? { ...event, startDate: selEntry.start_date || selEntry.start || event.startDate, endDate: selEntry.end_date || selEntry.end || null } : event;
             return <EventCard key={event.id} event={dispEvent} isLoggedIn={isLoggedIn} onEventClick={onViewEvent} origin="profile" />;
           })}
@@ -8895,7 +8895,7 @@ function FriendProfileView({ friend, onBack, onViewEvent, isLoggedIn }) {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {commonEvents.map(event => {
                 const fSelIdx = friend.event_date_selections?.[String(event.id)];
-                const fSelEntry = (event.category === 'skills-camps' && event.eventDates && fSelIdx !== undefined) ? event.eventDates[fSelIdx] : null;
+                const fSelEntry = ((event.category === 'skills-camps' || event.category === 'adventure-trips') && event.eventDates && fSelIdx !== undefined) ? event.eventDates[fSelIdx] : null;
                 const dispEvent = fSelEntry ? { ...event, startDate: fSelEntry.start_date || fSelEntry.start || event.startDate, endDate: fSelEntry.end_date || fSelEntry.end || null } : event;
                 return <EventCard key={event.id} event={dispEvent} isLoggedIn={isLoggedIn} onEventClick={onViewEvent} origin="friend-profile" />;
               })}
@@ -10437,8 +10437,8 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
         </div>
       </div>
 
-      {/* Verfügbare Termine – Skills-Camps with multiple dates */}
-      {event.category === 'skills-camps' && liveEventDates && liveEventDates.length > 0 && (() => {
+      {/* Verfügbare Termine – Skills-Camps & Adventure-Trips with multiple dates */}
+      {(event.category === 'skills-camps' || event.category === 'adventure-trips') && liveEventDates && liveEventDates.length > 0 && (() => {
         var localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
         var locale = localeMap[language] || 'de-DE';
         var now = new Date();

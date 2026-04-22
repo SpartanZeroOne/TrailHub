@@ -1,5 +1,6 @@
 // ─── TrailHub Admin – Organizer Form ──────────────────────────────────────────
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { adminFetchOrganizerById, adminCreateOrganizer, adminUpdateOrganizer } from '../../services/adminSupabase';
 import { supabase } from '../../../services/supabaseClient';
 
@@ -47,6 +48,7 @@ function Toggle({ value, onChange, label }) {
 }
 
 export default function OrganizerForm({ organizerId, onNavigate, toast }) {
+  const { t } = useTranslation();
   const isNew = !organizerId || organizerId === 'new';
   const [form, setFormState] = useState({ ...DEFAULTS });
   const [errors, setErrors] = useState({});
@@ -62,14 +64,14 @@ export default function OrganizerForm({ organizerId, onNavigate, toast }) {
       setLoading(true);
       adminFetchOrganizerById(organizerId)
         .then(data => setFormState({ ...DEFAULTS, ...data }))
-        .catch(err => toast?.error('Laden fehlgeschlagen: ' + err.message))
+        .catch(err => toast?.error(t('organizerForm.errorLoad', { msg: err.message })))
         .finally(() => setLoading(false));
     }
   }, [organizerId]);
 
   const validate = () => {
     const e = {};
-    if (!form.name?.trim()) e.name = 'Name ist erforderlich';
+    if (!form.name?.trim()) e.name = t('eventForm.errName');
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -84,18 +86,18 @@ export default function OrganizerForm({ organizerId, onNavigate, toast }) {
 
       if (isNew) await adminCreateOrganizer(payload);
       else await adminUpdateOrganizer(organizerId, payload);
-      toast?.success(isNew ? 'Organizer erstellt!' : 'Organizer gespeichert!');
+      toast?.success(isNew ? t('organizerForm.successCreate') : t('organizerForm.successSave'));
       onNavigate('/admin/organizers');
     } catch (err) {
-      toast?.error('Speichern fehlgeschlagen: ' + err.message);
+      toast?.error(t('organizerForm.errorSave', { msg: err.message }));
     } finally {
       setSaving(false);
     }
   };
 
   const handleLogoUpload = async (file) => {
-    if (!file.type.startsWith('image/')) { toast?.error('Nur Bilddateien erlaubt'); return; }
-    if (file.size > 5 * 1024 * 1024) { toast?.error('Max. 5 MB'); return; }
+    if (!file.type.startsWith('image/')) { toast?.error(t('organizerForm.errorLogoType')); return; }
+    if (file.size > 5 * 1024 * 1024) { toast?.error(t('organizerForm.errorLogoSize')); return; }
     const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
     setLogoUploading(true);
     try {
@@ -104,9 +106,9 @@ export default function OrganizerForm({ organizerId, onNavigate, toast }) {
       if (error) throw error;
       const { data } = supabase.storage.from('organizer-logos').getPublicUrl(fileName);
       setField('logo', data.publicUrl);
-      toast?.success('Logo hochgeladen!');
+      toast?.success(t('organizerForm.successLogoUpload'));
     } catch (err) {
-      toast?.error('Upload fehlgeschlagen: ' + err.message);
+      toast?.error(t('organizerForm.errorLogoUpload', { msg: err.message }));
     } finally {
       setLogoUploading(false);
     }
@@ -121,12 +123,12 @@ export default function OrganizerForm({ organizerId, onNavigate, toast }) {
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-stone-100">{isNew ? 'Neuer Organizer' : 'Organizer bearbeiten'}</h1>
+        <h1 className="text-2xl font-bold text-stone-100">{isNew ? t('organizerForm.titleNew') : t('organizerForm.titleEdit')}</h1>
         <div className="flex gap-3">
-          <button onClick={() => onNavigate('/admin/organizers')} className="px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm border border-stone-700 transition-colors">Abbrechen</button>
+          <button onClick={() => onNavigate('/admin/organizers')} className="px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm border border-stone-700 transition-colors">{t('common.cancel')}</button>
           <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium disabled:opacity-50 transition-colors">
             {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>}
-            {isNew ? 'Erstellen' : 'Speichern'}
+            {isNew ? t('organizerForm.saveCreate') : t('organizerForm.saveEdit')}
           </button>
         </div>
       </div>
@@ -146,7 +148,7 @@ export default function OrganizerForm({ organizerId, onNavigate, toast }) {
             }
           </div>
           <div className="flex-1 space-y-3">
-            <Field label="Logo" hint="URL eingeben oder Datei hochladen (JPG, PNG, WebP – max. 5 MB)">
+            <Field label={t('organizerForm.logoLabel')} hint={t('organizerForm.logoHint')}>
               <div className="flex gap-2">
                 <Input value={form.logo} onChange={v => setField('logo', v)} placeholder="https://..." />
                 <button
@@ -160,7 +162,7 @@ export default function OrganizerForm({ organizerId, onNavigate, toast }) {
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && handleLogoUpload(e.target.files[0])} />
               </div>
             </Field>
-            <Field label="Hintergrundfarbe" hint="Für weiße / transparente Logos">
+            <Field label={t('organizerForm.bgColor')} hint={t('organizerForm.bgColorHint')}>
               <div className="flex items-center gap-2 flex-wrap">
                 {['black', 'white', '#1c1917', '#78350f', '#292524', '#0f172a'].map(color => (
                   <button
@@ -185,41 +187,41 @@ export default function OrganizerForm({ organizerId, onNavigate, toast }) {
         </div>
 
         {isNew && (
-          <Field label="ID (Slug)" hint="Eindeutiger Bezeichner, z.B. 'rally-masters' – wird automatisch aus Name generiert wenn leer">
-            <Input value={form.id} onChange={v => setField('id', v)} placeholder="rally-masters" />
+          <Field label={t('organizerForm.idSlug')} hint={t('organizerForm.idSlugHint')}>
+            <Input value={form.id} onChange={v => setField('id', v)} placeholder={t('organizerForm.idSlugPlaceholder')} />
           </Field>
         )}
 
-        <Field label="Name" required>
-          <Input value={form.name} onChange={v => setField('name', v)} placeholder="z.B. Rally Masters GmbH" />
+        <Field label={t('common.name')} required>
+          <Input value={form.name} onChange={v => setField('name', v)} placeholder={t('organizerForm.namePlaceholder')} />
           {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
         </Field>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <Field label="E-Mail">
-            <Input type="email" value={form.email} onChange={v => setField('email', v)} placeholder="info@rally-masters.de" />
+          <Field label={t('common.email')}>
+            <Input type="email" value={form.email} onChange={v => setField('email', v)} placeholder={t('organizerForm.emailPlaceholder')} />
           </Field>
-          <Field label="Telefon">
-            <Input value={form.phone} onChange={v => setField('phone', v)} placeholder="+49 123 456789" />
+          <Field label={t('common.phone')}>
+            <Input value={form.phone} onChange={v => setField('phone', v)} placeholder={t('organizerForm.phonePlaceholder')} />
           </Field>
         </div>
 
-        <Field label="Website">
-          <Input value={form.website} onChange={v => setField('website', v)} placeholder="https://rally-masters.de" />
+        <Field label={t('common.website')}>
+          <Input value={form.website} onChange={v => setField('website', v)} placeholder={t('organizerForm.websitePlaceholder')} />
         </Field>
 
-        <Field label="Beschreibung" hint="Kurze Beschreibung des Veranstalters">
+        <Field label={t('common.description')} hint={t('organizerForm.descriptionHint')}>
           <textarea
             value={form.description ?? ''}
             onChange={e => setField('description', e.target.value)}
-            placeholder="z.B. Europas führender Enduro-Veranstalter seit 2008"
+            placeholder={t('organizerForm.descriptionPlaceholder')}
             rows={4}
             className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm placeholder:text-stone-600 placeholder:italic focus:outline-none focus:border-orange-500/60 resize-y"
           />
         </Field>
 
         <div className="flex gap-6 pt-2">
-          <Toggle value={form.verified} onChange={v => setField('verified', v)} label="Verifizierter Organizer" />
+          <Toggle value={form.verified} onChange={v => setField('verified', v)} label={t('organizerForm.verifiedToggle')} />
         </div>
       </div>
     </div>

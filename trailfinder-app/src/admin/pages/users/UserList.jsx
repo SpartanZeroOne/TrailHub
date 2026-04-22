@@ -1,8 +1,10 @@
 // ─── TrailHub Admin – User List ───────────────────────────────────────────────
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { adminFetchUsers, adminUpdateUser } from '../../services/adminSupabase';
 
 export default function UserList({ onNavigate, toast }) {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,7 @@ export default function UserList({ onNavigate, toast }) {
       setTotal(count);
       setSelected(new Set());
     } catch (err) {
-      toast?.error('Laden fehlgeschlagen: ' + err.message);
+      toast?.error(t('users.errorLoad', { msg: err.message }));
     } finally {
       setLoading(false);
     }
@@ -61,10 +63,10 @@ export default function UserList({ onNavigate, toast }) {
     try {
       if (bulkAction === 'block') {
         for (const id of ids) await adminUpdateUser(id, { is_blocked: true });
-        toast?.success(`${ids.length} User gesperrt.`);
+        toast?.success(`${ids.length} ${t('userDetail.successLock')}`);
       } else if (bulkAction === 'unblock') {
         for (const id of ids) await adminUpdateUser(id, { is_blocked: false });
-        toast?.success(`${ids.length} User entsperrt.`);
+        toast?.success(`${ids.length} ${t('userDetail.successUnlock')}`);
       }
       setBulkAction('');
       load();
@@ -84,8 +86,8 @@ export default function UserList({ onNavigate, toast }) {
     <div className="p-6 space-y-5 max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-100">User</h1>
-          <p className="text-stone-500 text-sm mt-0.5">{total} registrierte User</p>
+          <h1 className="text-2xl font-bold text-stone-100">{t('users.title')}</h1>
+          <p className="text-stone-500 text-sm mt-0.5">{total} {t('users.subtitleTemplate')}</p>
         </div>
       </div>
 
@@ -95,19 +97,19 @@ export default function UserList({ onNavigate, toast }) {
           <div className="flex-1 min-w-[200px]">
             <input
               type="text"
-              placeholder="Suche nach Name oder E-Mail..."
+              placeholder={t('users.searchPlaceholder')}
               value={search}
               onChange={e => handleSearchChange(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm placeholder:text-stone-600 focus:outline-none focus:border-orange-500/50"
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-stone-500 text-sm whitespace-nowrap">Min. Registrierungen:</span>
+            <span className="text-stone-500 text-sm whitespace-nowrap">{t('users.minRegistrations')}</span>
             <input
               type="number"
               value={minReg}
               onChange={e => setMinReg(e.target.value)}
-              placeholder="z.B. 3"
+              placeholder={t('users.minRegistrationsPlaceholder')}
               min={0}
               className="w-20 px-3 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm focus:outline-none focus:border-orange-500/50"
             />
@@ -116,7 +118,7 @@ export default function UserList({ onNavigate, toast }) {
             onClick={handleFilter}
             className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium transition-colors"
           >
-            Filtern
+            {t('users.filter')}
           </button>
         </div>
       </div>
@@ -124,35 +126,33 @@ export default function UserList({ onNavigate, toast }) {
       {/* Bulk */}
       {selected.size > 0 && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
-          <span className="text-orange-400 text-sm font-medium">{selected.size} ausgewählt</span>
+          <span className="text-orange-400 text-sm font-medium">{selected.size} {t('common.selected')}</span>
           <select
             value={bulkAction}
             onChange={e => setBulkAction(e.target.value)}
             className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm"
           >
-            <option value="">Aktion wählen...</option>
-            <option value="block">Sperren</option>
-            <option value="unblock">Entsperren</option>
+            <option value="">{t('common.selectAction')}</option>
+            <option value="block">{t('users.bulkLock')}</option>
+            <option value="unblock">{t('users.bulkUnlock')}</option>
           </select>
           <button
             onClick={() => { if (bulkAction) setShowConfirm(true); }}
             disabled={!bulkAction}
             className="px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm disabled:opacity-40 transition-colors"
-          >Ausführen</button>
-          <button onClick={() => setSelected(new Set())} className="text-stone-500 hover:text-stone-300 text-sm ml-auto">Aufheben</button>
+          >{t('common.execute')}</button>
+          <button onClick={() => setSelected(new Set())} className="text-stone-500 hover:text-stone-300 text-sm ml-auto">{t('common.deselectAll')}</button>
         </div>
       )}
 
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="bg-stone-900 border border-stone-700 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
-            <h3 className="text-stone-100 font-semibold mb-2">Bestätigen</h3>
-            <p className="text-stone-400 text-sm mb-5">{selected.size} User{' '}
-              {bulkAction === 'block' ? 'sperren' : 'entsperren'}?
-            </p>
+            <h3 className="text-stone-100 font-semibold mb-2">{t('users.confirmTitle')}</h3>
+            <p className="text-stone-400 text-sm mb-5">{t('users.confirmBulkAction', { count: selected.size })}</p>
             <div className="flex gap-3">
-              <button onClick={executeBulk} className="flex-1 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm">Bestätigen</button>
-              <button onClick={() => setShowConfirm(false)} className="flex-1 py-2 rounded-lg bg-stone-800 text-stone-300 border border-stone-700 text-sm">Abbrechen</button>
+              <button onClick={executeBulk} className="flex-1 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm">{t('common.confirm')}</button>
+              <button onClick={() => setShowConfirm(false)} className="flex-1 py-2 rounded-lg bg-stone-800 text-stone-300 border border-stone-700 text-sm">{t('common.cancel')}</button>
             </div>
           </div>
         </div>
@@ -172,14 +172,14 @@ export default function UserList({ onNavigate, toast }) {
                   <th className="px-4 py-3">
                     <input type="checkbox" checked={users.length > 0 && selected.size === users.length} onChange={toggleAll} className="rounded border-stone-600 bg-stone-800 accent-orange-500" />
                   </th>
-                  {['Avatar', 'Name', 'E-Mail', 'Standort', 'Events', 'Freunde', 'Registriert', 'Status', 'Aktionen'].map(h => (
+                  {[t('users.tableAvatar'), t('users.tableName'), t('users.tableEmail'), t('users.tableLocation'), t('users.tableEvents'), t('users.tableFriends'), t('users.tableRegistered'), t('users.tableStatus'), t('users.tableActions')].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-medium text-stone-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-800">
                 {users.length === 0 ? (
-                  <tr><td colSpan={10} className="text-center py-12 text-stone-600">Keine User gefunden.</td></tr>
+                  <tr><td colSpan={10} className="text-center py-12 text-stone-600">{t('users.noUsers')}</td></tr>
                 ) : users.map(user => (
                   <tr key={user.id} className={`hover:bg-stone-800/40 transition-colors ${selected.has(user.id) ? 'bg-orange-500/5' : ''}`}>
                     <td className="px-4 py-3">
@@ -210,15 +210,15 @@ export default function UserList({ onNavigate, toast }) {
                     </td>
                     <td className="px-4 py-3">
                       {user.is_blocked
-                        ? <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-red-500/15 text-red-400 border border-red-500/20">Gesperrt</span>
-                        : <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-500/15 text-green-400 border border-green-500/20">Aktiv</span>
+                        ? <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-red-500/15 text-red-400 border border-red-500/20">{t('users.statusLocked')}</span>
+                        : <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-500/15 text-green-400 border border-green-500/20">{t('users.statusActive')}</span>
                       }
                     </td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => onNavigate(`/admin/users/${user.id}`)}
                         className="p-1.5 rounded-lg text-stone-400 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
-                        title="Details anzeigen"
+                        title={t('users.tooltipDetails')}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-3-9a9 9 0 100 18A9 9 0 0012 3z"/></svg>
                       </button>
@@ -232,10 +232,10 @@ export default function UserList({ onNavigate, toast }) {
 
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-stone-800">
-            <p className="text-stone-500 text-sm">{(page - 1) * perPage + 1}–{Math.min(page * perPage, total)} von {total}</p>
+            <p className="text-stone-500 text-sm">{(page - 1) * perPage + 1}–{Math.min(page * perPage, total)} {t('common.of')} {total}</p>
             <div className="flex gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-400 text-sm disabled:opacity-40">← Zurück</button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-400 text-sm disabled:opacity-40">Weiter →</button>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-400 text-sm disabled:opacity-40">{t('common.back')}</button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-400 text-sm disabled:opacity-40">{t('common.next')}</button>
             </div>
           </div>
         )}

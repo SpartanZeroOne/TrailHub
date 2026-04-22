@@ -1,5 +1,6 @@
 // ─── TrailHub Admin – Reports & Analytics ────────────────────────────────────
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { adminFetchDashboardStats, adminFetchEventsByCategory, adminFetchEventsPerMonth } from '../services/adminSupabase';
 import { supabase } from '../../services/supabaseClient';
 
@@ -40,7 +41,7 @@ function HBarChart({ data, labelKey, valueKey }) {
 
 // ─── Line-style month chart ───────────────────────────────────────────────────
 function MonthChart({ data }) {
-  if (!data?.length) return <p className="text-stone-600 text-sm text-center py-8">Keine Daten</p>;
+  if (!data?.length) return <p className="text-stone-600 text-sm text-center py-8">{/* no data */}</p>;
   const max = Math.max(...data.map(d => d.count), 1);
   const w = 600, h = 160, pad = { t: 16, b: 28, l: 32, r: 16 };
   const cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
@@ -115,6 +116,7 @@ async function fetchTopOrganizers() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Reports({ onNavigate, toast }) {
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [catData, setCatData] = useState([]);
   const [monthData, setMonthData] = useState([]);
@@ -136,7 +138,7 @@ export default function Reports({ onNavigate, toast }) {
       setMonthData(m.slice(-12));
       setTopUsers(tu);
       setTopOrganizers(to);
-    }).catch(err => toast?.error('Laden fehlgeschlagen: ' + err.message))
+    }).catch(err => toast?.error(t('reports.errorLoad', { msg: err.message })))
       .finally(() => setLoading(false));
   }, []);
 
@@ -148,34 +150,34 @@ export default function Reports({ onNavigate, toast }) {
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-stone-100">Berichte & Analytics</h1>
+      <h1 className="text-2xl font-bold text-stone-100">{t('reports.title')}</h1>
 
       {/* Overview Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Gesamt Events" value={stats?.totalEvents} sub="Alle Kategorien" />
-        <StatCard label="Upcoming Events" value={stats?.upcomingEvents} sub="Bevorstehend" />
-        <StatCard label="Registrierte User" value={stats?.totalUsers} sub="Aktive Accounts" />
-        <StatCard label="Organizer" value={stats?.totalOrganizers} sub="Aktive Veranstalter" />
+        <StatCard label={t('reports.totalEvents')} value={stats?.totalEvents} sub={t('reports.allCategories')} />
+        <StatCard label={t('reports.upcomingEvents')} value={stats?.upcomingEvents} sub={t('reports.upcoming')} />
+        <StatCard label={t('reports.registeredUsers')} value={stats?.totalUsers} sub={t('reports.activeAccounts')} />
+        <StatCard label={t('reports.organizers')} value={stats?.totalOrganizers} sub={t('reports.activeOrganizers')} />
       </div>
 
       {/* Events per Month */}
       <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
-        <h2 className="text-stone-200 font-semibold mb-4">Events pro Monat (letzten 12 Monate)</h2>
+        <h2 className="text-stone-200 font-semibold mb-4">{t('reports.eventsPerMonth')}</h2>
         <MonthChart data={monthData} />
       </div>
 
       {/* Category Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
-          <h2 className="text-stone-200 font-semibold mb-4">Events nach Kategorie</h2>
+          <h2 className="text-stone-200 font-semibold mb-4">{t('reports.eventsByCategory')}</h2>
           <HBarChart data={catData} labelKey="category" valueKey="count" />
         </div>
 
         {/* Top Organizers */}
         <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
-          <h2 className="text-stone-200 font-semibold mb-4">Top Organizer (nach Events)</h2>
+          <h2 className="text-stone-200 font-semibold mb-4">{t('reports.topOrganizers')}</h2>
           {topOrganizers.length === 0
-            ? <p className="text-stone-600 text-sm">Keine Daten</p>
+            ? <p className="text-stone-600 text-sm">{t('common.noData')}</p>
             : (
               <div className="space-y-2">
                 {topOrganizers.map((o, i) => (
@@ -197,15 +199,15 @@ export default function Reports({ onNavigate, toast }) {
 
       {/* Top Users */}
       <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
-        <h2 className="text-stone-200 font-semibold mb-4">Top User (meiste Anmeldungen)</h2>
+        <h2 className="text-stone-200 font-semibold mb-4">{t('reports.topUsers')}</h2>
         {topUsers.length === 0
-          ? <p className="text-stone-600 text-sm">Keine Daten</p>
+          ? <p className="text-stone-600 text-sm">{t('common.noData')}</p>
           : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="border-b border-stone-800">
                   <tr>
-                    {['#', 'Avatar', 'Name', 'Anmeldungen'].map(h => (
+                    {[t('reports.tableHash'), t('reports.tableAvatar'), t('reports.tableName'), t('reports.tableRegistrations')].map(h => (
                       <th key={h} className="px-3 py-2.5 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
@@ -222,7 +224,7 @@ export default function Reports({ onNavigate, toast }) {
                       </td>
                       <td className="px-3 py-3">
                         <button onClick={() => onNavigate(`/admin/users/${u.id}`)} className="text-stone-300 hover:text-orange-400 text-sm transition-colors">
-                          {u.name ?? 'Unbekannt'}
+                          {u.name ?? t('reports.unknown')}
                         </button>
                       </td>
                       <td className="px-3 py-3">

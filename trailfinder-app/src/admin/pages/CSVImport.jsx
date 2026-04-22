@@ -1,5 +1,6 @@
 // ─── TrailHub Admin – CSV Import ──────────────────────────────────────────────
 import { useState, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { adminImportEvents } from '../services/adminSupabase';
 import { CSV_FIELD_MAP, CATEGORIES, STATUS_OPTIONS } from '../utils/adminConfig';
 
@@ -37,7 +38,7 @@ function parseCSV(text) {
 }
 
 // ─── CSV Template Generator ───────────────────────────────────────────────────
-function downloadTemplate() {
+function downloadTemplate(filename) {
   const fields = Object.keys(CSV_FIELD_MAP);
   const example = {
     name: 'Black Forest Enduro 2026', category: 'trail-adventures', subcategory: 'enduro',
@@ -62,12 +63,13 @@ function downloadTemplate() {
   const csv = headers + '\n' + row;
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'trailhub_events_vorlage.csv'; a.click();
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
 }
 
 // ─── Field Mapping Row ────────────────────────────────────────────────────────
 function MappingRow({ csvCol, dbField, onChange, dbFields }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-3 py-2 border-b border-stone-800 last:border-0">
       <span className="w-40 text-sm text-stone-300 font-mono truncate" title={csvCol}>{csvCol}</span>
@@ -79,7 +81,7 @@ function MappingRow({ csvCol, dbField, onChange, dbFields }) {
         onChange={e => onChange(e.target.value)}
         className="flex-1 px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm focus:outline-none focus:border-orange-500/50"
       >
-        <option value="">(ignorieren)</option>
+        <option value="">{t('csvImport.ignore')}</option>
         {dbFields.map(f => (
           <option key={f.key} value={f.key}>{f.label}{f.required ? ' *' : ''}</option>
         ))}
@@ -90,6 +92,7 @@ function MappingRow({ csvCol, dbField, onChange, dbFields }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function CSVImport({ onNavigate, toast }) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1); // 1=upload, 2=mapping, 3=options, 4=importing, 5=done
   const [csvData, setCsvData] = useState(null); // { headers, rows }
   const [mapping, setMapping] = useState({});
@@ -118,11 +121,11 @@ export default function CSVImport({ onNavigate, toast }) {
   }, []);
 
   const handleFile = (file) => {
-    if (!file?.name.endsWith('.csv')) { toast?.error('Nur .csv Dateien erlaubt'); return; }
+    if (!file?.name.endsWith('.csv')) { toast?.error(t('csvImport.errorOnlyCsv')); return; }
     const reader = new FileReader();
     reader.onload = (e) => {
       const { headers, rows } = parseCSV(e.target.result);
-      if (!headers.length || !rows.length) { toast?.error('Leere oder ungültige CSV-Datei'); return; }
+      if (!headers.length || !rows.length) { toast?.error(t('csvImport.errorEmptyCsv')); return; }
       setCsvData({ headers, rows });
       setMapping(autoMap(headers));
       setStep(2);
@@ -162,7 +165,7 @@ export default function CSVImport({ onNavigate, toast }) {
   const handleImport = async () => {
     const requiredFields = Object.values(mapping);
     if (!requiredFields.includes('name') || !requiredFields.includes('category') || !requiredFields.includes('start_date')) {
-      toast?.error('Mapping fehlt: Name, Kategorie und Start-Datum sind Pflichtfelder!');
+      toast?.error(t('csvImport.errorMissingFields'));
       return;
     }
     setStep(4);
@@ -173,8 +176,8 @@ export default function CSVImport({ onNavigate, toast }) {
     });
     setResults(res);
     setStep(5);
-    if (res.success > 0) toast?.success(`${res.success} Event(s) erfolgreich importiert!`);
-    if (res.errors.length > 0) toast?.warning(`${res.errors.length} Fehler beim Import.`);
+    if (res.success > 0) toast?.success(t('csvImport.successImport', { count: res.success }));
+    if (res.errors.length > 0) toast?.warning(t('csvImport.errorImport', { count: res.errors.length }));
   };
 
   const reset = () => { setStep(1); setCsvData(null); setMapping({}); setResults(null); };
@@ -183,23 +186,23 @@ export default function CSVImport({ onNavigate, toast }) {
     <div className="p-6 max-w-4xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-100">CSV Import</h1>
-          <p className="text-stone-500 text-sm mt-0.5">Events aus CSV-Datei importieren</p>
+          <h1 className="text-2xl font-bold text-stone-100">{t('csvImport.title')}</h1>
+          <p className="text-stone-500 text-sm mt-0.5">{t('csvImport.subtitle')}</p>
         </div>
-        <button onClick={downloadTemplate} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 border border-stone-700 text-stone-300 text-sm transition-colors">
+        <button onClick={() => downloadTemplate(t('csvImport.templateFilename'))} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 border border-stone-700 text-stone-300 text-sm transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          CSV-Vorlage herunterladen
+          {t('csvImport.downloadTemplate')}
         </button>
       </div>
 
       {/* Step Indicator */}
       <div className="flex items-center gap-2">
         {[
-          { n: 1, label: 'Upload' },
-          { n: 2, label: 'Mapping' },
-          { n: 3, label: 'Optionen' },
-          { n: 4, label: 'Import' },
-          { n: 5, label: 'Fertig' },
+          { n: 1, label: t('csvImport.stepUpload') },
+          { n: 2, label: t('csvImport.stepMapping') },
+          { n: 3, label: t('csvImport.stepOptions') },
+          { n: 4, label: t('csvImport.stepImport') },
+          { n: 5, label: t('csvImport.stepDone') },
         ].map(({ n, label }) => (
           <div key={n} className="flex items-center gap-2">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
@@ -227,13 +230,13 @@ export default function CSVImport({ onNavigate, toast }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
               </svg>
             </div>
-            <p className="text-stone-300 font-medium mb-1">CSV-Datei hierher ziehen</p>
-            <p className="text-stone-500 text-sm mb-4">oder klicken zum Auswählen · UTF-8 · max. 10 MB</p>
+            <p className="text-stone-300 font-medium mb-1">{t('csvImport.dropText')}</p>
+            <p className="text-stone-500 text-sm mb-4">{t('csvImport.dropHint')}</p>
             <button
               onClick={() => fileRef.current?.click()}
               className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium transition-colors"
             >
-              Datei auswählen
+              {t('csvImport.selectFile')}
             </button>
             <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={e => handleFile(e.target.files[0])} />
           </div>
@@ -245,18 +248,18 @@ export default function CSVImport({ onNavigate, toast }) {
         <div className="bg-stone-900 rounded-xl border border-stone-800 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-stone-800">
             <div>
-              <h2 className="text-stone-200 font-semibold">Spalten-Zuordnung</h2>
-              <p className="text-stone-500 text-sm mt-0.5">{csvData.headers.length} Spalten · {csvData.rows.length} Zeilen erkannt</p>
+              <h2 className="text-stone-200 font-semibold">{t('csvImport.columnMapping')}</h2>
+              <p className="text-stone-500 text-sm mt-0.5">{t('csvImport.columnsDetected', { cols: csvData.headers.length, rows: csvData.rows.length })}</p>
             </div>
             <div className="flex gap-2">
-              <button onClick={reset} className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-400 text-sm hover:bg-stone-700 transition-colors">← Neue Datei</button>
-              <button onClick={() => setStep(3)} className="px-4 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium transition-colors">Weiter →</button>
+              <button onClick={reset} className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-400 text-sm hover:bg-stone-700 transition-colors">{t('csvImport.newFile')}</button>
+              <button onClick={() => setStep(3)} className="px-4 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium transition-colors">{t('common.next')}</button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-stone-800">
             <div className="p-4">
-              <h3 className="text-stone-400 text-xs font-medium uppercase tracking-wider mb-3">CSV-Spalte → Datenbank-Feld</h3>
+              <h3 className="text-stone-400 text-xs font-medium uppercase tracking-wider mb-3">{t('csvImport.csvToDb')}</h3>
               <div className="max-h-96 overflow-y-auto">
                 {csvData.headers.map(h => (
                   <MappingRow
@@ -271,7 +274,7 @@ export default function CSVImport({ onNavigate, toast }) {
             </div>
 
             <div className="p-4">
-              <h3 className="text-stone-400 text-xs font-medium uppercase tracking-wider mb-3">Vorschau (erste 5 Zeilen)</h3>
+              <h3 className="text-stone-400 text-xs font-medium uppercase tracking-wider mb-3">{t('csvImport.preview')}</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
@@ -300,23 +303,23 @@ export default function CSVImport({ onNavigate, toast }) {
       {/* STEP 3: Import Options */}
       {step === 3 && (
         <div className="bg-stone-900 rounded-xl border border-stone-800 p-6 space-y-5">
-          <h2 className="text-stone-200 font-semibold">Import-Optionen</h2>
+          <h2 className="text-stone-200 font-semibold">{t('csvImport.importOptions')}</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="space-y-1.5">
-              <label className="block text-sm text-stone-400">Duplikat-Behandlung</label>
+              <label className="block text-sm text-stone-400">{t('csvImport.duplicateHandling')}</label>
               <select
                 value={options.duplicates}
                 onChange={e => setOptions(o => ({ ...o, duplicates: e.target.value }))}
                 className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm focus:outline-none focus:border-orange-500/50"
               >
-                <option value="skip">Überspringen (bestehendes behalten)</option>
-                <option value="overwrite">Überschreiben</option>
+                <option value="skip">{t('csvImport.skipDuplicates')}</option>
+                <option value="overwrite">{t('csvImport.overwriteDuplicates')}</option>
               </select>
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm text-stone-400">Standard-Status</label>
+              <label className="block text-sm text-stone-400">{t('csvImport.defaultStatus')}</label>
               <select
                 value={options.status}
                 onChange={e => setOptions(o => ({ ...o, status: e.target.value }))}
@@ -327,12 +330,12 @@ export default function CSVImport({ onNavigate, toast }) {
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
-              <label className="block text-sm text-stone-400">Standard-Organizer (optional – überschreibt CSV-Wert)</label>
+              <label className="block text-sm text-stone-400">{t('csvImport.defaultOrganizer')}</label>
               <input
                 type="text"
                 value={options.organizer_id}
                 onChange={e => setOptions(o => ({ ...o, organizer_id: e.target.value }))}
-                placeholder="z.B. enduro-events (leer lassen für CSV-Wert)"
+                placeholder={t('csvImport.defaultOrganizerPlaceholder')}
                 className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm placeholder:text-stone-600 focus:outline-none focus:border-orange-500/50"
               />
             </div>
@@ -340,23 +343,23 @@ export default function CSVImport({ onNavigate, toast }) {
 
           {/* Summary */}
           <div className="rounded-lg bg-stone-800 border border-stone-700 p-4">
-            <h3 className="text-stone-300 text-sm font-medium mb-2">Import-Zusammenfassung</h3>
+            <h3 className="text-stone-300 text-sm font-medium mb-2">{t('csvImport.importSummary')}</h3>
             <ul className="space-y-1 text-sm text-stone-400">
-              <li>📄 <strong className="text-stone-300">{csvData?.rows.length ?? 0}</strong> Zeilen werden importiert</li>
-              <li>🗂 Status: <strong className="text-stone-300">{options.status}</strong></li>
-              <li>♻️ Duplikate: <strong className="text-stone-300">{options.duplicates === 'skip' ? 'Überspringen' : 'Überschreiben'}</strong></li>
-              <li>✅ Gemappte Felder: <strong className="text-stone-300">{Object.values(mapping).filter(Boolean).length}</strong> von {csvData?.headers.length ?? 0}</li>
-              {!Object.values(mapping).includes('name') && <li className="text-red-400">⚠ "name" Spalte nicht gemappt!</li>}
-              {!Object.values(mapping).includes('category') && <li className="text-red-400">⚠ "category" Spalte nicht gemappt!</li>}
-              {!Object.values(mapping).includes('start_date') && <li className="text-red-400">⚠ "start_date" Spalte nicht gemappt!</li>}
+              <li>{t('csvImport.rowsToImport', { count: csvData?.rows.length ?? 0 })}</li>
+              <li>{t('csvImport.statusLabel')} <strong className="text-stone-300">{options.status}</strong></li>
+              <li>{t('csvImport.duplicatesLabel')} <strong className="text-stone-300">{options.duplicates === 'skip' ? t('csvImport.skipDuplicates') : t('csvImport.overwriteDuplicates')}</strong></li>
+              <li>{t('csvImport.mappedFields')} <strong className="text-stone-300">{Object.values(mapping).filter(Boolean).length}</strong> {t('common.of')} {csvData?.headers.length ?? 0}</li>
+              {!Object.values(mapping).includes('name') && <li className="text-red-400">{t('csvImport.warnName')}</li>}
+              {!Object.values(mapping).includes('category') && <li className="text-red-400">{t('csvImport.warnCategory')}</li>}
+              {!Object.values(mapping).includes('start_date') && <li className="text-red-400">{t('csvImport.warnStartDate')}</li>}
             </ul>
           </div>
 
           <div className="flex gap-3">
-            <button onClick={() => setStep(2)} className="px-4 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm hover:bg-stone-700 transition-colors">← Zurück</button>
+            <button onClick={() => setStep(2)} className="px-4 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm hover:bg-stone-700 transition-colors">{t('csvImport.backBtn')}</button>
             <button onClick={handleImport} className="flex items-center gap-2 px-6 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-              Import starten ({csvData?.rows.length ?? 0} Events)
+              {t('csvImport.startImport', { count: csvData?.rows.length ?? 0 })}
             </button>
           </div>
         </div>
@@ -367,8 +370,8 @@ export default function CSVImport({ onNavigate, toast }) {
         <div className="bg-stone-900 rounded-xl border border-stone-800 p-8 text-center space-y-5">
           <div className="w-14 h-14 border-3 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto" style={{ borderWidth: 3 }}/>
           <div>
-            <p className="text-stone-200 font-semibold">Importiere Events...</p>
-            <p className="text-stone-500 text-sm mt-1">Zeile {progress.current} von {progress.total}</p>
+            <p className="text-stone-200 font-semibold">{t('csvImport.importing')}</p>
+            <p className="text-stone-500 text-sm mt-1">{t('csvImport.progressRow', { current: progress.current, total: progress.total })}</p>
           </div>
           <div className="w-full bg-stone-800 rounded-full h-2 overflow-hidden">
             <div
@@ -383,26 +386,26 @@ export default function CSVImport({ onNavigate, toast }) {
       {/* STEP 5: Results */}
       {step === 5 && results && (
         <div className="bg-stone-900 rounded-xl border border-stone-800 p-6 space-y-5">
-          <h2 className="text-stone-200 font-semibold">Import abgeschlossen</h2>
+          <h2 className="text-stone-200 font-semibold">{t('csvImport.importComplete')}</h2>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4 text-center">
               <p className="text-4xl font-bold text-green-400">{results.success}</p>
-              <p className="text-green-300 text-sm mt-1">Erfolgreich importiert</p>
+              <p className="text-green-300 text-sm mt-1">{t('csvImport.successCount')}</p>
             </div>
             <div className={`rounded-lg p-4 text-center ${results.errors.length > 0 ? 'bg-red-500/10 border border-red-500/20' : 'bg-stone-800 border border-stone-700'}`}>
               <p className={`text-4xl font-bold ${results.errors.length > 0 ? 'text-red-400' : 'text-stone-500'}`}>{results.errors.length}</p>
-              <p className={`text-sm mt-1 ${results.errors.length > 0 ? 'text-red-300' : 'text-stone-500'}`}>Fehler</p>
+              <p className={`text-sm mt-1 ${results.errors.length > 0 ? 'text-red-300' : 'text-stone-500'}`}>{t('csvImport.errorCount')}</p>
             </div>
           </div>
 
           {results.errors.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-stone-400 text-sm font-medium">Fehler-Log</h3>
+              <h3 className="text-stone-400 text-sm font-medium">{t('csvImport.errorLog')}</h3>
               <div className="max-h-48 overflow-y-auto bg-stone-950 rounded-lg border border-stone-700 p-3 space-y-1.5">
                 {results.errors.map((e, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs">
-                    <span className="text-red-400 flex-shrink-0">Zeile {e.row}:</span>
+                    <span className="text-red-400 flex-shrink-0">{t('csvImport.errorRow', { row: e.row })}</span>
                     <span className="text-stone-400 font-mono">{e.error}</span>
                   </div>
                 ))}
@@ -412,10 +415,10 @@ export default function CSVImport({ onNavigate, toast }) {
 
           <div className="flex gap-3">
             <button onClick={reset} className="px-4 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm hover:bg-stone-700 transition-colors">
-              Neuer Import
+              {t('csvImport.newImport')}
             </button>
             <button onClick={() => onNavigate('/admin/events')} className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium transition-colors">
-              Zu Events →
+              {t('csvImport.goToEvents')}
             </button>
           </div>
         </div>
