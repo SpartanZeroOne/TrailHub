@@ -11085,12 +11085,13 @@ export default function OffroadEventsApp() {
     if (pendingEventIdRef.current && mockEvents.length > 0) {
       const targetId = String(pendingEventIdRef.current);
       const event = mockEvents.find(e => String(e.id) === targetId);
-      pendingEventIdRef.current = null;
       if (event) {
+        pendingEventIdRef.current = null; // only clear when found
         setSelectedEvent(event);
         setCurrentView('event-detail');
         setNavigationOrigin('events');
       }
+      // If not found yet, keep ref alive — next _forceRender (events load) will retry
     }
   }, [renderTick]); // eslint-disable-line
 
@@ -11104,6 +11105,7 @@ export default function OffroadEventsApp() {
         if (event) { setSelectedEvent(event); setCurrentView('event-detail'); setNavigationOrigin('events'); }
         else setCurrentView('events');
       } else if (view === 'events') {
+        setNavigationType('POP'); // restore saved filter state in EventsOverview
         setSelectedCategory(category || null);
         setCurrentView('events');
       } else if (view === 'friend-profile' && friendId) {
@@ -11427,6 +11429,11 @@ export default function OffroadEventsApp() {
     if (!isLoggedIn) {
       setShowLoginPrompt(true);
       return;
+    }
+
+    // Save EventsOverview filter state so browser/custom back can restore it
+    if (origin === 'events' && eventsOverviewRef.current?.saveCurrentState) {
+      eventsOverviewRef.current.saveCurrentState();
     }
 
     // Save scroll position before navigating away

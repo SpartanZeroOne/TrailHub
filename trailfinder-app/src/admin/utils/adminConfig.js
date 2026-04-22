@@ -184,7 +184,6 @@ export const CSV_FIELD_MAP = {
   meta_title:       { label: 'Meta-Title', required: false },
   meta_description: { label: 'Meta-Description', required: false },
   keywords:         { label: 'Keywords', required: false },
-  slug:             { label: 'Slug (URL)', required: false },
   is_new:           { label: 'Neu-Badge', required: false },
   rallye_region:    { label: 'Rallye-Region', required: false },
   rallye_level:     { label: 'Rallye-Level', required: false },

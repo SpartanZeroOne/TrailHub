@@ -168,12 +168,6 @@ function normalizeEventPayload(form) {
     p.price_value = parseFloat(p.price_value) || null;
     p.price = p.price_value != null ? `€${p.price_value}` : null;
   }
-  // Auto-generate slug from name if missing (kept for future use but not sent to DB)
-  if (!p.slug && p.name) {
-    p.slug = p.name.toLowerCase()
-      .replace(/[äöüß]/g, c => ({ ä:'ae', ö:'oe', ü:'ue', ß:'ss' }[c] || c))
-      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  }
   // Flexible events must have null dates — never send an empty string to a date column
   if (p.is_flexible_date) {
     p.start_date = null;

@@ -26,7 +26,7 @@ const DEFAULTS = {
   ai_prompt_fr: AI_PROMPT_TEMPLATES.FR,
   ai_prompt_nl: AI_PROMPT_TEMPLATES.NL,
   image: '',
-  slug: '', event_url: '',
+  event_url: '',
 };
 
 // ─── UI Components ────────────────────────────────────────────────────────────
@@ -401,16 +401,6 @@ export default function EventForm({ eventId, onNavigate, toast }) {
       }).finally(() => setLoading(false));
     }
   }, [eventId]);
-
-  // Auto-generate slug from name
-  useEffect(() => {
-    if (!form.slug && form.name) {
-      const slug = form.name.toLowerCase()
-        .replace(/[äöüß]/g, c => ({ ä:'ae', ö:'oe', ü:'ue', ß:'ss' }[c] || c))
-        .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      setField('slug', slug);
-    }
-  }, [form.name]);
 
   const validate = () => {
     const e = {};
@@ -909,16 +899,6 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         {activeTab === 'seo' && (
           <div className="space-y-5">
             <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionSeo')}</h2>
-            <Field label={t('eventForm.slug')} hint={t('eventForm.slugHint')}>
-              <div className="flex items-center gap-2">
-                <span className="text-stone-500 text-sm flex-shrink-0">/events/</span>
-                <Input
-                  value={form.slug}
-                  onChange={v => setField('slug', v)}
-                  placeholder="black-forest-enduro-2026"
-                />
-              </div>
-            </Field>
             <Field label={t('eventForm.eventUrl')} hint={t('eventForm.eventUrlHint')}>
               <Input
                 value={form.event_url}
