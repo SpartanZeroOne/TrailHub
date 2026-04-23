@@ -6439,11 +6439,15 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
 
   // Category filters with subcategories
   const [categoryFilters, setCategoryFilters] = useState({
-    'trail-adventures': { active: true, expanded: false, subs: { trail: true, enduro: true, 'hard-enduro': true, mx: true } },
-    'rallyes': { active: true, expanded: false, subs: {} },
-    'adventure-trips': { active: true, expanded: false, subs: { onroad: true, offroad: true } },
-    'skills-camps': { active: true, expanded: false, subs: {} },
-    'offroad-festivals': { active: true, expanded: false, subs: {} },
+    'trail-adventures': { active: true, subs: { trail: true, enduro: true, 'hard-enduro': true, mx: true } },
+    'rallyes':          { active: true, subs: {} },
+    'adventure-trips':  { active: true, subs: { onroad: true, offroad: true } },
+    'skills-camps':     { active: true, subs: {} },
+    'offroad-festivals':{ active: true, subs: {} },
+  });
+  const [expandedCategories, setExpandedCategories] = useState({
+    'trail-adventures': false, 'rallyes': false, 'adventure-trips': false,
+    'skills-camps': false, 'offroad-festivals': false,
   });
 
   const today = new Date();
@@ -6899,12 +6903,26 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
   }, [selectedEvent]);
 
   const toggleCategory = (cat) => {
-    setCategoryFilters(prev => ({ ...prev, [cat]: { ...prev[cat], active: !prev[cat].active } }));
+    setCategoryFilters(prev => {
+      const allKeys = Object.keys(prev);
+      const activeKeys = allKeys.filter(k => prev[k].active);
+      const isActive = prev[cat].active;
+      // Only active one → reset all to active
+      if (isActive && activeKeys.length === 1) {
+        return Object.fromEntries(allKeys.map(k => [k, { ...prev[k], active: true }]));
+      }
+      // All active → isolate to just this one
+      if (activeKeys.length === allKeys.length) {
+        return Object.fromEntries(allKeys.map(k => [k, { ...prev[k], active: k === cat }]));
+      }
+      // Mixed: toggle this one (add if inactive, remove if active)
+      return { ...prev, [cat]: { ...prev[cat], active: !isActive } };
+    });
   };
 
   const toggleCategoryExpand = (cat, e) => {
     e.stopPropagation();
-    setCategoryFilters(prev => ({ ...prev, [cat]: { ...prev[cat], expanded: !prev[cat].expanded } }));
+    setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
   };
 
   const toggleSubcategory = (cat, sub, e) => {
@@ -7340,29 +7358,38 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
             <div className="text-[10px] text-stone-500 font-medium mb-1.5 px-1">{t('categories') || 'Kategorien'}</div>
             {Object.entries(categoryConfig).map(([key, config]) => {
               const filter = categoryFilters[key];
+              const isExpanded = expandedCategories[key];
               const hasSubs = config.subs.length > 0;
+              // Parent dot is dimmed when the category is inactive OR when it has subs
+              // and ALL subs are deselected
+              const allSubsOff = hasSubs && Object.values(filter.subs).every(v => !v);
+              const dotDimmed = !filter.active || allSubsOff;
 
               return (
                 <div key={key}>
                   <div
-                    className={`flex items-center gap-1.5 px-1.5 py-1 rounded cursor-pointer transition-colors ${filter.active ? 'hover:bg-stone-800' : 'opacity-40'}`}
+                    className={`flex items-center gap-1.5 px-1.5 py-1 rounded cursor-pointer transition-colors hover:bg-stone-800 ${!filter.active ? 'opacity-40' : ''}`}
                     onClick={() => toggleCategory(key)}
                   >
-                    <div className="w-3.5 h-3.5 rounded-full shrink-0" style={{ background: config.color }} />
+                    <div
+                      className="w-3.5 h-3.5 rounded-full shrink-0 transition-opacity"
+                      style={{ background: config.color, opacity: dotDimmed ? 0.3 : 1 }}
+                    />
                     <span className="text-[11px] text-stone-300 flex-1 truncate">{config.label}</span>
                     {hasSubs && (
                       <button
                         onClick={(e) => toggleCategoryExpand(key, e)}
-                        className={`text-stone-500 hover:text-stone-300 p-0.5 transition-colors ${!filter.active ? 'pointer-events-none' : ''}`}
+                        className="text-stone-500 hover:text-stone-300 p-0.5 transition-colors"
                       >
-                        <svg className={`w-3 h-3 transition-transform ${filter.expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
                     )}
                   </div>
 
-                  {hasSubs && filter.expanded && filter.active && (
+                  {/* Subcategory list — visible when expanded, independent of filter active state */}
+                  {hasSubs && isExpanded && (
                     <div className="ml-5 mt-0.5 space-y-0.5 mb-1">
                       {config.subs.map(sub => (
                         <div
