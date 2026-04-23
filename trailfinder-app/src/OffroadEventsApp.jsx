@@ -3780,9 +3780,6 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
   const [filterCountries, setFilterCountries] = useState(() =>
     shouldRestoreState ? eventsView.savedState.filters?.filterCountries || [] : []
   );
-  const [filterRegions, setFilterRegions] = useState(() =>
-    shouldRestoreState ? eventsView.savedState.filters?.filterRegions || {} : {}
-  );
   const [filterShowPast, setFilterShowPast] = useState(() =>
     shouldRestoreState ? eventsView.savedState.filters?.filterShowPast || false : false
   );
@@ -3965,7 +3962,6 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     setTrailPrice('all');
     clearLocationFilter();
     setFilterCountries([]);
-    setFilterRegions({});
     setFilterShowPast(false);
     setFilterOnlyNew(false);
     setFilterFriendsOnly(false);
@@ -4058,7 +4054,6 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
         filters: {
           // Shared filters
           filterCountries,
-          filterRegions,
           filterShowPast,
           filterOnlyNew,
           filterFriendsOnly,
@@ -4100,7 +4095,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     }
   }), [
     eventsView, filterCategory, trailSubcategory,
-    filterCountries, filterRegions, filterShowPast, filterOnlyNew,
+    filterCountries, filterShowPast, filterOnlyNew,
     filterFriendsOnly, filterFlexible, searchQuery,
     trailTime, trailDuration, trailDifficulty, trailRadius, trailInArea, trailPrice,
     tripType, tripTime, tripDuration, tripRadius, tripPrice,
@@ -4213,7 +4208,6 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
         filters: {
           // Shared filters
           filterCountries,
-          filterRegions,
           filterShowPast,
           filterOnlyNew,
           filterFriendsOnly,
@@ -4257,7 +4251,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     }
   }, [
     onViewEvent, filterCategory, trailSubcategory, eventsView,
-    filterCountries, filterRegions, filterShowPast, filterOnlyNew,
+    filterCountries, filterShowPast, filterOnlyNew,
     filterFriendsOnly, filterFlexible, trailTime, trailDuration, trailDifficulty,
     trailRadius, trailInArea, trailPrice, searchQuery,
     tripType, tripTime, tripDuration, tripRadius, tripPrice,
@@ -4464,36 +4458,29 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
   const otherCountryKeys = ['spain', 'italy', 'austria', 'switzerland', 'croatia', 'greece', 'morocco', 'portugal'];
   const extendedCountryKeys = ['poland', 'czechRepublic', 'romania', 'bulgaria', 'serbia', 'sweden', 'norway', 'turkey'];
 
-  const countryRegionKeys = {
-    'germany': ['northGermany', 'westGermany', 'southGermany', 'eastGermany'],
-    'france': ['northFrance', 'westFrance', 'eastFrance', 'southFrance'],
-    'belgium': ['wallonia', 'flanders'],
-    'netherlands': ['northNetherlands', 'southNetherlands'],
-  };
-
-  // Legacy mapping for filtering (internal use)
-  const countryKeyToGerman = {
-    'germany': 'Deutschland',
-    'france': 'Frankreich',
-    'belgium': 'Belgien',
-    'netherlands': 'Niederlande',
-    'luxembourg': 'Luxemburg',
-    'spain': 'Spanien',
-    'italy': 'Italien',
-    'austria': 'Österreich',
-    'switzerland': 'Schweiz',
-    'croatia': 'Kroatien',
-    'greece': 'Griechenland',
-    'morocco': 'Marokko',
-    'portugal': 'Portugal',
-    'poland': 'Polen',
-    'czechRepublic': 'Tschechien',
-    'romania': 'Rumänien',
-    'bulgaria': 'Bulgarien',
-    'serbia': 'Serbien',
-    'sweden': 'Schweden',
-    'norway': 'Norwegen',
-    'turkey': 'Türkei',
+  // All accepted spellings per country key (German + English + local variants)
+  const countryKeyToNames = {
+    'germany':      ['deutschland', 'germany'],
+    'france':       ['frankreich', 'france'],
+    'belgium':      ['belgien', 'belgium', 'belgique'],
+    'netherlands':  ['niederlande', 'netherlands', 'nederland'],
+    'luxembourg':   ['luxemburg', 'luxembourg'],
+    'spain':        ['spanien', 'spain', 'españa'],
+    'italy':        ['italien', 'italy', 'italia'],
+    'austria':      ['österreich', 'austria'],
+    'switzerland':  ['schweiz', 'switzerland', 'suisse'],
+    'croatia':      ['kroatien', 'croatia'],
+    'greece':       ['griechenland', 'greece'],
+    'morocco':      ['marokko', 'morocco'],
+    'portugal':     ['portugal'],
+    'poland':       ['polen', 'poland'],
+    'czechRepublic':['tschechien', 'czech republic', 'czechia'],
+    'romania':      ['rumänien', 'romania'],
+    'bulgaria':     ['bulgarien', 'bulgaria'],
+    'serbia':       ['serbien', 'serbia'],
+    'sweden':       ['schweden', 'sweden'],
+    'norway':       ['norwegen', 'norway'],
+    'turkey':       ['türkei', 'turkey'],
   };
 
   // === HELPER FUNCTIONS ===
@@ -4547,26 +4534,11 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
   };
 
   const toggleCountry = (country) => {
-    setFilterCountries(prev => {
-      if (prev.includes(country)) {
-        const newRegions = { ...filterRegions };
-        delete newRegions[country];
-        setFilterRegions(newRegions);
-        return prev.filter(c => c !== country);
-      }
-      return [...prev, country];
-    });
+    setFilterCountries(prev =>
+      prev.includes(country) ? prev.filter(c => c !== country) : [...prev, country]
+    );
   };
 
-  const toggleRegion = (country, region) => {
-    setFilterRegions(prev => {
-      const current = prev[country] || [];
-      if (current.includes(region)) {
-        return { ...prev, [country]: current.filter(r => r !== region) };
-      }
-      return { ...prev, [country]: [...current, region] };
-    });
-  };
 
   // Activate radius filter for a specific km value
   const handleRadiusClick = (r) => {
@@ -4746,44 +4718,13 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
       if (!inName && !inLocation && !inOrganizer) return false;
     }
 
-    // Country filter - convert keys to German for matching event locations
+    // Country filter — matches German, English and local country name spellings
     if (filterCountries.length > 0) {
-      const eventCountry = event.location.split(',').pop().trim().toLowerCase();
-      const matchingCountry = filterCountries.some(countryKey => {
-        const germanName = countryKeyToGerman[countryKey];
-        return germanName && eventCountry.includes(germanName.toLowerCase());
-      });
-      if (!matchingCountry) return false;
-
-      // Region filter - if regions selected for a matching country, filter by region
-      const eventCity = event.location.split(',')[0].trim().toLowerCase();
-      const regionToCity = {
-        northGermany: ['hamburg', 'bremen', 'hannover', 'kiel', 'rostock', 'lübeck', 'oldenburg'],
-        westGermany: ['köln', 'düsseldorf', 'dortmund', 'essen', 'duisburg', 'aachen', 'bonn', 'grevenbroich', 'gaildorf', 'wiehl-bielstein', 'nürburgring', 'landstuhl', 'trier'],
-        southGermany: ['münchen', 'stuttgart', 'nürnberg', 'freiburg', 'augsburg', 'regensburg', 'ulm', 'teutschenthal'],
-        eastGermany: ['berlin', 'dresden', 'leipzig', 'potsdam', 'erfurt', 'magdeburg', 'harz'],
-        northFrance: ['paris', 'lille', 'rouen', 'amiens'],
-        westFrance: ['nantes', 'brest', 'rennes', 'bordeaux'],
-        eastFrance: ['strasbourg', 'lyon', 'dijon', 'colmar', 'metz'],
-        southFrance: ['marseille', 'nice', 'toulouse', 'montpellier'],
-        wallonia: ['spa', 'liège', 'namur', 'charleroi', 'mons', 'arlon'],
-        flanders: ['antwerpen', 'gent', 'brugge', 'leuven', 'mechelen'],
-        northNetherlands: ['amsterdam', 'utrecht', 'groningen'],
-        southNetherlands: ['eindhoven', 'maastricht', 'tilburg'],
-      };
-      for (const countryKey of filterCountries) {
-        const selectedRegions = filterRegions[countryKey];
-        if (selectedRegions && selectedRegions.length > 0) {
-          const germanName = countryKeyToGerman[countryKey];
-          if (germanName && eventCountry.includes(germanName.toLowerCase())) {
-            const matchesRegion = selectedRegions.some(regionKey => {
-              const cities = regionToCity[regionKey] || [];
-              return cities.some(city => eventCity.includes(city));
-            });
-            if (!matchesRegion) return false;
-          }
-        }
-      }
+      const locationLower = (event.location ?? '').toLowerCase();
+      const matchesCountry = filterCountries.some(countryKey =>
+        (countryKeyToNames[countryKey] ?? []).some(name => locationLower.includes(name))
+      );
+      if (!matchesCountry) return false;
     }
 
     // === TRAIL ADVENTURES ===
@@ -5243,21 +5184,6 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
                 >
                   {t(countryKey)}
                 </button>
-                {/* Show regions when country is selected */}
-                {filterCountries.includes(countryKey) && countryRegionKeys[countryKey] && (
-                  <div className="flex flex-wrap gap-1.5 mt-2 ml-4 pb-2 border-l-2 border-amber-500/20 pl-3">
-                    {countryRegionKeys[countryKey].map((regionKey) => (
-                      <button
-                        key={regionKey}
-                        onClick={() => toggleRegion(countryKey, regionKey)}
-                        className={`px-2 py-1 rounded text-[11px] font-medium transition-all ${filterRegions[countryKey]?.includes(regionKey) ? 'bg-amber-500/30 text-amber-300' : 'bg-stone-700/50 text-stone-500 hover:text-stone-400'
-                          }`}
-                      >
-                        {t(regionKey)}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             ))}
           </div>
