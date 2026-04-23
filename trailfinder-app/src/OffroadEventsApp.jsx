@@ -4471,7 +4471,7 @@ const EventsOverview = React.forwardRef(function EventsOverview({ isLoggedIn, on
     'switzerland':  ['schweiz', 'switzerland', 'suisse'],
     'croatia':      ['kroatien', 'croatia'],
     'greece':       ['griechenland', 'greece'],
-    'morocco':      ['marokko', 'morocco'],
+    'morocco':      ['marokko', 'morocco', 'marocco', 'morroco', 'maroc'],
     'portugal':     ['portugal'],
     'poland':       ['polen', 'poland'],
     'czechRepublic':['tschechien', 'czech republic', 'czechia'],
@@ -6665,12 +6665,20 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
       }
 
       // Date filter - rolling window from today to +dateRange months (skip for flexible events)
+      // Use end date for the "already ended" check so ongoing events remain visible.
       if (!event.isFlexibleDate) {
-        const eventDate = new Date(event.startDate);
-        if (eventDate < today) return false;
+        const lastDateStr = (() => {
+          if (event.eventDates?.length > 0) {
+            const last = event.eventDates[event.eventDates.length - 1];
+            return last.end_date || last.end || last.start_date || last.start;
+          }
+          return event.endDate || event.startDate;
+        })();
+        if (new Date(lastDateStr) < today) return false;
+        const startDate = new Date(event.startDate);
         const maxDate = new Date(today);
         maxDate.setMonth(maxDate.getMonth() + dateRange);
-        if (eventDate > maxDate) return false;
+        if (startDate > maxDate) return false;
       }
 
       // Price filter — dual range
@@ -6927,7 +6935,15 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
 
   const toggleSubcategory = (cat, sub, e) => {
     e.stopPropagation();
-    setCategoryFilters(prev => ({ ...prev, [cat]: { ...prev[cat], subs: { ...prev[cat].subs, [sub]: !prev[cat].subs[sub] } } }));
+    setCategoryFilters(prev => {
+      const currentSubs = prev[cat].subs;
+      const subKeys = Object.keys(currentSubs);
+      const isOnlyActive = currentSubs[sub] && subKeys.every(k => k === sub || !currentSubs[k]);
+      const newSubs = isOnlyActive
+        ? Object.fromEntries(subKeys.map(k => [k, true]))
+        : Object.fromEntries(subKeys.map(k => [k, k === sub]));
+      return { ...prev, [cat]: { ...prev[cat], active: true, subs: newSubs } };
+    });
   };
 
   // Skill badge helper - Standardized: beginner, hobbyist, intermediate, pro
@@ -7391,16 +7407,23 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
                   {/* Subcategory list — visible when expanded, independent of filter active state */}
                   {hasSubs && isExpanded && (
                     <div className="ml-5 mt-0.5 space-y-0.5 mb-1">
-                      {config.subs.map(sub => (
+                      {config.subs.map(sub => {
+                        const isActive = filter.subs[sub.key];
+                        const isIsolated = isActive && Object.keys(filter.subs).every(k => k === sub.key || !filter.subs[k]);
+                        return (
                         <div
                           key={sub.key}
-                          className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded cursor-pointer transition-colors hover:bg-stone-800/50 ${filter.subs[sub.key] ? 'text-stone-300' : 'text-stone-600'}`}
+                          className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded cursor-pointer transition-colors hover:bg-stone-800/50 ${isIsolated ? 'text-white font-medium' : isActive ? 'text-stone-300' : 'text-stone-600'}`}
                           onClick={(e) => toggleSubcategory(key, sub.key, e)}
                         >
-                          <div className={`w-2 h-2 rounded-sm border transition-colors ${filter.subs[sub.key] ? 'bg-stone-400 border-stone-400' : 'border-stone-600'}`} />
+                          <div
+                            className="w-2 h-2 rounded-full shrink-0 transition-all"
+                            style={{ background: isIsolated ? config.color : isActive ? '#78716c' : 'transparent', border: isActive ? 'none' : '1px solid #57534e' }}
+                          />
                           <span className="text-[10px]">{sub.label}</span>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

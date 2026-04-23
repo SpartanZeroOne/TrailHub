@@ -19,31 +19,68 @@ const CATEGORY_COLORS = {
   'offroad-festivals':'#a855f7',
 };
 
+// ─── Month label formatter: "2026-08" → "Aug 26" ─────────────────────────────
+const MONTH_ABBR = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+function formatMonthLabel(yyyyMm) {
+  const [year, month] = yyyyMm.split('-');
+  return `${MONTH_ABBR[parseInt(month, 10) - 1]} ${String(year).slice(2)}`;
+}
+
 // ─── Mini Bar Chart (SVG) ─────────────────────────────────────────────────────
+const BAR_AREA_H = 120;
+
 function BarChart({ data, labelKey, valueKey, color = '#f97316' }) {
+  const [hovered, setHovered] = useState(null);
   if (!data?.length) return <div className="h-40 flex items-center justify-center text-stone-600 text-sm">Keine Daten</div>;
   const max = Math.max(...data.map(d => d[valueKey]), 1);
-  const barWidth = Math.max(8, Math.min(32, Math.floor(320 / data.length) - 4));
+  const barWidth = Math.max(10, Math.min(32, Math.floor(340 / data.length) - 6));
 
   return (
     <div className="overflow-x-auto">
-      <div className="flex items-end gap-1 h-40 min-w-max px-2">
+      {/* bars + count numbers — fixed height so all bars share same baseline */}
+      <div className="flex items-end gap-1 min-w-max px-2" style={{ height: BAR_AREA_H + 20 }}>
         {data.map((item, i) => {
-          const h = Math.max(4, Math.round((item[valueKey] / max) * 130));
+          const h = Math.max(4, Math.round((item[valueKey] / max) * BAR_AREA_H));
+          const isHovered = hovered === i;
           return (
-            <div key={i} className="flex flex-col items-center gap-1" style={{ width: barWidth + 16 }}>
-              <span className="text-xs text-stone-400">{item[valueKey]}</span>
-              <div
-                className="rounded-t transition-all"
-                style={{ height: h, width: barWidth, background: color, opacity: 0.85 }}
-                title={`${item[labelKey]}: ${item[valueKey]}`}
-              />
-              <span className="text-[10px] text-stone-500 truncate w-full text-center" title={item[labelKey]}>
-                {String(item[labelKey]).length > 6 ? String(item[labelKey]).slice(0, 6) + '…' : item[labelKey]}
+            <div
+              key={i}
+              className="flex flex-col items-center gap-1 cursor-pointer"
+              style={{ width: barWidth + 8 }}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <span className={`text-xs leading-none transition-colors ${isHovered ? 'text-orange-300 font-semibold' : 'text-stone-400'}`}>
+                {item[valueKey]}
               </span>
+              <div
+                className="rounded-t transition-all duration-150"
+                style={{
+                  height: h,
+                  width: barWidth,
+                  background: color,
+                  opacity: isHovered ? 1 : 0.75,
+                  transform: isHovered ? 'scaleY(1.04)' : 'scaleY(1)',
+                  transformOrigin: 'bottom',
+                  boxShadow: isHovered ? `0 0 10px ${color}55` : 'none',
+                }}
+                title={`${item[labelKey]}: ${item[valueKey]} Events`}
+              />
             </div>
           );
         })}
+      </div>
+      {/* month labels — separate row so they're never clipped */}
+      <div className="flex gap-1 min-w-max px-2 mt-1">
+        {data.map((item, i) => (
+          <div
+            key={i}
+            className={`text-[10px] text-center leading-none transition-colors ${hovered === i ? 'text-stone-300' : 'text-stone-500'}`}
+            style={{ width: barWidth + 8 }}
+          >
+            {item[labelKey]}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -60,7 +97,7 @@ function DonutChart({ data }) {
   return (
     <div className="flex items-center gap-4 flex-wrap">
       <svg width="160" height="140" viewBox="0 0 160 140">
-        {data.map((d, i) => {
+        {data.map((d) => {
           const pct = d.count / total;
           const dash = pct * circ;
           const gap = circ - dash;
@@ -207,6 +244,7 @@ export default function Dashboard({ onNavigate, toast }) {
   const [stats, setStats] = useState(null);
   const [catData, setCatData] = useState([]);
   const [monthData, setMonthData] = useState([]);
+  const [undatedCount, setUndatedCount] = useState(0);
   const [pastEvents, setPastEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -220,7 +258,9 @@ export default function Dashboard({ onNavigate, toast }) {
     ]).then(([s, c, m, p]) => {
       setStats(s);
       setCatData(c);
-      setMonthData(m.slice(-8));
+      const { chartData, undatedCount: uc } = m;
+      setMonthData(chartData.slice(-12).map(d => ({ ...d, label: formatMonthLabel(d.month) })));
+      setUndatedCount(uc ?? 0);
       setPastEvents(p);
     }).catch(err => {
       toast?.error(t('common.error') + ': ' + err.message);
@@ -323,8 +363,15 @@ export default function Dashboard({ onNavigate, toast }) {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
-          <h2 className="text-stone-200 font-semibold mb-4">{t('dashboard.eventsPerMonth')}</h2>
-          <BarChart data={monthData} labelKey="month" valueKey="count" color="#f97316" />
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-stone-200 font-semibold">{t('dashboard.eventsPerMonth')}</h2>
+            {undatedCount > 0 && (
+              <span className="text-xs text-stone-500 bg-stone-800 px-2 py-1 rounded-lg" title="Events ohne festes Datum (Auf Anfrage)">
+                + {undatedCount} Auf Anfrage
+              </span>
+            )}
+          </div>
+          <BarChart data={monthData} labelKey="label" valueKey="count" color="#f97316" />
         </div>
         <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
           <h2 className="text-stone-200 font-semibold mb-4">{t('dashboard.eventsByCategory')}</h2>

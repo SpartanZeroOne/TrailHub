@@ -378,16 +378,27 @@ export const adminFetchEventsByCategory = async () => {
 
 export const adminFetchEventsPerMonth = async () => {
   const { data, error } = await supabase
-    .from('events').select('start_date').not('start_date', 'is', null);
-  if (error) return [];
+    .from('events').select('start_date, event_dates');
+  if (error) return { chartData: [], undatedCount: 0 };
   const counts = {};
+  let undatedCount = 0;
   (data ?? []).forEach(e => {
-    const month = e.start_date?.substring(0, 7); // YYYY-MM
-    if (month) counts[month] = (counts[month] || 0) + 1;
+    if (e.start_date) {
+      const month = e.start_date.substring(0, 7);
+      counts[month] = (counts[month] || 0) + 1;
+    } else if (Array.isArray(e.event_dates) && e.event_dates.length > 0) {
+      e.event_dates.forEach(d => {
+        const month = d.start_date?.substring(0, 7);
+        if (month) counts[month] = (counts[month] || 0) + 1;
+      });
+    } else {
+      undatedCount++;
+    }
   });
-  return Object.entries(counts)
+  const chartData = Object.entries(counts)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([month, count]) => ({ month, count }));
+  return { chartData, undatedCount };
 };
 
 // ─── AUDIT LOG ────────────────────────────────────────────────────────────────
