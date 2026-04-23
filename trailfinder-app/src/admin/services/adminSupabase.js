@@ -168,8 +168,8 @@ function normalizeEventPayload(form) {
     p.price_value = parseFloat(p.price_value) || null;
     p.price = p.price_value != null ? `€${p.price_value}` : null;
   }
-  // Flexible events must have null dates — never send an empty string to a date column
-  if (p.is_flexible_date) {
+  // Flexible events and MX-Tracks must have null dates
+  if (p.is_flexible_date || p.mx_type === 'mx-track') {
     p.start_date = null;
     p.end_date = null;
   }
@@ -454,6 +454,54 @@ export const adminGenerateAiSummary = async (eventData, lang = 'DE', customPromp
   });
   if (error) throw error;
   return data?.summary ?? '';
+};
+
+// ─── MX TRACKS ────────────────────────────────────────────────────────────────
+
+function normalizeMxTrackPayload(form, eventId) {
+  let coords = form.coordinates;
+  if (typeof coords === 'string') {
+    try { coords = JSON.parse(coords); } catch { coords = {}; }
+  }
+  return {
+    name: form.name || '',
+    location: form.location || '',
+    coordinates: coords || {},
+    organizer_id: form.organizer_id || null,
+    status: form.status || 'active',
+    season_start: form.mx_season_start || null,
+    season_end: form.mx_season_end || null,
+    open_days: form.mx_open_days || [],
+    opening_hours: form.mx_opening_hours || {},
+    price_info: form.mx_price_info || null,
+    price_value: form.price_value !== '' && form.price_value != null ? parseFloat(form.price_value) : null,
+    image: form.image || null,
+    difficulty: form.difficulty ? parseInt(form.difficulty) : null,
+    beginner_friendly: form.beginner_friendly || false,
+    event_id: eventId,
+  };
+}
+
+export const adminFetchMxTrackByEventId = async (eventId) => {
+  const { data, error } = await supabase
+    .from('mx_tracks').select('*').eq('event_id', eventId).maybeSingle();
+  if (error) throw error;
+  return data;
+};
+
+export const adminCreateMxTrack = async (form, eventId) => {
+  const payload = normalizeMxTrackPayload(form, eventId);
+  const { data, error } = await supabase.from('mx_tracks').insert([payload]).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const adminUpdateMxTrack = async (form, eventId) => {
+  const payload = normalizeMxTrackPayload(form, eventId);
+  const { data, error } = await supabase
+    .from('mx_tracks').update(payload).eq('event_id', eventId).select().single();
+  if (error) throw error;
+  return data;
 };
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────

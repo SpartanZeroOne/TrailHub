@@ -1,7 +1,7 @@
 // ─── TrailHub Admin – Event Form (Multi-Tab) ──────────────────────────────────
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { adminFetchEventById, adminCreateEvent, adminUpdateEvent, adminUploadEventImage, adminGenerateAiSummary } from '../../services/adminSupabase';
+import { adminFetchEventById, adminCreateEvent, adminUpdateEvent, adminUploadEventImage, adminGenerateAiSummary, adminCreateMxTrack, adminUpdateMxTrack, adminFetchMxTrackByEventId } from '../../services/adminSupabase';
 import { adminFetchOrganizers } from '../../services/adminSupabase';
 import { CATEGORY_FIELDS, CATEGORIES, STATUS_OPTIONS, AI_PROMPT_TEMPLATES } from '../../utils/adminConfig';
 
@@ -27,7 +27,39 @@ const DEFAULTS = {
   ai_prompt_nl: AI_PROMPT_TEMPLATES.NL,
   image: '',
   event_url: '',
+  // MX-specific
+  mx_type: '',            // 'mx-track' | 'mx-race' | ''
+  mx_season_start: '',
+  mx_season_end: '',
+  mx_open_days: [],       // ['monday', 'tuesday', ...]
+  mx_opening_hours: {},   // { monday: { open: '09:00', close: '18:00' }, ... }
+  mx_price_info: '',      // e.g. '28 € Tageskarte'
 };
+
+const MONTHS = [
+  { value: 'january',   label: 'Januar' },
+  { value: 'february',  label: 'Februar' },
+  { value: 'march',     label: 'März' },
+  { value: 'april',     label: 'April' },
+  { value: 'may',       label: 'Mai' },
+  { value: 'june',      label: 'Juni' },
+  { value: 'july',      label: 'Juli' },
+  { value: 'august',    label: 'August' },
+  { value: 'september', label: 'September' },
+  { value: 'october',   label: 'Oktober' },
+  { value: 'november',  label: 'November' },
+  { value: 'december',  label: 'Dezember' },
+];
+
+const DAYS_OF_WEEK = [
+  { value: 'monday',    label: 'Mo' },
+  { value: 'tuesday',   label: 'Di' },
+  { value: 'wednesday', label: 'Mi' },
+  { value: 'thursday',  label: 'Do' },
+  { value: 'friday',    label: 'Fr' },
+  { value: 'saturday',  label: 'Sa' },
+  { value: 'sunday',    label: 'So' },
+];
 
 // ─── UI Components ────────────────────────────────────────────────────────────
 function Field({ label, required, error, hint, children }) {
@@ -334,6 +366,10 @@ export default function EventForm({ eventId, onNavigate, toast }) {
 
   const setField = (key, val) => setFormState(f => ({ ...f, [key]: val }));
 
+  const isMxSubcategory = form.category === 'trail-adventures' && form.subcategory === 'mx';
+  const isMxTrack = isMxSubcategory && form.mx_type === 'mx-track';
+  const isMxRace  = isMxSubcategory && form.mx_type === 'mx-race';
+
   // ─── Multi-date helpers (Skills-Camps) ──────────────────────────────────────
   const addEventDate = () => {
     if (!tempStartDate || !tempEndDate) return;
@@ -389,13 +425,26 @@ export default function EventForm({ eventId, onNavigate, toast }) {
 
     if (!isNew) {
       setLoading(true);
-      adminFetchEventById(eventId).then(event => {
-        setFormState({
+      adminFetchEventById(eventId).then(async event => {
+        const base = {
           ...DEFAULTS,
           ...event,
           coordinates: event.coordinates ? JSON.stringify(event.coordinates) : '',
           event_dates: Array.isArray(event.event_dates) ? event.event_dates : [],
-        });
+        };
+        if (event.mx_type === 'mx-track') {
+          try {
+            const mxTrack = await adminFetchMxTrackByEventId(eventId);
+            if (mxTrack) {
+              base.mx_season_start   = mxTrack.season_start   || '';
+              base.mx_season_end     = mxTrack.season_end     || '';
+              base.mx_open_days      = Array.isArray(mxTrack.open_days) ? mxTrack.open_days : [];
+              base.mx_opening_hours  = mxTrack.opening_hours  || {};
+              base.mx_price_info     = mxTrack.price_info     || '';
+            }
+          } catch { /* non-fatal */ }
+        }
+        setFormState(base);
       }).catch(err => {
         toast?.error(t('eventForm.errorLoad', { msg: err.message }));
       }).finally(() => setLoading(false));
@@ -404,11 +453,12 @@ export default function EventForm({ eventId, onNavigate, toast }) {
 
   const validate = () => {
     const e = {};
+    const mxTrack = form.category === 'trail-adventures' && form.subcategory === 'mx' && form.mx_type === 'mx-track';
     if (!form.name?.trim()) e.name = t('eventForm.errName');
     if (!form.category) e.category = t('eventForm.errCategory');
-    if (!form.is_flexible_date && !form.start_date) e.start_date = t('eventForm.errStartDate');
+    if (!mxTrack && !form.is_flexible_date && !form.start_date) e.start_date = t('eventForm.errStartDate');
     if (!form.location?.trim()) e.location = t('eventForm.errLocation');
-    if (!form.is_flexible_date && form.end_date && form.start_date && form.end_date < form.start_date) {
+    if (!mxTrack && !form.is_flexible_date && form.end_date && form.start_date && form.end_date < form.start_date) {
       e.end_date = t('eventForm.errEndDate');
     }
     setErrors(e);
@@ -418,7 +468,6 @@ export default function EventForm({ eventId, onNavigate, toast }) {
   const handleSave = async () => {
     if (!validate()) {
       toast?.error(t('eventForm.errorRequired'));
-      // Jump to first tab with errors
       if (errors.name || errors.category) setActiveTab('basics');
       else if (errors.start_date) setActiveTab('datetime');
       else if (errors.location) setActiveTab('location');
@@ -426,13 +475,27 @@ export default function EventForm({ eventId, onNavigate, toast }) {
     }
     setSaving(true);
     try {
-      if (isNew) {
-        await adminCreateEvent(form);
-        toast?.success(t('eventForm.successCreate'));
+      if (isMxTrack) {
+        if (isNew) {
+          const event = await adminCreateEvent(form);
+          await adminCreateMxTrack(form, event.id);
+        } else {
+          await adminUpdateEvent(eventId, form);
+          const existing = await adminFetchMxTrackByEventId(eventId);
+          if (existing) {
+            await adminUpdateMxTrack(form, eventId);
+          } else {
+            await adminCreateMxTrack(form, eventId);
+          }
+        }
       } else {
-        await adminUpdateEvent(eventId, form);
-        toast?.success(t('eventForm.successSave'));
+        if (isNew) {
+          await adminCreateEvent(form);
+        } else {
+          await adminUpdateEvent(eventId, form);
+        }
       }
+      toast?.success(isNew ? t('eventForm.successCreate') : t('eventForm.successSave'));
       onNavigate('/admin/events');
     } catch (err) {
       toast?.error(t('eventForm.errorLoad', { msg: err.message }));
@@ -598,6 +661,33 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                 </div>
               </>
             )}
+
+            {/* MX type selector — shown when Trail Adventures → MX */}
+            {isMxSubcategory && (
+              <div className="border-t border-stone-800 pt-4">
+                <h3 className="text-stone-300 text-sm font-medium mb-3 text-orange-400">MX Typ</h3>
+                <div className="flex gap-3">
+                  {[
+                    { value: 'mx-track', label: 'MX-Track', hint: 'Dauerhafte Anlage mit Saisonzeiten' },
+                    { value: 'mx-race',  label: 'MX-Race',  hint: 'Einmaliges Rennevent' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setField('mx_type', opt.value)}
+                      className={`flex-1 px-4 py-3 rounded-xl border text-sm font-medium transition-colors text-left ${
+                        form.mx_type === opt.value
+                          ? 'bg-orange-500/20 border-orange-500 text-orange-300'
+                          : 'bg-stone-800 border-stone-700 text-stone-400 hover:border-stone-500'
+                      }`}
+                    >
+                      <div className="font-semibold">{opt.label}</div>
+                      <div className="text-xs mt-0.5 opacity-70">{opt.hint}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -606,7 +696,97 @@ export default function EventForm({ eventId, onNavigate, toast }) {
           <div className="space-y-5">
             <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionDateTime')}</h2>
 
-            {/* Date fields — always visible, greyed out when flexible */}
+            {/* MX-Track: season + open days + opening hours */}
+            {isMxTrack && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Field label="Saison Start">
+                    <Select
+                      value={form.mx_season_start}
+                      onChange={v => setField('mx_season_start', v)}
+                      options={MONTHS}
+                      placeholder="Monat wählen…"
+                    />
+                  </Field>
+                  <Field label="Saison Ende">
+                    <Select
+                      value={form.mx_season_end}
+                      onChange={v => setField('mx_season_end', v)}
+                      options={MONTHS}
+                      placeholder="Monat wählen…"
+                    />
+                  </Field>
+                </div>
+
+                <Field label="Öffnungstage">
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {DAYS_OF_WEEK.map(day => {
+                      const active = (form.mx_open_days ?? []).includes(day.value);
+                      return (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => {
+                            const days = form.mx_open_days ?? [];
+                            const next = active ? days.filter(d => d !== day.value) : [...days, day.value];
+                            setField('mx_open_days', next);
+                            if (!next.includes(day.value)) {
+                              const hours = { ...form.mx_opening_hours };
+                              delete hours[day.value];
+                              setField('mx_opening_hours', hours);
+                            }
+                          }}
+                          className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+                            active
+                              ? 'bg-orange-500/20 border-orange-500 text-orange-300'
+                              : 'bg-stone-800 border-stone-700 text-stone-500 hover:border-stone-500'
+                          }`}
+                        >
+                          {day.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Field>
+
+                {(form.mx_open_days ?? []).length > 0 && (
+                  <Field label="Öffnungszeiten">
+                    <div className="space-y-2">
+                      {DAYS_OF_WEEK.filter(d => (form.mx_open_days ?? []).includes(d.value)).map(day => {
+                        const hours = form.mx_opening_hours?.[day.value] ?? {};
+                        return (
+                          <div key={day.value} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-stone-800 border border-stone-700">
+                            <span className="text-stone-400 text-sm font-medium w-7 shrink-0">{day.label}</span>
+                            <input
+                              type="time"
+                              value={hours.open ?? ''}
+                              onChange={e => setField('mx_opening_hours', {
+                                ...form.mx_opening_hours,
+                                [day.value]: { ...hours, open: e.target.value },
+                              })}
+                              className="px-2 py-1 rounded bg-stone-900 border border-stone-600 text-stone-200 text-sm focus:outline-none focus:border-orange-500/60"
+                            />
+                            <span className="text-stone-600 text-sm">–</span>
+                            <input
+                              type="time"
+                              value={hours.close ?? ''}
+                              onChange={e => setField('mx_opening_hours', {
+                                ...form.mx_opening_hours,
+                                [day.value]: { ...hours, close: e.target.value },
+                              })}
+                              className="px-2 py-1 rounded bg-stone-900 border border-stone-600 text-stone-200 text-sm focus:outline-none focus:border-orange-500/60"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Field>
+                )}
+              </div>
+            )}
+
+            {/* Normal event date fields — hidden for MX-Track */}
+            {!isMxTrack && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Field label={t('eventForm.startDate')} required={!form.is_flexible_date} error={errors.start_date} hint={t('eventForm.startDateHint')}>
                 <Input
@@ -627,8 +807,9 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                 />
               </Field>
             </div>
+            )}
 
-            {!form.is_flexible_date && daysBetween !== null && (
+            {!isMxTrack && !form.is_flexible_date && daysBetween !== null && (
               <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
                 <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -637,8 +818,8 @@ export default function EventForm({ eventId, onNavigate, toast }) {
               </div>
             )}
 
-            {/* Flexible date toggle — plain inline row */}
-            <div className="flex items-center justify-between gap-4 pt-1">
+            {/* Flexible date toggle — hidden for MX-Track */}
+            {!isMxTrack && <div className="flex items-center justify-between gap-4 pt-1">
               <div>
                 <p className="text-sm font-medium text-stone-300">{t('eventForm.flexibleDate')}</p>
                 <p className="text-xs text-stone-500 mt-0.5">{t('eventForm.flexibleDateHint')}</p>
@@ -655,10 +836,10 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                 }}
                 label=""
               />
-            </div>
+            </div>}
 
             {/* Duration dropdown — only shown when flexible */}
-            {form.is_flexible_date && (
+            {!isMxTrack && form.is_flexible_date && (
               <Field label={t('eventForm.eventDurationLabel')}>
                 <Select
                   value={form.flexible_date_info}
@@ -795,39 +976,84 @@ export default function EventForm({ eventId, onNavigate, toast }) {
         {activeTab === 'details' && (
           <div className="space-y-5">
             <h2 className="text-stone-200 font-semibold text-lg border-b border-stone-800 pb-3">{t('eventForm.sectionDetails')}</h2>
-            <div className="flex items-start gap-6">
-              <Field label={t('eventForm.priceLabel')} hint={t('eventForm.priceHint')}>
-                <div className="relative max-w-xs">
-                  <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm transition-colors ${form.is_free ? 'text-stone-600' : 'text-stone-500'}`}>€</span>
+
+            {/* MX-Track: price label + numeric value + difficulty + beginner */}
+            {isMxTrack ? (
+              <div className="space-y-4">
+                <Field label="Preis-Info" hint='z.B. "28 € Tageskarte" oder "25 € / Tag"'>
                   <Input
-                    type="number"
-                    value={form.is_free ? '' : form.price_value}
-                    onChange={v => setField('price_value', v)}
-                    placeholder={form.is_free ? '—' : '185'}
-                    className={`pl-7 ${form.is_free ? 'opacity-40 pointer-events-none' : ''}`}
-                    disabled={form.is_free}
-                    min={0}
-                    step={0.01}
+                    value={form.mx_price_info}
+                    onChange={v => setField('mx_price_info', v)}
+                    placeholder="28 € Tageskarte"
                   />
+                </Field>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Field label="Preis (€)" hint="Numerischer Wert für Filterung">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-stone-500">€</span>
+                      <Input
+                        type="number"
+                        value={form.price_value}
+                        onChange={v => setField('price_value', v)}
+                        placeholder="28"
+                        className="pl-7"
+                        min={0}
+                        step={0.01}
+                      />
+                    </div>
+                  </Field>
+                  <Field label={t('eventForm.difficultySelect')}>
+                    <Select
+                      value={form.difficulty}
+                      onChange={v => setField('difficulty', v)}
+                      options={[
+                        { value: '1', label: t('eventForm.difficulty1') },
+                        { value: '2', label: t('eventForm.difficulty2') },
+                        { value: '3', label: t('eventForm.difficulty3') },
+                      ]}
+                      placeholder={t('eventForm.difficultySelect')}
+                    />
+                  </Field>
                 </div>
-              </Field>
-              <div className="pt-7">
-                <Toggle
-                  value={form.is_free}
-                  onChange={v => {
-                    setField('is_free', v);
-                    if (v) setField('price_value', '');
-                  }}
-                  label={t('common.free')}
-                />
+                <Toggle value={form.beginner_friendly} onChange={v => setField('beginner_friendly', v)} label={t('eventForm.beginnerFriendly')} />
               </div>
-            </div>
-            <div className="border-t border-stone-800 pt-4">
-              <h3 className="text-stone-400 text-sm font-medium mb-3">{t('eventForm.flagsSection')}</h3>
-              <div className="flex flex-wrap gap-4">
-                <Toggle value={form.has_changes} onChange={v => setField('has_changes', v)} label={t('eventForm.hasChanges')} />
-              </div>
-            </div>
+            ) : (
+              <>
+                <div className="flex items-start gap-6">
+                  <Field label={t('eventForm.priceLabel')} hint={t('eventForm.priceHint')}>
+                    <div className="relative max-w-xs">
+                      <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm transition-colors ${form.is_free ? 'text-stone-600' : 'text-stone-500'}`}>€</span>
+                      <Input
+                        type="number"
+                        value={form.is_free ? '' : form.price_value}
+                        onChange={v => setField('price_value', v)}
+                        placeholder={form.is_free ? '—' : '185'}
+                        className={`pl-7 ${form.is_free ? 'opacity-40 pointer-events-none' : ''}`}
+                        disabled={form.is_free}
+                        min={0}
+                        step={0.01}
+                      />
+                    </div>
+                  </Field>
+                  <div className="pt-7">
+                    <Toggle
+                      value={form.is_free}
+                      onChange={v => {
+                        setField('is_free', v);
+                        if (v) setField('price_value', '');
+                      }}
+                      label={t('common.free')}
+                    />
+                  </div>
+                </div>
+                <div className="border-t border-stone-800 pt-4">
+                  <h3 className="text-stone-400 text-sm font-medium mb-3">{t('eventForm.flagsSection')}</h3>
+                  <div className="flex flex-wrap gap-4">
+                    <Toggle value={form.has_changes} onChange={v => setField('has_changes', v)} label={t('eventForm.hasChanges')} />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
