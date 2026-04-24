@@ -7680,7 +7680,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
   const profileLink = auth.user ? `https://trailhub.netlify.app/profile/${auth.user.id}` : '';
 
   // Get events from context state
-  const favorites = mockEvents.filter(e => favoriteEventIds.includes(e.id));
+  const favorites = mockEvents.filter(e => favoriteEventIds.includes(e.id)).sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
   const registeredEvents = mockEvents.filter(e => registeredEventIds.includes(e.id));
 
   // Compute participation stats: count per category, sort descending, take top 3
@@ -7714,7 +7714,8 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
     .map(e => ({
       ...e,
       pastStatus: getPastEventStatus(e.endDate)
-    }));
+    }))
+    .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
 
   // Real friends data from Supabase (via context)
   const { friends, incomingRequests, loadFriends, friendsError } = useUserState();
@@ -7787,7 +7788,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
     if (e.status === 'past') return false;
     if (e.isFlexibleDate) return true; // flexible events always appear in upcoming
     return !e.startDate || new Date(e.startDate) >= new Date();
-  });
+  }).sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
   // Tab content renderers
   const renderEventsTab = () => (
