@@ -7680,7 +7680,14 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
   const profileLink = auth.user ? `https://trailhub.netlify.app/profile/${auth.user.id}` : '';
 
   // Get events from context state
-  const favorites = mockEvents.filter(e => favoriteEventIds.includes(e.id)).sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  const favorites = mockEvents.filter(e => favoriteEventIds.includes(e.id)).sort((a, b) => {
+    const aFlex = a.isFlexibleDate || a.bookingType === 'flexible';
+    const bFlex = b.isFlexibleDate || b.bookingType === 'flexible';
+    if (aFlex && bFlex) return 0;
+    if (aFlex) return 1;
+    if (bFlex) return -1;
+    return new Date(a.startDate) - new Date(b.startDate);
+  });
   const registeredEvents = mockEvents.filter(e => registeredEventIds.includes(e.id));
 
   // Compute participation stats: count per category, sort descending, take top 3
