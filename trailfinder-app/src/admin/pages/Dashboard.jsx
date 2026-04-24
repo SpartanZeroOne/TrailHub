@@ -29,7 +29,7 @@ function formatMonthLabel(yyyyMm) {
 // ─── Mini Bar Chart (SVG) ─────────────────────────────────────────────────────
 const BAR_AREA_H = 120;
 
-function BarChart({ data, labelKey, valueKey, color = '#f97316' }) {
+function BarChart({ data, labelKey, valueKey, monthKey, color = '#f97316', onBarClick }) {
   const [hovered, setHovered] = useState(null);
   if (!data?.length) return <div className="h-40 flex items-center justify-center text-stone-600 text-sm">Keine Daten</div>;
   const max = Math.max(...data.map(d => d[valueKey]), 1);
@@ -45,10 +45,12 @@ function BarChart({ data, labelKey, valueKey, color = '#f97316' }) {
           return (
             <div
               key={i}
-              className="flex flex-col items-center gap-1 cursor-pointer"
+              className="flex flex-col items-center gap-1 cursor-pointer group"
               style={{ width: barWidth + 8 }}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
+              onClick={() => onBarClick?.(item[monthKey ?? 'month'])}
+              title={`${item[labelKey]} anklicken um Events zu filtern`}
             >
               <span className={`text-xs leading-none transition-colors ${isHovered ? 'text-orange-300 font-semibold' : 'text-stone-400'}`}>
                 {item[valueKey]}
@@ -62,9 +64,10 @@ function BarChart({ data, labelKey, valueKey, color = '#f97316' }) {
                   opacity: isHovered ? 1 : 0.75,
                   transform: isHovered ? 'scaleY(1.04)' : 'scaleY(1)',
                   transformOrigin: 'bottom',
-                  boxShadow: isHovered ? `0 0 10px ${color}55` : 'none',
+                  boxShadow: isHovered ? `0 0 12px ${color}66` : 'none',
+                  outline: isHovered ? `2px solid ${color}44` : 'none',
+                  outlineOffset: '2px',
                 }}
-                title={`${item[labelKey]}: ${item[valueKey]} Events`}
               />
             </div>
           );
@@ -75,8 +78,9 @@ function BarChart({ data, labelKey, valueKey, color = '#f97316' }) {
         {data.map((item, i) => (
           <div
             key={i}
-            className={`text-[10px] text-center leading-none transition-colors ${hovered === i ? 'text-stone-300' : 'text-stone-500'}`}
+            className={`text-[10px] text-center leading-none transition-colors cursor-pointer ${hovered === i ? 'text-orange-300' : 'text-stone-500'}`}
             style={{ width: barWidth + 8 }}
+            onClick={() => onBarClick?.(item[monthKey ?? 'month'])}
           >
             {item[labelKey]}
           </div>
@@ -87,7 +91,8 @@ function BarChart({ data, labelKey, valueKey, color = '#f97316' }) {
 }
 
 // ─── Donut Chart (SVG) ────────────────────────────────────────────────────────
-function DonutChart({ data }) {
+function DonutChart({ data, onCategoryClick }) {
+  const [hovered, setHovered] = useState(null);
   if (!data?.length) return <div className="h-40 flex items-center justify-center text-stone-600 text-sm">Keine Daten</div>;
   const total = data.reduce((s, d) => s + d.count, 0);
   let offset = 0;
@@ -96,37 +101,59 @@ function DonutChart({ data }) {
 
   return (
     <div className="flex items-center gap-4 flex-wrap">
-      <svg width="160" height="140" viewBox="0 0 160 140">
+      <svg width="160" height="140" viewBox="0 0 160 140" style={{ cursor: 'pointer' }}>
         {data.map((d) => {
           const pct = d.count / total;
           const dash = pct * circ;
           const gap = circ - dash;
           const color = CATEGORY_COLORS[d.category] ?? '#888';
+          const isHovered = hovered === d.category;
           const slice = (
             <circle
               key={d.category}
               cx={cx} cy={cy} r={radius}
               fill="none"
               stroke={color}
-              strokeWidth={strokeWidth}
+              strokeWidth={isHovered ? strokeWidth + 4 : strokeWidth}
               strokeDasharray={`${dash} ${gap}`}
               strokeDashoffset={-offset * circ}
-              style={{ transition: 'all 0.4s' }}
+              opacity={hovered && !isHovered ? 0.45 : 1}
+              style={{ transition: 'all 0.2s', cursor: 'pointer' }}
+              onMouseEnter={() => setHovered(d.category)}
+              onMouseLeave={() => setHovered(null)}
+              onClick={() => onCategoryClick?.(d.category)}
             />
           );
           offset += pct;
           return slice;
         })}
-        <text x={cx} y={cy - 4} textAnchor="middle" fill="#d4d4d4" fontSize="18" fontWeight="bold">{total}</text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fill="#737373" fontSize="10">Events</text>
+        {/* Centre hit area — click navigates to all events */}
+        <circle
+          cx={cx} cy={cy} r={radius - strokeWidth / 2}
+          fill="transparent"
+          style={{ cursor: 'pointer' }}
+          onClick={() => onCategoryClick?.(null)}
+        />
+        <text x={cx} y={cy - 4} textAnchor="middle" fill="#d4d4d4" fontSize="18" fontWeight="bold"
+          style={{ pointerEvents: 'none' }}>{total}</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" fill="#737373" fontSize="10"
+          style={{ pointerEvents: 'none' }}>Events</text>
       </svg>
       <div className="flex flex-col gap-1.5">
         {data.map(d => (
-          <div key={d.category} className="flex items-center gap-2">
+          <button
+            key={d.category}
+            className="flex items-center gap-2 rounded px-1 -mx-1 transition-opacity hover:opacity-100 text-left"
+            style={{ opacity: hovered && hovered !== d.category ? 0.45 : 1 }}
+            onMouseEnter={() => setHovered(d.category)}
+            onMouseLeave={() => setHovered(null)}
+            onClick={() => onCategoryClick?.(d.category)}
+            title={`Filter: ${CATEGORY_LABELS[d.category] ?? d.category}`}
+          >
             <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: CATEGORY_COLORS[d.category] ?? '#888' }} />
             <span className="text-xs text-stone-400">{CATEGORY_LABELS[d.category] ?? d.category}</span>
             <span className="text-xs text-stone-300 ml-1 font-medium">{d.count}</span>
-          </div>
+          </button>
         ))}
       </div>
     </div>
@@ -259,7 +286,12 @@ export default function Dashboard({ onNavigate, toast }) {
       setStats(s);
       setCatData(c);
       const { chartData, undatedCount: uc } = m;
-      setMonthData(chartData.slice(-12).map(d => ({ ...d, label: formatMonthLabel(d.month) })));
+      const nowMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+      const filtered = chartData
+        .filter(d => d.month >= nowMonth)
+        .slice(0, 12)
+        .map(d => ({ ...d, label: formatMonthLabel(d.month) }));
+      setMonthData(filtered);
       setUndatedCount(uc ?? 0);
       setPastEvents(p);
     }).catch(err => {
@@ -371,11 +403,23 @@ export default function Dashboard({ onNavigate, toast }) {
               </span>
             )}
           </div>
-          <BarChart data={monthData} labelKey="label" valueKey="count" color="#f97316" />
+          <BarChart
+            data={monthData}
+            labelKey="label"
+            valueKey="count"
+            monthKey="month"
+            color="#f97316"
+            onBarClick={(month) => onNavigate(`/admin/events?month=${month}`)}
+          />
         </div>
         <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
           <h2 className="text-stone-200 font-semibold mb-4">{t('dashboard.eventsByCategory')}</h2>
-          <DonutChart data={catData} />
+          <DonutChart
+            data={catData}
+            onCategoryClick={(cat) =>
+              onNavigate(cat ? `/admin/events?category=${cat}` : '/admin/events')
+            }
+          />
         </div>
       </div>
 

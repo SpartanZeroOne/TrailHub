@@ -50,7 +50,7 @@ export const adminSyncExpiredEvents = async () => {
 // ─── EVENTS ───────────────────────────────────────────────────────────────────
 
 export const adminFetchEvents = async ({
-  page = 1, perPage = 25, category, status, organizerId, search, sortBy = 'start_date', sortDir = 'asc',
+  page = 1, perPage = 25, category, status, organizerId, search, month, startFrom, startTo, sortBy = 'start_date', sortDir = 'asc',
 } = {}) => {
   const today = new Date().toISOString().split('T')[0];
   let q = supabase.from('events').select('*, organizers(id, name)', { count: 'exact' });
@@ -59,6 +59,15 @@ export const adminFetchEvents = async ({
   if (status)      q = q.eq('status', status);
   if (organizerId) q = q.eq('organizer_id', organizerId);
   if (search)      q = q.or(`name.ilike.%${search}%,location.ilike.%${search}%`);
+  if (month) {
+    // month = "YYYY-MM" → filter start_date within that calendar month
+    const [y, m] = month.split('-').map(Number);
+    const from = `${month}-01`;
+    const nextMonth = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
+    q = q.gte('start_date', from).lt('start_date', nextMonth);
+  }
+  if (startFrom) q = q.gte('start_date', startFrom);
+  if (startTo)   q = q.lte('start_date', startTo);
 
   // When no explicit status filter: exclude past events and date-expired events at DB level.
   // Show an event only when one of these conditions holds:

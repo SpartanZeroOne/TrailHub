@@ -24,6 +24,7 @@ function StatusBadge({ status }) {
   const map = {
     upcoming:  'bg-green-500/15 text-green-400 border border-green-500/20',
     past:      'bg-stone-700 text-stone-400 border border-stone-600',
+    ongoing:   'bg-blue-500/15 text-blue-400 border border-blue-500/20',
     permanent: 'bg-blue-500/15 text-blue-400 border border-blue-500/20',
     sold_out:  'bg-orange-500/15 text-orange-400 border border-orange-500/30',
     cancelled: 'bg-red-500/15 text-red-400 border border-red-500/30',
@@ -31,6 +32,7 @@ function StatusBadge({ status }) {
   const labels = {
     upcoming:  'upcoming',
     past:      'past',
+    ongoing:   'ongoing',
     permanent: 'permanent',
     sold_out:  'sold out',
     cancelled: 'cancelled',
@@ -56,7 +58,55 @@ function SortIcon({ active, dir }) {
   return <span className="text-orange-400 ml-1">{dir === 'asc' ? '↑' : '↓'}</span>;
 }
 
-export default function EventList({ onNavigate, toast, initialOrganizerId = '', organizerName = '' }) {
+const DE_MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+function formatMonthDE(yyyyMm) {
+  if (!yyyyMm) return '';
+  const [y, m] = yyyyMm.split('-');
+  return `${DE_MONTHS[parseInt(m, 10) - 1]} ${y}`;
+}
+
+function daysUntilStart(startDate) {
+  if (!startDate) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = new Date(startDate); start.setHours(0, 0, 0, 0);
+  return Math.ceil((start - today) / 86400000);
+}
+
+function formatStartsIn(days) {
+  if (days === null)  return '—';
+  if (days < 0)       return 'Past';
+  if (days === 0)     return 'Today';
+  if (days === 1)     return 'Tomorrow';
+  return `${days} Days`;
+}
+
+function startsInColor(days) {
+  if (days === null || days < 0) return 'text-stone-500';
+  if (days <= 3)  return 'text-red-400';
+  if (days <= 7)  return 'text-orange-400';
+  return 'text-green-400';
+}
+
+function timeframeRange(value) {
+  if (!value || value === 'all') return {};
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const fmt = d => d.toISOString().split('T')[0];
+  if (value === 'week') {
+    const to = new Date(today); to.setDate(to.getDate() + 7);
+    return { startFrom: fmt(today), startTo: fmt(to) };
+  }
+  if (value === 'month') {
+    const to = new Date(today); to.setDate(to.getDate() + 30);
+    return { startFrom: fmt(today), startTo: fmt(to) };
+  }
+  if (value === 'past') {
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+    return { startTo: fmt(yesterday) };
+  }
+  return {};
+}
+
+export default function EventList({ onNavigate, toast, initialOrganizerId = '', organizerName = '', initialMonth = '', initialCategory = '' }) {
   const { t } = useTranslation();
   const [events, setEvents] = useState([]);
   const [total, setTotal] = useState(0);
@@ -65,7 +115,9 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
   const [perPage, setPerPage] = useState(25);
   const [sortBy, setSortBy] = useState('start_date');
   const [sortDir, setSortDir] = useState('asc');
-  const [filters, setFilters] = useState({ category: '', status: '', organizerId: initialOrganizerId, search: '' });
+  const [filters, setFilters] = useState({ category: initialCategory, status: '', organizerId: initialOrganizerId, search: '' });
+  const [monthFilter, setMonthFilter] = useState(initialMonth);
+  const [timeframe, setTimeframe] = useState('all');
   const [selected, setSelected] = useState(new Set());
   const [bulkAction, setBulkAction] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -83,6 +135,8 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
         status: filters.status || undefined,
         organizerId: filters.organizerId || undefined,
         search: filters.search || undefined,
+        month: monthFilter || undefined,
+        ...timeframeRange(timeframe),
       });
       setEvents(data);
       setTotal(count);
@@ -92,7 +146,7 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
     } finally {
       setLoading(false);
     }
-  }, [page, perPage, sortBy, sortDir, filters]);
+  }, [page, perPage, sortBy, sortDir, filters, monthFilter, timeframe]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -207,7 +261,35 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
           <h1 className="text-2xl font-bold text-stone-100">
             {organizerName ? `Events – ${organizerName}` : t('events.title')}
           </h1>
-          <p className="text-stone-500 text-sm mt-0.5">{total} {t('events.subtitleTemplate')}</p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <p className="text-stone-500 text-sm">{total} {t('events.subtitleTemplate')}</p>
+            {monthFilter && (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-300 text-xs">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Filter: {formatMonthDE(monthFilter)}
+                <button
+                  onClick={() => { setMonthFilter(''); setPage(1); onNavigate('/admin/events'); }}
+                  className="ml-0.5 hover:text-orange-100 transition-colors"
+                  title="Filter entfernen"
+                >✕</button>
+              </span>
+            )}
+            {filters.category && (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-300 text-xs">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10M7 12h10M7 17h10"/>
+                </svg>
+                {CATEGORY_LABELS[filters.category] ?? filters.category}
+                <button
+                  onClick={() => { handleFilterChange('category', ''); onNavigate('/admin/events'); }}
+                  className="ml-0.5 hover:text-orange-100 transition-colors"
+                  title="Filter entfernen"
+                >✕</button>
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex gap-2 flex-wrap">
           {initialOrganizerId && (
@@ -235,7 +317,7 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
 
       {/* Filters */}
       <div className="bg-stone-900 rounded-xl border border-stone-800 p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <input
             type="text"
             placeholder={t('events.searchPlaceholder')}
@@ -258,6 +340,16 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
           >
             <option value="">{t('events.allStatus')}</option>
             {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+          <select
+            value={timeframe}
+            onChange={e => { setTimeframe(e.target.value); setPage(1); }}
+            className="px-3 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm focus:outline-none focus:border-orange-500/50"
+          >
+            <option value="all">All Timeframes</option>
+            <option value="week">This Week (0–7 days)</option>
+            <option value="month">This Month (0–30 days)</option>
+            <option value="past">Past</option>
           </select>
           <select
             value={perPage}
@@ -352,13 +444,14 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
                   <Th label={t('events.tablePrice')} col="price_value" />
                   <Th label={t('events.tableDifficulty')} />
                   <Th label={t('events.tableStatus')} col="status" />
+                  <Th label="Starts In" col="start_date" />
                   <th className="px-4 py-3 text-left text-xs font-medium text-stone-400 uppercase tracking-wider">{t('events.tableActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-800">
                 {events.length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="text-center py-12 text-stone-600">
+                    <td colSpan={12} className="text-center py-12 text-stone-600">
                       {t('events.noEventsFound')}
                     </td>
                   </tr>
@@ -421,6 +514,16 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={event.status} />
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {(() => {
+                        const days = daysUntilStart(event.start_date);
+                        return (
+                          <span className={`text-sm font-medium ${startsInColor(days)}`}>
+                            {formatStartsIn(days)}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">

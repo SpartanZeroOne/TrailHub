@@ -211,9 +211,11 @@ function AdminAppInner() {
       case 'dashboard':      return <Dashboard {...props} />;
       case 'events': {
         const qs = new URLSearchParams(currentPath.split('?')[1] || '');
-        const orgId   = qs.get('organizer_id') || '';
-        const orgName = qs.get('organizer_name') || '';
-        return <EventList {...props} initialOrganizerId={orgId} organizerName={orgName} />;
+        const orgId    = qs.get('organizer_id') || '';
+        const orgName  = qs.get('organizer_name') || '';
+        const month    = qs.get('month') || '';
+        const category = qs.get('category') || '';
+        return <EventList {...props} initialOrganizerId={orgId} organizerName={orgName} initialMonth={month} initialCategory={category} />;
       }
       case 'event-form':     return <EventForm {...props} eventId={route.params?.id} />;
       case 'organizers':     return <OrganizerList {...props} />;

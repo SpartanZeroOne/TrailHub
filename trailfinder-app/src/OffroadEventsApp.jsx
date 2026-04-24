@@ -3436,6 +3436,29 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
   const localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
   const translatedLocation = translateLocation(event.location, language);
 
+  const getDaysUntilStart = (startDate) => {
+    if (!startDate) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const start = new Date(startDate); start.setHours(0, 0, 0, 0);
+    return Math.round((start - today) / (1000 * 60 * 60 * 24));
+  };
+  const formatDaysUntil = (days) => {
+    if (days === null) return null;
+    if (days < 0)   return language === 'de' ? 'Vergangen' : language === 'fr' ? 'Passé' : language === 'nl' ? 'Verleden' : 'Past';
+    if (days === 0) return language === 'de' ? 'Heute' : language === 'fr' ? "Aujourd'hui" : language === 'nl' ? 'Vandaag' : 'Today';
+    if (days === 1) return language === 'de' ? 'Morgen' : language === 'fr' ? 'Demain' : language === 'nl' ? 'Morgen' : 'Tomorrow';
+    if (days <= 7)  return language === 'de' ? `${days} Tage` : language === 'fr' ? `${days} jours` : language === 'nl' ? `${days} dagen` : `${days} days`;
+    return language === 'de' ? `In ${days} Tagen` : language === 'fr' ? `Dans ${days} jours` : language === 'nl' ? `Over ${days} dagen` : `In ${days} days`;
+  };
+  const getDaysColor = (days) => {
+    if (days === null || days < 0) return 'text-stone-500';
+    if (days <= 1)   return 'text-red-400';
+    if (days <= 7)   return 'text-orange-400';
+    if (days <= 14)  return 'text-yellow-400';
+    if (days <= 59)  return 'text-emerald-400';
+    return 'text-stone-500';
+  };
+
   // Share handler
   const handleShare = async (e) => {
     e.stopPropagation();
@@ -3692,6 +3715,21 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
             <span className="text-xs truncate">{translatedLocation}</span>
           </div>
         </div>
+
+        {/* Days until start — only shown in Meine Events / Favoriten */}
+        {origin === 'profile' && !event.isFlexibleDate && (() => {
+          const days = getDaysUntilStart(event.startDate);
+          const label = formatDaysUntil(days);
+          if (label === null) return null;
+          return (
+            <div className="flex items-center gap-1.5 mt-2">
+              <svg className="w-3 h-3 text-stone-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className={`text-xs font-medium ${getDaysColor(days)}`}>{label}</span>
+            </div>
+          );
+        })()}
 
         <div className="mt-3 pt-3 border-t border-stone-800/50 flex items-center justify-between">
           <span className="text-lg font-bold text-amber-400">{event.isFree ? t('freeLabel') : event.price}</span>
