@@ -7,7 +7,7 @@ import { App as CapApp } from '@capacitor/app';
 // On native: use the deep link scheme; on web: use the current origin
 const getAppUrl = () =>
     Capacitor.isNativePlatform()
-        ? 'com.trailhub.app://callback'
+        ? 'com.trailhub.mx://callback'
         : (import.meta.env.VITE_APP_URL || window.location.origin);
 import {
     supabase,

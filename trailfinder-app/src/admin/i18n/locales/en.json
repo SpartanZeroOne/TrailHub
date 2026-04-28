@@ -27,7 +27,7 @@
     "title": "Admin Login",
     "email": "Email",
     "password": "Password",
-    "emailPlaceholder": "admin@trailhub.de",
+    "emailPlaceholder": "admin@trailhub.mx",
     "submit": "Sign in",
     "submitting": "Signing in…",
     "backToApp": "← Back to TrailHub App",

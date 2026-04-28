@@ -9209,7 +9209,7 @@ function ImpressumPage({ setCurrentView }) {
       </LegalSection>
 
       <LegalSection title="Kontakt">
-        <p>E-Mail: <a href="mailto:info@trailhub.app" className="text-amber-500 hover:text-amber-400">info@trailhub.app</a></p>
+        <p>E-Mail: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
         <p>Telefon: auf Anfrage</p>
       </LegalSection>
 
@@ -9277,7 +9277,7 @@ function DatenschutzPage({ setCurrentView }) {
       <LegalSection title="Verantwortliche Stelle">
         <p>[Name des Betreibers]</p>
         <p>[Straße], [PLZ Ort]</p>
-        <p>E-Mail: <a href="mailto:info@trailhub.app" className="text-amber-500 hover:text-amber-400">info@trailhub.app</a></p>
+        <p>E-Mail: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
       </LegalSection>
 
       <LegalSection title="Erhobene Daten">
@@ -9352,7 +9352,7 @@ function DatenschutzPage({ setCurrentView }) {
           <li><span className="text-stone-300">Widerspruch</span> – gegen Verarbeitung auf Basis berechtigter Interessen (Art. 21 DSGVO)</li>
           <li><span className="text-stone-300">Beschwerde</span> – bei der zuständigen Datenschutzaufsichtsbehörde</li>
         </ul>
-        <p className="mt-2">Zur Ausübung deiner Rechte wende dich an: <a href="mailto:info@trailhub.app" className="text-amber-500 hover:text-amber-400">info@trailhub.app</a></p>
+        <p className="mt-2">Zur Ausübung deiner Rechte wende dich an: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
       </LegalSection>
 
       <LegalSection title="Cookies &amp; lokaler Speicher">
@@ -9394,7 +9394,7 @@ function KontaktPage({ setCurrentView }) {
     e.preventDefault();
     const { name, email, subject, message } = formData;
     const subjectLabel = subjectOptions.find(o => o.value === subject)?.label || subject;
-    const mailtoLink = `mailto:info@trailhub.app?subject=${encodeURIComponent(`[${subjectLabel}] – Kontaktanfrage von ${name}`)}&body=${encodeURIComponent(`Name: ${name}\nE-Mail: ${email}\n\n${message}`)}`;
+    const mailtoLink = `mailto:info@trailhub.mx?subject=${encodeURIComponent(`[${subjectLabel}] – Kontaktanfrage von ${name}`)}&body=${encodeURIComponent(`Name: ${name}\nE-Mail: ${email}\n\n${message}`)}`;
     window.location.href = mailtoLink;
     setSubmitted(true);
   };
@@ -9432,7 +9432,7 @@ function KontaktPage({ setCurrentView }) {
 
         <div className="space-y-2 text-stone-400">
           <p className="text-stone-300 font-medium">So funktioniert's:</p>
-          <p>Schreib uns eine E-Mail an <a href="mailto:events@trailhub.app" className="text-amber-500 hover:text-amber-400">events@trailhub.app</a> mit folgenden Infos:</p>
+          <p>Schreib uns eine E-Mail an <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a> mit folgenden Infos:</p>
           <ul className="list-disc list-inside space-y-1 ml-2">
             <li>Event-Name und Datum</li>
             <li>Ort / GPS-Koordinaten</li>
@@ -9471,7 +9471,7 @@ function KontaktPage({ setCurrentView }) {
         {submitted ? (
           <div className="bg-stone-900 border border-amber-500/20 rounded-xl p-6 text-center space-y-2">
             <p className="text-stone-300 font-medium">Deine E-Mail-App wurde geöffnet.</p>
-            <p className="text-stone-500 text-xs">Falls nichts passiert ist, schreib uns direkt an <a href="mailto:info@trailhub.app" className="text-amber-500">info@trailhub.app</a>.</p>
+            <p className="text-stone-500 text-xs">Falls nichts passiert ist, schreib uns direkt an <a href="mailto:info@trailhub.mx" className="text-amber-500">info@trailhub.mx</a>.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -9547,9 +9547,9 @@ function KontaktPage({ setCurrentView }) {
       {/* ── Direkte Kontaktinfos ── */}
       <LegalSection title="Direkte Kontaktmöglichkeiten">
         <div className="space-y-2">
-          <p>Allgemeine Anfragen: <a href="mailto:info@trailhub.app" className="text-amber-500 hover:text-amber-400">info@trailhub.app</a></p>
-          <p>Events eintragen: <a href="mailto:events@trailhub.app" className="text-amber-500 hover:text-amber-400">events@trailhub.app</a></p>
-          <p>Technischer Support: <a href="mailto:support@trailhub.app" className="text-amber-500 hover:text-amber-400">support@trailhub.app</a></p>
+          <p>Allgemeine Anfragen: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
+          <p>Events eintragen: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
+          <p>Technischer Support: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
         </div>
       </LegalSection>
     </LegalPageShell>

@@ -49,7 +49,7 @@ function AdminLoginGate({ onLogin }) {
       const hasAccess = admin_role === 'super_admin' || admin_role === 'organizer' || !!organizer_id
         || user?.app_metadata?.role === 'admin'
         || user?.user_metadata?.is_admin === true
-        || user?.email?.endsWith('@trailhub.de')
+        || user?.email?.endsWith('@trailhub.mx')
         || !!user;
 
       if (!hasAccess) throw new Error(t('login.errorNoAccess'));

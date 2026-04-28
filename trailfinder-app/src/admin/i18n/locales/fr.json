@@ -27,7 +27,7 @@
     "title": "Connexion Admin",
     "email": "E-mail",
     "password": "Mot de passe",
-    "emailPlaceholder": "admin@trailhub.de",
+    "emailPlaceholder": "admin@trailhub.mx",
     "submit": "Se connecter",
     "submitting": "Connexion…",
     "backToApp": "← Retour à l'app TrailHub",
