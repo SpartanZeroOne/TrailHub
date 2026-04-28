@@ -563,6 +563,114 @@ const translations = {
     confirmedEnd: 'Bestätigtes Enddatum',
     skipDates: 'Ohne Datum fortfahren',
     yourConfirmedDates: 'Dein bestätigter Termin',
+
+    // Legal pages
+    legalBack: 'Zurück',
+
+    // Impressum
+    impTitle: 'Impressum',
+    impS1Title: 'Angaben gemäß § 5 TMG',
+    impS1p1: 'Offroad Event Plattform',
+    impS1name: 'Adrian Tavares',
+    impS1street: '23, rue principale',
+    impS1city: 'L-8814 Bigonville, Luxemburg',
+    impS2Title: 'Kontakt',
+    impS2email: 'E-Mail:',
+    impS2phone: 'Telefon: auf Anfrage',
+    impS3Title: 'Vertreten durch',
+    impS3name: 'Gil Reding',
+    impS4Title: 'Registereintrag',
+    impS4text: 'Kleinunternehmer gemäß § 19 UStG – keine Umsatzsteuer-Pflicht. Kein Handelsregistereintrag.',
+    impS5Title: 'Haftungsausschluss – Inhalt',
+    impS5text: 'Die Inhalte dieser Plattform wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Haftung übernehmen. Als Plattformbetreiber sind wir gemäß § 7 Abs. 1 TMG für eigene Inhalte verantwortlich. Für fremde Inhalte (z. B. Events externer Veranstalter) übernehmen wir gemäß §§ 8–10 TMG keine Haftung. Eine Pflicht zur Überwachung übermittelter oder gespeicherter Informationen besteht nicht.',
+    impS6Title: 'Haftungsausschluss – externe Links',
+    impS6text: 'Diese Plattform enthält Links zu externen Webseiten Dritter. Auf deren Inhalte haben wir keinen Einfluss und übernehmen keine Haftung. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter verantwortlich. Zum Zeitpunkt der Verlinkung waren keine Rechtsverstöße erkennbar. Bei Bekanntwerden von Rechtsverletzungen werden solche Links umgehend entfernt.',
+    impS7Title: 'Haftung gegenüber Veranstaltungen',
+    impS7text: 'TrailHub ist eine Community-Plattform und fungiert ausschließlich als Informationsverzeichnis. Alle auf der Plattform gelisteten Events werden von unabhängigen Veranstaltern organisiert. TrailHub übernimmt keine Haftung für Ablauf, Sicherheit, Absage oder sonstige Belange der aufgeführten Veranstaltungen. Die finale Anmeldung erfolgt stets direkt beim Veranstalter.',
+    impS8Title: 'Urheberrecht',
+    impS8text: 'Die auf dieser Plattform enthaltenen Inhalte und Werke unterliegen dem deutschen Urheberrecht. Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechts bedürfen der schriftlichen Zustimmung von TrailHub. Downloads und Kopien sind nur für den privaten, nicht-kommerziellen Gebrauch gestattet.',
+
+    // Datenschutz
+    privTitle: 'Datenschutzerklärung',
+    privS1Title: 'Einleitung',
+    privS1text: 'Der Schutz deiner persönlichen Daten ist uns wichtig. Diese Datenschutzerklärung informiert dich darüber, welche Daten TrailHub erhebt, wie sie verwendet werden und welche Rechte du als Nutzer hast. Wir verarbeiten personenbezogene Daten ausschließlich im Rahmen der geltenden Datenschutzgesetze, insbesondere der EU-Datenschutz-Grundverordnung (DSGVO).',
+    privS2Title: 'Verantwortliche Stelle',
+    privS2name: 'Adrian Tavares',
+    privS2address: '23, rue principale, L-8814 Bigonville, Luxemburg',
+    privS3Title: 'Erhobene Daten',
+    privS3regTitle: 'Bei der Registrierung:',
+    privS3regItems: ['E-Mail-Adresse', 'Benutzername (selbst gewählt)', 'Profilbild (optional, vom Nutzer hochgeladen)', 'Bevorzugte Disziplin / Spracheinstellung'],
+    privS3usageTitle: 'Nutzungsdaten (automatisch):',
+    privS3usageItems: ['Login-Zeitstempel', 'Event-Anmeldungen und Favoriten', 'Freundschaftsverbindungen und zugehörige Sichtbarkeitseinstellungen'],
+    privS3localTitle: 'Lokale Speicherung (kein Server):',
+    privS3localItems: ['Spracheinstellung (localStorage)', 'Session-Cookies für die eingeloggte Sitzung (Supabase Auth)', 'Bestätigungszustand des Anmelde-Hinweisdialogs (localStorage)'],
+    privS4Title: 'Zweck der Verarbeitung',
+    privS4items: ['Bereitstellung der Plattformfunktionalität (Login, Profil, Events)', 'Anzeige von Event-Anmeldungen bei Freunden (Freundes-Funktion)', 'Personalisierung der Darstellung (Sprache, Disziplin)', 'Sicherheit und Authentifizierung der Nutzersitzung'],
+    privS5Title: 'Rechtsgrundlage (DSGVO)',
+    privS5items: ['Art. 6 Abs. 1 lit. b DSGVO – Vertragserfüllung (Registrierung & Nutzung)', 'Art. 6 Abs. 1 lit. f DSGVO – Berechtigtes Interesse (Sicherheit, Missbrauchsschutz)', 'Art. 6 Abs. 1 lit. a DSGVO – Einwilligung (wo optional, z. B. Profilbild)'],
+    privS6Title: 'Speicherdauer',
+    privS6text: 'Personenbezogene Daten werden gespeichert, solange ein aktives Nutzerkonto besteht. Nach Löschung des Kontos werden alle zugehörigen Daten innerhalb von 30 Tagen entfernt, sofern keine gesetzlichen Aufbewahrungspflichten entgegenstehen.',
+    privS7Title: 'Weitergabe an Dritte',
+    privS7p1a: 'Deine Daten werden nicht an Dritte zu Werbezwecken weitergegeben. TrailHub nutzt',
+    privS7p1b: 'als Backend-Infrastruktur (Datenbank, Authentifizierung, Datei-Storage). Supabase ist DSGVO-konform und verarbeitet Daten auf Servern innerhalb der EU (Frankfurt). Weitere Details:',
+    privS7p2: 'Externe Event-Veranstalter erhalten keine direkten Nutzerdaten. Bei Event-Anmeldungen erfolgt die finale Registrierung stets über die eigene Website des Veranstalters.',
+    privS8Title: 'Deine Rechte',
+    privS8intro: 'Du hast jederzeit das Recht auf:',
+    privS8rights: [
+      { name: 'Auskunft', desc: '– welche Daten wir über dich gespeichert haben (Art. 15 DSGVO)' },
+      { name: 'Berichtigung', desc: '– Korrektur unrichtiger Daten (Art. 16 DSGVO)' },
+      { name: 'Löschung', desc: '– Löschung deines Kontos und aller Daten (Art. 17 DSGVO)' },
+      { name: 'Einschränkung', desc: '– Einschränkung der Verarbeitung (Art. 18 DSGVO)' },
+      { name: 'Widerspruch', desc: '– gegen Verarbeitung auf Basis berechtigter Interessen (Art. 21 DSGVO)' },
+      { name: 'Beschwerde', desc: '– bei der zuständigen Datenschutzaufsichtsbehörde' },
+    ],
+    privS8contact: 'Zur Ausübung deiner Rechte wende dich an:',
+    privS9Title: 'Cookies & lokaler Speicher',
+    privS9intro: 'TrailHub verwendet keine Tracking-Cookies oder Werbe-Cookies. Folgende technische Cookies bzw. lokale Speichereinträge werden verwendet:',
+    privS9items: [
+      { name: 'Supabase Session-Cookie', desc: '– für die eingeloggte Sitzung, wird beim Logout gelöscht' },
+      { name: 'localStorage: Spracheinstellung', desc: '– damit deine Sprachwahl gespeichert bleibt' },
+      { name: 'localStorage: Hinweisdialog', desc: '– ob der Anmelde-Hinweis bereits bestätigt wurde' },
+    ],
+    privS10Title: 'SSL-Verschlüsselung',
+    privS10text: 'Diese Plattform nutzt aus Sicherheitsgründen eine SSL-Verschlüsselung für alle Datenübertragungen. Du erkennst dies an dem https:// in der Browser-Adresszeile und dem Schloss-Symbol in der Adressleiste.',
+
+    // Kontakt page
+    ctctTitle: 'Kontakt',
+    ctctIntro: 'Du hast Fragen, Feedback oder technische Probleme? Wir helfen dir gerne weiter. Füll einfach das Formular aus oder schreib uns direkt per E-Mail. Wir antworten in der Regel innerhalb von 24–48 Stunden.',
+    ctctEventTitle: 'Event eintragen lassen',
+    ctctEventDesc: 'Du bist Veranstalter eines Offroad-Events, MX-Tracks, Skills-Camps oder Festivals? Trag dein Event auf TrailHub ein und erreiche tausende Rider in deiner Region!',
+    ctctEventCategories: ['Offroad-Events & Trail-Rides', 'MX-Tracks & MX-Races', 'Skills-Camps & Fahrtrainings', 'Offroad-Festivals & Community-Treffen', 'Enduro-, Hard-Enduro- & Adventure-Events'],
+    ctctHowTitle: 'So funktioniert\'s:',
+    ctctHowIntro: 'Schreib uns eine E-Mail an',
+    ctctHowIntroSuffix: 'mit folgenden Infos:',
+    ctctHowItems: ['Event-Name und Datum', 'Ort / GPS-Koordinaten', 'Kurzbeschreibung und Zielgruppe', 'Schwierigkeitsgrad (1–3)', 'Preis-Info (kostenlos / Eintritt / Anmeldung)', 'Link zur Veranstalter-Website', 'Kontakt-E-Mail für Rückfragen'],
+    ctctHowNote: 'Wir prüfen dein Event und fügen es innerhalb von 1–3 Werktagen hinzu.',
+    ctctBenefits: [
+      { icon: '📍', text: 'Sichtbarkeit bei aktiven Offroad-Enthusiasten' },
+      { icon: '🗓️', text: 'Automatische Anzeige in Kalender & Kartenansicht' },
+      { icon: '✅', text: 'User können "Angemeldet"-Status setzen' },
+      { icon: '🌍', text: 'Mehrsprachige Darstellung (DE/EN/FR/NL)' },
+      { icon: '🔗', text: 'Direkter Link zu deiner Anmeldeseite' },
+    ],
+    ctctDisclaimer: 'TrailHub ist eine Community-Plattform. Wir übernehmen keine Haftung für externe Events. Die finale Anmeldung erfolgt immer direkt beim Veranstalter.',
+    ctctFormTitle: 'Schreib uns',
+    ctctFormName: 'Name',
+    ctctFormEmail: 'E-Mail',
+    ctctFormSubject: 'Betreff',
+    ctctFormMessage: 'Nachricht',
+    ctctFormConsent: 'Ich stimme der Verarbeitung meiner Daten gemäß der',
+    ctctFormConsentLink: 'Datenschutzerklärung',
+    ctctFormConsentSuffix: 'zu.',
+    ctctFormSubmit: 'Nachricht senden',
+    ctctFormSending: 'Wird gesendet...',
+    ctctSubjectGeneral: 'Allgemeine Frage',
+    ctctSubjectSupport: 'Technischer Support',
+    ctctSubjectEvent: 'Event eintragen',
+    ctctSubjectFeedback: 'Feedback',
+    ctctSuccessTitle: 'Vielen Dank! Deine Nachricht wurde gesendet.',
+    ctctSuccessSub: 'Wir melden uns in der Regel innerhalb von 1–2 Werktagen.',
+    ctctErrorMsg: 'Entschuldigung, es gab ein Problem beim Senden. Bitte versuche es später erneut oder schreibe direkt an info@trailhub.mx',
   },
   en: {
     // Navigation
@@ -886,6 +994,114 @@ const translations = {
     confirmedEnd: 'Confirmed End Date',
     skipDates: 'Continue without dates',
     yourConfirmedDates: 'Your confirmed date',
+
+    // Legal pages
+    legalBack: 'Back',
+
+    // Imprint
+    impTitle: 'Imprint',
+    impS1Title: 'Legal Information',
+    impS1p1: 'Offroad Event Platform',
+    impS1name: 'Adrian Tavares',
+    impS1street: '23, rue principale',
+    impS1city: 'L-8814 Bigonville, Luxembourg',
+    impS2Title: 'Contact',
+    impS2email: 'Email:',
+    impS2phone: 'Phone: on request',
+    impS3Title: 'Represented by',
+    impS3name: 'Gil Reding',
+    impS4Title: 'Business Registration',
+    impS4text: 'Small business operator pursuant to § 19 UStG – no VAT liability. No commercial register entry.',
+    impS5Title: 'Disclaimer – Content',
+    impS5text: 'The content of this platform has been created with the utmost care. However, we cannot guarantee the accuracy, completeness or timeliness of the content. As a platform operator, we are responsible for our own content in accordance with general law. We accept no liability for third-party content (e.g. events by external organizers). We are under no obligation to monitor transmitted or stored third-party information.',
+    impS6Title: 'Disclaimer – External Links',
+    impS6text: 'This platform contains links to external third-party websites. We have no influence over their content and accept no liability for it. The respective provider is always responsible for the content of linked pages. No legal violations were apparent at the time of linking. If we become aware of any infringements, we will remove such links immediately.',
+    impS7Title: 'Disclaimer – Events',
+    impS7text: 'TrailHub is a community platform and serves exclusively as an information directory. All events listed on the platform are organized by independent organizers. TrailHub accepts no liability for the conduct, safety, cancellation or any other aspects of the listed events. Final registration always takes place directly with the organizer.',
+    impS8Title: 'Copyright',
+    impS8text: 'The content and works on this platform are subject to copyright law. Reproduction, editing, distribution and any kind of use beyond the limits of copyright law require the written consent of TrailHub. Downloads and copies are only permitted for private, non-commercial use.',
+
+    // Privacy Policy
+    privTitle: 'Privacy Policy',
+    privS1Title: 'Introduction',
+    privS1text: 'The protection of your personal data is important to us. This Privacy Policy informs you about what data TrailHub collects, how it is used, and what rights you have as a user. We process personal data exclusively within the framework of applicable data protection laws, in particular the EU General Data Protection Regulation (GDPR).',
+    privS2Title: 'Data Controller',
+    privS2name: 'Adrian Tavares',
+    privS2address: '23, rue principale, L-8814 Bigonville, Luxembourg',
+    privS3Title: 'Data Collected',
+    privS3regTitle: 'On registration:',
+    privS3regItems: ['Email address', 'Username (self-chosen)', 'Profile picture (optional, uploaded by the user)', 'Preferred discipline / language setting'],
+    privS3usageTitle: 'Usage data (automatic):',
+    privS3usageItems: ['Login timestamps', 'Event registrations and favourites', 'Friend connections and associated visibility settings'],
+    privS3localTitle: 'Local storage (no server):',
+    privS3localItems: ['Language setting (localStorage)', 'Session cookies for the logged-in session (Supabase Auth)', 'Confirmation state of the registration notice dialog (localStorage)'],
+    privS4Title: 'Purpose of Processing',
+    privS4items: ['Provision of platform functionality (login, profile, events)', 'Display of event registrations among friends (friends feature)', 'Personalisation of the interface (language, discipline)', 'Security and authentication of user sessions'],
+    privS5Title: 'Legal Basis (GDPR)',
+    privS5items: ['Art. 6(1)(b) GDPR – Performance of contract (registration & use)', 'Art. 6(1)(f) GDPR – Legitimate interests (security, abuse prevention)', 'Art. 6(1)(a) GDPR – Consent (where optional, e.g. profile picture)'],
+    privS6Title: 'Retention Period',
+    privS6text: 'Personal data is stored for as long as an active user account exists. After deletion of the account, all associated data will be removed within 30 days, unless statutory retention obligations apply.',
+    privS7Title: 'Disclosure to Third Parties',
+    privS7p1a: 'Your data is not shared with third parties for advertising purposes. TrailHub uses',
+    privS7p1b: 'as backend infrastructure (database, authentication, file storage). Supabase is GDPR-compliant and processes data on servers within the EU (Frankfurt). Further details:',
+    privS7p2: 'External event organizers do not receive any direct user data. When registering for events, final registration always takes place via the organizer\'s own website.',
+    privS8Title: 'Your Rights',
+    privS8intro: 'You have the right at any time to:',
+    privS8rights: [
+      { name: 'Access', desc: '– what data we have stored about you (Art. 15 GDPR)' },
+      { name: 'Rectification', desc: '– correction of inaccurate data (Art. 16 GDPR)' },
+      { name: 'Erasure', desc: '– deletion of your account and all data (Art. 17 GDPR)' },
+      { name: 'Restriction', desc: '– restriction of processing (Art. 18 GDPR)' },
+      { name: 'Objection', desc: '– to processing based on legitimate interests (Art. 21 GDPR)' },
+      { name: 'Complaint', desc: '– to the competent data protection supervisory authority' },
+    ],
+    privS8contact: 'To exercise your rights, contact us at:',
+    privS9Title: 'Cookies & Local Storage',
+    privS9intro: 'TrailHub does not use tracking or advertising cookies. The following technical cookies and local storage entries are used:',
+    privS9items: [
+      { name: 'Supabase Session Cookie', desc: '– for the logged-in session, deleted on logout' },
+      { name: 'localStorage: Language setting', desc: '– so your language preference is saved' },
+      { name: 'localStorage: Notice dialog', desc: '– whether the registration notice has been confirmed' },
+    ],
+    privS10Title: 'SSL Encryption',
+    privS10text: 'For security reasons, this platform uses SSL encryption for all data transfers. You can recognise this by the https:// in the browser address bar and the padlock icon.',
+
+    // Contact page
+    ctctTitle: 'Contact',
+    ctctIntro: 'Have questions, feedback or technical issues? We\'re happy to help. Just fill in the form or write to us directly by email. We typically respond within 24–48 hours.',
+    ctctEventTitle: 'List your event',
+    ctctEventDesc: 'Are you an organizer of an offroad event, MX track, skills camp or festival? List your event on TrailHub and reach thousands of riders in your region!',
+    ctctEventCategories: ['Offroad Events & Trail Rides', 'MX Tracks & MX Races', 'Skills Camps & Riding Clinics', 'Offroad Festivals & Community Meetups', 'Enduro, Hard Enduro & Adventure Events'],
+    ctctHowTitle: 'How it works:',
+    ctctHowIntro: 'Send us an email at',
+    ctctHowIntroSuffix: 'with the following information:',
+    ctctHowItems: ['Event name and date', 'Location / GPS coordinates', 'Short description and target audience', 'Difficulty level (1–3)', 'Price info (free / entry fee / registration)', 'Link to the organizer\'s website', 'Contact email for enquiries'],
+    ctctHowNote: 'We review your event and add it within 1–3 business days.',
+    ctctBenefits: [
+      { icon: '📍', text: 'Visibility among active offroad enthusiasts' },
+      { icon: '🗓️', text: 'Automatic display in calendar & map view' },
+      { icon: '✅', text: 'Users can set "Registered" status' },
+      { icon: '🌍', text: 'Multilingual display (DE/EN/FR/NL)' },
+      { icon: '🔗', text: 'Direct link to your registration page' },
+    ],
+    ctctDisclaimer: 'TrailHub is a community platform. We accept no liability for external events. Final registration always takes place directly with the organizer.',
+    ctctFormTitle: 'Write to us',
+    ctctFormName: 'Name',
+    ctctFormEmail: 'Email',
+    ctctFormSubject: 'Subject',
+    ctctFormMessage: 'Message',
+    ctctFormConsent: 'I agree to the processing of my data in accordance with the',
+    ctctFormConsentLink: 'Privacy Policy',
+    ctctFormConsentSuffix: '.',
+    ctctFormSubmit: 'Send message',
+    ctctFormSending: 'Sending...',
+    ctctSubjectGeneral: 'General enquiry',
+    ctctSubjectSupport: 'Technical support',
+    ctctSubjectEvent: 'List an event',
+    ctctSubjectFeedback: 'Feedback',
+    ctctSuccessTitle: 'Thank you! Your message has been sent.',
+    ctctSuccessSub: 'We typically respond within 1–2 business days.',
+    ctctErrorMsg: 'Sorry, there was a problem sending your message. Please try again later or write directly to info@trailhub.mx',
   },
   fr: {
     // Navigation
@@ -1209,6 +1425,114 @@ const translations = {
     confirmedEnd: 'Date de fin confirmée',
     skipDates: 'Continuer sans dates',
     yourConfirmedDates: 'Votre date confirmée',
+
+    // Pages légales
+    legalBack: 'Retour',
+
+    // Mentions légales
+    impTitle: 'Mentions légales',
+    impS1Title: 'Informations légales',
+    impS1p1: 'Plateforme d\'événements offroad',
+    impS1name: 'Adrian Tavares',
+    impS1street: '23, rue principale',
+    impS1city: 'L-8814 Bigonville, Luxembourg',
+    impS2Title: 'Contact',
+    impS2email: 'E-mail :',
+    impS2phone: 'Téléphone : sur demande',
+    impS3Title: 'Représenté par',
+    impS3name: 'Gil Reding',
+    impS4Title: 'Inscription au registre',
+    impS4text: 'Micro-entrepreneur – exonéré de TVA. Pas d\'inscription au registre du commerce.',
+    impS5Title: 'Clause de non-responsabilité – Contenu',
+    impS5text: 'Le contenu de cette plateforme a été créé avec le plus grand soin. Nous ne pouvons toutefois pas garantir l\'exactitude, l\'exhaustivité ou l\'actualité des informations. En tant qu\'exploitant de la plateforme, nous sommes responsables de notre propre contenu conformément à la loi. Nous déclinons toute responsabilité quant au contenu tiers (p. ex. événements d\'organisateurs externes). Nous ne sommes pas tenus de surveiller les informations transmises ou stockées par des tiers.',
+    impS6Title: 'Clause de non-responsabilité – Liens externes',
+    impS6text: 'Cette plateforme contient des liens vers des sites web tiers. Nous n\'avons aucune influence sur leur contenu et déclinons toute responsabilité à leur égard. Le fournisseur respectif est toujours responsable du contenu des pages liées. Aucune violation légale n\'était apparente au moment de la mise en lien. Si nous avons connaissance d\'infractions, de tels liens seront supprimés sans délai.',
+    impS7Title: 'Responsabilité concernant les événements',
+    impS7text: 'TrailHub est une plateforme communautaire qui sert exclusivement de répertoire d\'informations. Tous les événements listés sur la plateforme sont organisés par des organisateurs indépendants. TrailHub décline toute responsabilité quant au déroulement, à la sécurité, à l\'annulation ou à tout autre aspect des événements répertoriés. L\'inscription finale s\'effectue toujours directement auprès de l\'organisateur.',
+    impS8Title: 'Droits d\'auteur',
+    impS8text: 'Le contenu et les œuvres de cette plateforme sont soumis au droit d\'auteur. La reproduction, le traitement, la diffusion et toute forme d\'exploitation au-delà des limites du droit d\'auteur nécessitent le consentement écrit de TrailHub. Les téléchargements et copies ne sont autorisés qu\'à des fins privées et non commerciales.',
+
+    // Politique de confidentialité
+    privTitle: 'Politique de confidentialité',
+    privS1Title: 'Introduction',
+    privS1text: 'La protection de vos données personnelles est importante pour nous. Cette politique de confidentialité vous informe des données que TrailHub collecte, de leur utilisation et de vos droits en tant qu\'utilisateur. Nous traitons les données personnelles exclusivement dans le cadre des lois applicables en matière de protection des données, en particulier le Règlement général sur la protection des données (RGPD) de l\'UE.',
+    privS2Title: 'Responsable du traitement',
+    privS2name: 'Adrian Tavares',
+    privS2address: '23, rue principale, L-8814 Bigonville, Luxembourg',
+    privS3Title: 'Données collectées',
+    privS3regTitle: 'Lors de l\'inscription :',
+    privS3regItems: ['Adresse e-mail', 'Nom d\'utilisateur (choisi par l\'utilisateur)', 'Photo de profil (facultative, téléchargée par l\'utilisateur)', 'Discipline préférée / paramètre de langue'],
+    privS3usageTitle: 'Données d\'utilisation (automatiques) :',
+    privS3usageItems: ['Horodatages de connexion', 'Inscriptions aux événements et favoris', 'Connexions d\'amis et paramètres de visibilité associés'],
+    privS3localTitle: 'Stockage local (hors serveur) :',
+    privS3localItems: ['Paramètre de langue (localStorage)', 'Cookies de session pour la session connectée (Supabase Auth)', 'État de confirmation de la boîte de dialogue d\'avis d\'inscription (localStorage)'],
+    privS4Title: 'Finalité du traitement',
+    privS4items: ['Fourniture des fonctionnalités de la plateforme (connexion, profil, événements)', 'Affichage des inscriptions aux événements parmi les amis (fonction amis)', 'Personnalisation de l\'interface (langue, discipline)', 'Sécurité et authentification des sessions utilisateur'],
+    privS5Title: 'Base juridique (RGPD)',
+    privS5items: ['Art. 6, par. 1, lit. b RGPD – Exécution du contrat (inscription et utilisation)', 'Art. 6, par. 1, lit. f RGPD – Intérêts légitimes (sécurité, prévention des abus)', 'Art. 6, par. 1, lit. a RGPD – Consentement (lorsque facultatif, p. ex. photo de profil)'],
+    privS6Title: 'Durée de conservation',
+    privS6text: 'Les données personnelles sont conservées aussi longtemps qu\'un compte utilisateur actif existe. Après la suppression du compte, toutes les données associées seront effacées dans un délai de 30 jours, sauf obligation légale de conservation contraire.',
+    privS7Title: 'Communication à des tiers',
+    privS7p1a: 'Vos données ne sont pas partagées avec des tiers à des fins publicitaires. TrailHub utilise',
+    privS7p1b: 'comme infrastructure backend (base de données, authentification, stockage de fichiers). Supabase est conforme au RGPD et traite les données sur des serveurs au sein de l\'UE (Francfort). Plus de détails :',
+    privS7p2: 'Les organisateurs d\'événements externes ne reçoivent aucune donnée utilisateur directe. Lors des inscriptions aux événements, l\'inscription finale s\'effectue toujours via le propre site web de l\'organisateur.',
+    privS8Title: 'Vos droits',
+    privS8intro: 'Vous avez à tout moment le droit de :',
+    privS8rights: [
+      { name: 'Accès', desc: '– aux données que nous avons stockées vous concernant (Art. 15 RGPD)' },
+      { name: 'Rectification', desc: '– correction des données inexactes (Art. 16 RGPD)' },
+      { name: 'Effacement', desc: '– suppression de votre compte et de toutes les données (Art. 17 RGPD)' },
+      { name: 'Limitation', desc: '– limitation du traitement (Art. 18 RGPD)' },
+      { name: 'Opposition', desc: '– au traitement fondé sur des intérêts légitimes (Art. 21 RGPD)' },
+      { name: 'Réclamation', desc: '– auprès de l\'autorité de contrôle compétente en matière de protection des données' },
+    ],
+    privS8contact: 'Pour exercer vos droits, contactez-nous à :',
+    privS9Title: 'Cookies et stockage local',
+    privS9intro: 'TrailHub n\'utilise pas de cookies de suivi ou publicitaires. Les cookies techniques et entrées de stockage local suivants sont utilisés :',
+    privS9items: [
+      { name: 'Cookie de session Supabase', desc: '– pour la session connectée, supprimé lors de la déconnexion' },
+      { name: 'localStorage : Paramètre de langue', desc: '– pour enregistrer votre préférence de langue' },
+      { name: 'localStorage : Boîte de dialogue d\'avis', desc: '– si l\'avis d\'inscription a été confirmé' },
+    ],
+    privS10Title: 'Chiffrement SSL',
+    privS10text: 'Pour des raisons de sécurité, cette plateforme utilise le chiffrement SSL pour tous les transferts de données. Vous pouvez le reconnaître grâce au https:// dans la barre d\'adresse du navigateur et à l\'icône de cadenas.',
+
+    // Page Contact
+    ctctTitle: 'Contact',
+    ctctIntro: 'Vous avez des questions, des retours ou des problèmes techniques ? Nous sommes là pour vous aider. Remplissez simplement le formulaire ou écrivez-nous directement par e-mail. Nous répondons généralement sous 24 à 48 heures.',
+    ctctEventTitle: 'Faire référencer votre événement',
+    ctctEventDesc: 'Vous êtes organisateur d\'un événement offroad, d\'une piste MX, d\'un stage ou d\'un festival ? Référencez votre événement sur TrailHub et touchez des milliers de riders dans votre région !',
+    ctctEventCategories: ['Événements offroad & trail rides', 'Pistes MX & courses MX', 'Stages de pilotage & formations', 'Festivals offroad & rassemblements communautaires', 'Événements enduro, hard enduro & aventure'],
+    ctctHowTitle: 'Comment ça marche :',
+    ctctHowIntro: 'Envoyez-nous un e-mail à',
+    ctctHowIntroSuffix: 'avec les informations suivantes :',
+    ctctHowItems: ['Nom et date de l\'événement', 'Lieu / coordonnées GPS', 'Courte description et public cible', 'Niveau de difficulté (1–3)', 'Informations tarifaires (gratuit / entrée / inscription)', 'Lien vers le site de l\'organisateur', 'E-mail de contact pour les questions'],
+    ctctHowNote: 'Nous vérifions votre événement et l\'ajoutons dans un délai de 1 à 3 jours ouvrables.',
+    ctctBenefits: [
+      { icon: '📍', text: 'Visibilité auprès des passionnés d\'offroad actifs' },
+      { icon: '🗓️', text: 'Affichage automatique dans le calendrier et la carte' },
+      { icon: '✅', text: 'Les utilisateurs peuvent définir le statut "Inscrit"' },
+      { icon: '🌍', text: 'Affichage multilingue (DE/EN/FR/NL)' },
+      { icon: '🔗', text: 'Lien direct vers votre page d\'inscription' },
+    ],
+    ctctDisclaimer: 'TrailHub est une plateforme communautaire. Nous déclinons toute responsabilité pour les événements externes. L\'inscription finale s\'effectue toujours directement auprès de l\'organisateur.',
+    ctctFormTitle: 'Écrivez-nous',
+    ctctFormName: 'Nom',
+    ctctFormEmail: 'E-mail',
+    ctctFormSubject: 'Objet',
+    ctctFormMessage: 'Message',
+    ctctFormConsent: 'J\'accepte le traitement de mes données conformément à la',
+    ctctFormConsentLink: 'Politique de confidentialité',
+    ctctFormConsentSuffix: '.',
+    ctctFormSubmit: 'Envoyer le message',
+    ctctFormSending: 'Envoi en cours...',
+    ctctSubjectGeneral: 'Question générale',
+    ctctSubjectSupport: 'Support technique',
+    ctctSubjectEvent: 'Référencer un événement',
+    ctctSubjectFeedback: 'Commentaires',
+    ctctSuccessTitle: 'Merci ! Votre message a été envoyé.',
+    ctctSuccessSub: 'Nous répondons généralement dans un délai de 1 à 2 jours ouvrables.',
+    ctctErrorMsg: 'Désolé, un problème est survenu lors de l\'envoi. Veuillez réessayer plus tard ou écrivez directement à info@trailhub.mx',
   },
   nl: {
     // Navigation
@@ -1533,6 +1857,114 @@ const translations = {
     confirmedEnd: 'Bevestigde einddatum',
     skipDates: 'Doorgaan zonder datums',
     yourConfirmedDates: 'Jouw bevestigde datum',
+
+    // Legale pagina's
+    legalBack: 'Terug',
+
+    // Colofon
+    impTitle: 'Colofon',
+    impS1Title: 'Wettelijke informatie',
+    impS1p1: 'Offroad Evenementenplatform',
+    impS1name: 'Adrian Tavares',
+    impS1street: '23, rue principale',
+    impS1city: 'L-8814 Bigonville, Luxemburg',
+    impS2Title: 'Contact',
+    impS2email: 'E-mail:',
+    impS2phone: 'Telefoon: op aanvraag',
+    impS3Title: 'Vertegenwoordigd door',
+    impS3name: 'Gil Reding',
+    impS4Title: 'Registratie',
+    impS4text: 'Kleine onderneming – vrijgesteld van BTW. Geen inschrijving in het handelsregister.',
+    impS5Title: 'Disclaimer – Inhoud',
+    impS5text: 'De inhoud van dit platform is met de grootst mogelijke zorg samengesteld. Wij kunnen echter geen garantie geven voor de juistheid, volledigheid of actualiteit van de inhoud. Als platformbeheerder zijn wij verantwoordelijk voor onze eigen inhoud conform de algemene wetgeving. Wij aanvaarden geen aansprakelijkheid voor inhoud van derden (bijv. evenementen van externe organisatoren). Wij zijn niet verplicht om verzonden of opgeslagen informatie van derden te controleren.',
+    impS6Title: 'Disclaimer – Externe links',
+    impS6text: 'Dit platform bevat links naar externe websites van derden. Wij hebben geen invloed op hun inhoud en aanvaarden daarvoor geen aansprakelijkheid. De respectievelijke aanbieder is altijd verantwoordelijk voor de inhoud van gelinkte pagina\'s. Op het moment van linken waren geen juridische overtredingen zichtbaar. Bij kennisname van overtredingen zullen dergelijke links onmiddellijk worden verwijderd.',
+    impS7Title: 'Aansprakelijkheid voor evenementen',
+    impS7text: 'TrailHub is een communityplatform en fungeert uitsluitend als informatiegids. Alle op het platform vermelde evenementen worden georganiseerd door onafhankelijke organisatoren. TrailHub aanvaardt geen aansprakelijkheid voor het verloop, de veiligheid, de annulering of enige andere aspecten van de vermelde evenementen. De definitieve inschrijving vindt altijd rechtstreeks bij de organisator plaats.',
+    impS8Title: 'Auteursrecht',
+    impS8text: 'De inhoud en werken op dit platform zijn onderworpen aan het auteursrecht. Reproductie, bewerking, verspreiding en elke vorm van gebruik buiten de grenzen van het auteursrecht vereisen de schriftelijke toestemming van TrailHub. Downloads en kopieën zijn alleen toegestaan voor privé, niet-commercieel gebruik.',
+
+    // Privacyverklaring
+    privTitle: 'Privacyverklaring',
+    privS1Title: 'Inleiding',
+    privS1text: 'De bescherming van uw persoonsgegevens is belangrijk voor ons. Deze privacyverklaring informeert u over welke gegevens TrailHub verzamelt, hoe ze worden gebruikt en welke rechten u als gebruiker heeft. Wij verwerken persoonsgegevens uitsluitend binnen het kader van de toepasselijke privacywetgeving, in het bijzonder de EU Algemene Verordening Gegevensbescherming (AVG).',
+    privS2Title: 'Verwerkingsverantwoordelijke',
+    privS2name: 'Adrian Tavares',
+    privS2address: '23, rue principale, L-8814 Bigonville, Luxemburg',
+    privS3Title: 'Verzamelde gegevens',
+    privS3regTitle: 'Bij registratie:',
+    privS3regItems: ['E-mailadres', 'Gebruikersnaam (zelf gekozen)', 'Profielfoto (optioneel, geüpload door de gebruiker)', 'Voorkeursdiscipline / taalinstelling'],
+    privS3usageTitle: 'Gebruiksgegevens (automatisch):',
+    privS3usageItems: ['Inlogtijdstempels', 'Evenementregistraties en favorieten', 'Vriendschapsverbindingen en bijbehorende zichtbaarheidsinstellingen'],
+    privS3localTitle: 'Lokale opslag (geen server):',
+    privS3localItems: ['Taalinstelling (localStorage)', 'Sessiecookies voor de ingelogde sessie (Supabase Auth)', 'Bevestigingsstatus van het registratiemelddialoogvenster (localStorage)'],
+    privS4Title: 'Doel van de verwerking',
+    privS4items: ['Levering van platformfunctionaliteit (inloggen, profiel, evenementen)', 'Weergave van evenementregistraties bij vrienden (vriendenfunctie)', 'Personalisatie van de interface (taal, discipline)', 'Beveiliging en authenticatie van gebruikerssessies'],
+    privS5Title: 'Rechtsgrondslag (AVG)',
+    privS5items: ['Art. 6 lid 1 sub b AVG – Uitvoering van een overeenkomst (registratie en gebruik)', 'Art. 6 lid 1 sub f AVG – Gerechtvaardigde belangen (beveiliging, misbruikpreventie)', 'Art. 6 lid 1 sub a AVG – Toestemming (waar optioneel, bijv. profielfoto)'],
+    privS6Title: 'Bewaartermijn',
+    privS6text: 'Persoonsgegevens worden bewaard zolang er een actief gebruikersaccount bestaat. Na verwijdering van het account worden alle bijbehorende gegevens binnen 30 dagen verwijderd, tenzij wettelijke bewaarplichten van toepassing zijn.',
+    privS7Title: 'Verstrekking aan derden',
+    privS7p1a: 'Uw gegevens worden niet gedeeld met derden voor reclamedoeleinden. TrailHub gebruikt',
+    privS7p1b: 'als backend-infrastructuur (database, authenticatie, bestandsopslag). Supabase voldoet aan de AVG en verwerkt gegevens op servers binnen de EU (Frankfurt). Meer details:',
+    privS7p2: 'Externe evenementorganisatoren ontvangen geen directe gebruikersgegevens. Bij evenementregistraties vindt de definitieve inschrijving altijd plaats via de eigen website van de organisator.',
+    privS8Title: 'Uw rechten',
+    privS8intro: 'U heeft te allen tijde het recht op:',
+    privS8rights: [
+      { name: 'Inzage', desc: '– welke gegevens wij over u hebben opgeslagen (Art. 15 AVG)' },
+      { name: 'Rectificatie', desc: '– correctie van onjuiste gegevens (Art. 16 AVG)' },
+      { name: 'Verwijdering', desc: '– verwijdering van uw account en alle gegevens (Art. 17 AVG)' },
+      { name: 'Beperking', desc: '– beperking van de verwerking (Art. 18 AVG)' },
+      { name: 'Bezwaar', desc: '– tegen verwerking op basis van gerechtvaardigde belangen (Art. 21 AVG)' },
+      { name: 'Klacht', desc: '– bij de bevoegde gegevensbeschermingsautoriteit' },
+    ],
+    privS8contact: 'Om uw rechten uit te oefenen, neem contact met ons op via:',
+    privS9Title: 'Cookies & lokale opslag',
+    privS9intro: 'TrailHub gebruikt geen tracking- of reclamecookies. De volgende technische cookies en lokale opslagvermeldingen worden gebruikt:',
+    privS9items: [
+      { name: 'Supabase sessiecookie', desc: '– voor de ingelogde sessie, verwijderd bij uitloggen' },
+      { name: 'localStorage: Taalinstelling', desc: '– zodat uw taalvoorkeur wordt opgeslagen' },
+      { name: 'localStorage: Meldingsdialoog', desc: '– of het registratiebericht is bevestigd' },
+    ],
+    privS10Title: 'SSL-versleuteling',
+    privS10text: 'Om veiligheidsredenen gebruikt dit platform SSL-versleuteling voor alle gegevensoverdrachten. U herkent dit aan https:// in de adresbalk van de browser en het slotpictogram.',
+
+    // Contactpagina
+    ctctTitle: 'Contact',
+    ctctIntro: 'Heeft u vragen, feedback of technische problemen? Wij helpen u graag. Vul gewoon het formulier in of schrijf ons direct per e-mail. We reageren doorgaans binnen 24 tot 48 uur.',
+    ctctEventTitle: 'Uw evenement laten vermelden',
+    ctctEventDesc: 'Bent u organisator van een offroad-evenement, MX-baan, skillskamp of festival? Vermeld uw evenement op TrailHub en bereik duizenden riders in uw regio!',
+    ctctEventCategories: ['Offroad-evenementen & trail rides', 'MX-banen & MX-races', 'Skillskampen & rijtrainingen', 'Offroad-festivals & community-bijeenkomsten', 'Enduro-, hard enduro- & adventure-evenementen'],
+    ctctHowTitle: 'Zo werkt het:',
+    ctctHowIntro: 'Stuur ons een e-mail naar',
+    ctctHowIntroSuffix: 'met de volgende informatie:',
+    ctctHowItems: ['Naam en datum van het evenement', 'Locatie / GPS-coördinaten', 'Korte beschrijving en doelgroep', 'Moeilijkheidsgraad (1–3)', 'Prijsinformatie (gratis / toegang / inschrijving)', 'Link naar de website van de organisator', 'Contact-e-mail voor vragen'],
+    ctctHowNote: 'Wij controleren uw evenement en voegen het toe binnen 1 tot 3 werkdagen.',
+    ctctBenefits: [
+      { icon: '📍', text: 'Zichtbaarheid bij actieve offroad-enthousiastelingen' },
+      { icon: '🗓️', text: 'Automatische weergave in agenda- en kaartweergave' },
+      { icon: '✅', text: 'Gebruikers kunnen de status "Aangemeld" instellen' },
+      { icon: '🌍', text: 'Meertalige weergave (DE/EN/FR/NL)' },
+      { icon: '🔗', text: 'Directe link naar uw inschrijvingspagina' },
+    ],
+    ctctDisclaimer: 'TrailHub is een communityplatform. Wij aanvaarden geen aansprakelijkheid voor externe evenementen. De definitieve inschrijving vindt altijd rechtstreeks bij de organisator plaats.',
+    ctctFormTitle: 'Schrijf ons',
+    ctctFormName: 'Naam',
+    ctctFormEmail: 'E-mail',
+    ctctFormSubject: 'Onderwerp',
+    ctctFormMessage: 'Bericht',
+    ctctFormConsent: 'Ik ga akkoord met de verwerking van mijn gegevens conform het',
+    ctctFormConsentLink: 'Privacybeleid',
+    ctctFormConsentSuffix: '.',
+    ctctFormSubmit: 'Bericht versturen',
+    ctctFormSending: 'Verzenden...',
+    ctctSubjectGeneral: 'Algemene vraag',
+    ctctSubjectSupport: 'Technische ondersteuning',
+    ctctSubjectEvent: 'Evenement vermelden',
+    ctctSubjectFeedback: 'Feedback',
+    ctctSuccessTitle: 'Dank u! Uw bericht is verzonden.',
+    ctctSuccessSub: 'We reageren doorgaans binnen 1 tot 2 werkdagen.',
+    ctctErrorMsg: 'Sorry, er is een probleem opgetreden bij het verzenden. Probeer het later opnieuw of schrijf direct naar info@trailhub.mx',
   },
 };
 
@@ -9167,6 +9599,7 @@ function FriendCard({ friend }) {
 
 // ─── Legal Page Shell ────────────────────────────────────────────────────────
 function LegalPageShell({ title, setCurrentView, children }) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-stone-950 text-stone-300">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -9177,7 +9610,7 @@ function LegalPageShell({ title, setCurrentView, children }) {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Zurück
+          {t('legalBack')}
         </button>
         <h1 className="text-3xl font-bold text-white mb-10 border-b border-stone-800 pb-6">{title}</h1>
         <div className="space-y-8 text-sm leading-relaxed">
@@ -9199,63 +9632,43 @@ function LegalSection({ title, children }) {
 
 // ─── Impressum ────────────────────────────────────────────────────────────────
 function ImpressumPage({ setCurrentView }) {
+  const { t } = useTranslation();
   return (
-    <LegalPageShell title="Impressum" setCurrentView={setCurrentView}>
-      <LegalSection title="Angaben gemäß § 5 TMG">
-        <p><span className="text-stone-300 font-medium">TrailHub</span> – Offroad Event Plattform</p>
-        <p>Betrieben durch: [Vor- und Nachname des Betreibers]</p>
-        <p>[Straße und Hausnummer]</p>
-        <p>[PLZ] [Ort], Deutschland</p>
+    <LegalPageShell title={t('impTitle')} setCurrentView={setCurrentView}>
+      <LegalSection title={t('impS1Title')}>
+        <p><span className="text-stone-300 font-medium">TrailHub</span> – {t('impS1p1')}</p>
+        <p>{t('impS1name')}</p>
+        <p>{t('impS1street')}</p>
+        <p>{t('impS1city')}</p>
       </LegalSection>
 
-      <LegalSection title="Kontakt">
-        <p>E-Mail: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
-        <p>Telefon: auf Anfrage</p>
+      <LegalSection title={t('impS2Title')}>
+        <p>{t('impS2email')} <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
+        <p>{t('impS2phone')}</p>
       </LegalSection>
 
-      <LegalSection title="Vertreten durch">
-        <p>[Name des Inhabers / Geschäftsführers]</p>
+      <LegalSection title={t('impS3Title')}>
+        <p>{t('impS3name')}</p>
       </LegalSection>
 
-      <LegalSection title="Registereintrag">
-        <p>Kleinunternehmer gemäß § 19 UStG – keine Umsatzsteuer-Pflicht. Kein Handelsregistereintrag.</p>
+      <LegalSection title={t('impS4Title')}>
+        <p>{t('impS4text')}</p>
       </LegalSection>
 
-      <LegalSection title="Haftungsausschluss – Inhalt">
-        <p>
-          Die Inhalte dieser Plattform wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit
-          und Aktualität der Inhalte können wir jedoch keine Haftung übernehmen. Als Plattformbetreiber sind
-          wir gemäß § 7 Abs. 1 TMG für eigene Inhalte verantwortlich. Für fremde Inhalte (z. B. Events
-          externer Veranstalter) übernehmen wir gemäß §§ 8–10 TMG keine Haftung. Eine Pflicht zur Überwachung
-          übermittelter oder gespeicherter Informationen besteht nicht.
-        </p>
+      <LegalSection title={t('impS5Title')}>
+        <p>{t('impS5text')}</p>
       </LegalSection>
 
-      <LegalSection title="Haftungsausschluss – externe Links">
-        <p>
-          Diese Plattform enthält Links zu externen Webseiten Dritter. Auf deren Inhalte haben wir keinen
-          Einfluss und übernehmen keine Haftung. Für die Inhalte der verlinkten Seiten ist stets der jeweilige
-          Anbieter verantwortlich. Zum Zeitpunkt der Verlinkung waren keine Rechtsverstöße erkennbar.
-          Bei Bekanntwerden von Rechtsverletzungen werden solche Links umgehend entfernt.
-        </p>
+      <LegalSection title={t('impS6Title')}>
+        <p>{t('impS6text')}</p>
       </LegalSection>
 
-      <LegalSection title="Haftung gegenüber Veranstaltungen">
-        <p>
-          TrailHub ist eine Community-Plattform und fungiert ausschließlich als Informationsverzeichnis.
-          Alle auf der Plattform gelisteten Events werden von unabhängigen Veranstaltern organisiert.
-          TrailHub übernimmt keine Haftung für Ablauf, Sicherheit, Absage oder sonstige Belange
-          der aufgeführten Veranstaltungen. Die finale Anmeldung erfolgt stets direkt beim Veranstalter.
-        </p>
+      <LegalSection title={t('impS7Title')}>
+        <p>{t('impS7text')}</p>
       </LegalSection>
 
-      <LegalSection title="Urheberrecht">
-        <p>
-          Die auf dieser Plattform enthaltenen Inhalte und Werke unterliegen dem deutschen Urheberrecht.
-          Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen
-          des Urheberrechts bedürfen der schriftlichen Zustimmung von TrailHub.
-          Downloads und Kopien sind nur für den privaten, nicht-kommerziellen Gebrauch gestattet.
-        </p>
+      <LegalSection title={t('impS8Title')}>
+        <p>{t('impS8text')}</p>
       </LegalSection>
     </LegalPageShell>
   );
@@ -9263,116 +9676,80 @@ function ImpressumPage({ setCurrentView }) {
 
 // ─── Datenschutz ─────────────────────────────────────────────────────────────
 function DatenschutzPage({ setCurrentView }) {
+  const { t } = useTranslation();
   return (
-    <LegalPageShell title="Datenschutzerklärung" setCurrentView={setCurrentView}>
-      <LegalSection title="Einleitung">
-        <p>
-          Der Schutz deiner persönlichen Daten ist uns wichtig. Diese Datenschutzerklärung informiert
-          dich darüber, welche Daten TrailHub erhebt, wie sie verwendet werden und welche Rechte
-          du als Nutzer hast. Wir verarbeiten personenbezogene Daten ausschließlich im Rahmen der
-          geltenden Datenschutzgesetze, insbesondere der EU-Datenschutz-Grundverordnung (DSGVO).
-        </p>
+    <LegalPageShell title={t('privTitle')} setCurrentView={setCurrentView}>
+      <LegalSection title={t('privS1Title')}>
+        <p>{t('privS1text')}</p>
       </LegalSection>
 
-      <LegalSection title="Verantwortliche Stelle">
-        <p>[Name des Betreibers]</p>
-        <p>[Straße], [PLZ Ort]</p>
+      <LegalSection title={t('privS2Title')}>
+        <p>{t('privS2name')}</p>
+        <p>{t('privS2address')}</p>
         <p>E-Mail: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
       </LegalSection>
 
-      <LegalSection title="Erhobene Daten">
-        <p className="text-stone-300 font-medium mb-1">Bei der Registrierung:</p>
+      <LegalSection title={t('privS3Title')}>
+        <p className="text-stone-300 font-medium mb-1">{t('privS3regTitle')}</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
-          <li>E-Mail-Adresse</li>
-          <li>Benutzername (selbst gewählt)</li>
-          <li>Profilbild (optional, vom Nutzer hochgeladen)</li>
-          <li>Bevorzugte Disziplin / Spracheinstellung</li>
+          {t('privS3regItems').map((item, i) => <li key={i}>{item}</li>)}
         </ul>
-        <p className="text-stone-300 font-medium mb-1 mt-3">Nutzungsdaten (automatisch):</p>
+        <p className="text-stone-300 font-medium mb-1 mt-3">{t('privS3usageTitle')}</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
-          <li>Login-Zeitstempel</li>
-          <li>Event-Anmeldungen und Favoriten</li>
-          <li>Freundschaftsverbindungen und zugehörige Sichtbarkeitseinstellungen</li>
+          {t('privS3usageItems').map((item, i) => <li key={i}>{item}</li>)}
         </ul>
-        <p className="text-stone-300 font-medium mb-1 mt-3">Lokale Speicherung (kein Server):</p>
+        <p className="text-stone-300 font-medium mb-1 mt-3">{t('privS3localTitle')}</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
-          <li>Spracheinstellung (localStorage)</li>
-          <li>Session-Cookies für die eingeloggte Sitzung (Supabase Auth)</li>
-          <li>Bestätigungszustand des Anmelde-Hinweisdialogs (localStorage)</li>
+          {t('privS3localItems').map((item, i) => <li key={i}>{item}</li>)}
         </ul>
       </LegalSection>
 
-      <LegalSection title="Zweck der Verarbeitung">
+      <LegalSection title={t('privS4Title')}>
         <ul className="list-disc list-inside space-y-1 ml-2">
-          <li>Bereitstellung der Plattformfunktionalität (Login, Profil, Events)</li>
-          <li>Anzeige von Event-Anmeldungen bei Freunden (Freundes-Funktion)</li>
-          <li>Personalisierung der Darstellung (Sprache, Disziplin)</li>
-          <li>Sicherheit und Authentifizierung der Nutzersitzung</li>
+          {t('privS4items').map((item, i) => <li key={i}>{item}</li>)}
         </ul>
       </LegalSection>
 
-      <LegalSection title="Rechtsgrundlage (DSGVO)">
+      <LegalSection title={t('privS5Title')}>
         <ul className="list-disc list-inside space-y-1 ml-2">
-          <li>Art. 6 Abs. 1 lit. b DSGVO – Vertragserfüllung (Registrierung &amp; Nutzung)</li>
-          <li>Art. 6 Abs. 1 lit. f DSGVO – Berechtigtes Interesse (Sicherheit, Missbrauchsschutz)</li>
-          <li>Art. 6 Abs. 1 lit. a DSGVO – Einwilligung (wo optional, z. B. Profilbild)</li>
+          {t('privS5items').map((item, i) => <li key={i}>{item}</li>)}
         </ul>
       </LegalSection>
 
-      <LegalSection title="Speicherdauer">
+      <LegalSection title={t('privS6Title')}>
+        <p>{t('privS6text')}</p>
+      </LegalSection>
+
+      <LegalSection title={t('privS7Title')}>
         <p>
-          Personenbezogene Daten werden gespeichert, solange ein aktives Nutzerkonto besteht.
-          Nach Löschung des Kontos werden alle zugehörigen Daten innerhalb von 30 Tagen entfernt,
-          sofern keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
-        </p>
-      </LegalSection>
-
-      <LegalSection title="Weitergabe an Dritte">
-        <p>
-          Deine Daten werden nicht an Dritte zu Werbezwecken weitergegeben.
-          TrailHub nutzt <span className="text-stone-300">Supabase</span> als Backend-Infrastruktur
-          (Datenbank, Authentifizierung, Datei-Storage). Supabase ist DSGVO-konform und verarbeitet
-          Daten auf Servern innerhalb der EU (Frankfurt). Weitere Details:&nbsp;
+          {t('privS7p1a')} <span className="text-stone-300">Supabase</span> {t('privS7p1b')}&nbsp;
           <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer"
             className="text-amber-500 hover:text-amber-400">supabase.com/privacy</a>.
         </p>
-        <p className="mt-2">
-          Externe Event-Veranstalter erhalten keine direkten Nutzerdaten. Bei Event-Anmeldungen
-          erfolgt die finale Registrierung stets über die eigene Website des Veranstalters.
-        </p>
+        <p className="mt-2">{t('privS7p2')}</p>
       </LegalSection>
 
-      <LegalSection title="Deine Rechte">
-        <p>Du hast jederzeit das Recht auf:</p>
-        <ul className="list-disc list-inside space-y-1 ml-2">
-          <li><span className="text-stone-300">Auskunft</span> – welche Daten wir über dich gespeichert haben (Art. 15 DSGVO)</li>
-          <li><span className="text-stone-300">Berichtigung</span> – Korrektur unrichtiger Daten (Art. 16 DSGVO)</li>
-          <li><span className="text-stone-300">Löschung</span> – Löschung deines Kontos und aller Daten (Art. 17 DSGVO)</li>
-          <li><span className="text-stone-300">Einschränkung</span> – Einschränkung der Verarbeitung (Art. 18 DSGVO)</li>
-          <li><span className="text-stone-300">Widerspruch</span> – gegen Verarbeitung auf Basis berechtigter Interessen (Art. 21 DSGVO)</li>
-          <li><span className="text-stone-300">Beschwerde</span> – bei der zuständigen Datenschutzaufsichtsbehörde</li>
+      <LegalSection title={t('privS8Title')}>
+        <p>{t('privS8intro')}</p>
+        <ul className="list-disc list-inside space-y-1 ml-2 mt-1">
+          {t('privS8rights').map((right, i) => (
+            <li key={i}><span className="text-stone-300">{right.name}</span> {right.desc}</li>
+          ))}
         </ul>
-        <p className="mt-2">Zur Ausübung deiner Rechte wende dich an: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
+        <p className="mt-2">{t('privS8contact')} <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
       </LegalSection>
 
-      <LegalSection title="Cookies &amp; lokaler Speicher">
-        <p>
-          TrailHub verwendet keine Tracking-Cookies oder Werbe-Cookies.
-          Folgende technische Cookies bzw. lokale Speichereinträge werden verwendet:
-        </p>
+      <LegalSection title={t('privS9Title')}>
+        <p>{t('privS9intro')}</p>
         <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
-          <li><span className="text-stone-300">Supabase Session-Cookie</span> – für die eingeloggte Sitzung, wird beim Logout gelöscht</li>
-          <li><span className="text-stone-300">localStorage: Spracheinstellung</span> – damit deine Sprachwahl gespeichert bleibt</li>
-          <li><span className="text-stone-300">localStorage: Hinweisdialog</span> – ob der Anmelde-Hinweis bereits bestätigt wurde</li>
+          {t('privS9items').map((item, i) => (
+            <li key={i}><span className="text-stone-300">{item.name}</span> {item.desc}</li>
+          ))}
         </ul>
       </LegalSection>
 
-      <LegalSection title="SSL-Verschlüsselung">
-        <p>
-          Diese Plattform nutzt aus Sicherheitsgründen eine SSL-Verschlüsselung für alle
-          Datenübertragungen. Du erkennst dies an dem <span className="text-stone-300">https://</span> in
-          der Browser-Adresszeile und dem Schloss-Symbol in der Adressleiste.
-        </p>
+      <LegalSection title={t('privS10Title')}>
+        <p>{t('privS10text')}</p>
       </LegalSection>
     </LegalPageShell>
   );
@@ -9380,16 +9757,17 @@ function DatenschutzPage({ setCurrentView }) {
 
 // ─── Kontakt ─────────────────────────────────────────────────────────────────
 function KontaktPage({ setCurrentView }) {
+  const { t } = useTranslation();
   const [formData, setFormData] = React.useState({ name: '', email: '', subject: 'general', message: '', consent: false });
   const [submitted, setSubmitted] = React.useState(false);
   const [sending, setSending] = React.useState(false);
   const [sendError, setSendError] = React.useState('');
 
   const subjectOptions = [
-    { value: 'general', label: 'Allgemeine Frage' },
-    { value: 'support', label: 'Technischer Support' },
-    { value: 'event', label: 'Event eintragen' },
-    { value: 'feedback', label: 'Feedback' },
+    { value: 'general', label: t('ctctSubjectGeneral') },
+    { value: 'support', label: t('ctctSubjectSupport') },
+    { value: 'event', label: t('ctctSubjectEvent') },
+    { value: 'feedback', label: t('ctctSubjectFeedback') },
   ];
 
   const handleSubmit = async (e) => {
@@ -9400,47 +9778,28 @@ function KontaktPage({ setCurrentView }) {
     const subjectLabel = subjectOptions.find(o => o.value === subject)?.label || subject;
     try {
       const { error } = await supabase.functions.invoke('send-contact-message', {
-        body: {
-          sender_name: name,
-          sender_email: email,
-          subject: subjectLabel,
-          message,
-          source: 'footer',
-        },
+        body: { sender_name: name, sender_email: email, subject: subjectLabel, message, source: 'footer' },
       });
       if (error) throw error;
       setSubmitted(true);
     } catch {
-      setSendError('Entschuldigung, es gab ein Problem beim Senden. Bitte versuche es später erneut oder schreibe direkt an info@trailhub.mx');
+      setSendError(t('ctctErrorMsg'));
     } finally {
       setSending(false);
     }
   };
 
   return (
-    <LegalPageShell title="Kontakt" setCurrentView={setCurrentView}>
-      <p className="text-stone-400">
-        Du hast Fragen, Feedback oder technische Probleme? Wir helfen dir gerne weiter.
-        Füll einfach das Formular aus oder schreib uns direkt per E-Mail.
-        Wir antworten in der Regel innerhalb von <span className="text-stone-300">24–48 Stunden</span>.
-      </p>
+    <LegalPageShell title={t('ctctTitle')} setCurrentView={setCurrentView}>
+      <p className="text-stone-400">{t('ctctIntro')}</p>
 
-      {/* ── Event-Veranstalter Bereich ── */}
+      {/* ── Event organizer section ── */}
       <div className="bg-stone-900 border border-amber-500/20 rounded-xl p-6 space-y-4">
-        <h2 className="text-base font-semibold text-amber-500">Event eintragen lassen</h2>
-        <p className="text-stone-400">
-          Du bist Veranstalter eines Offroad-Events, MX-Tracks, Skills-Camps oder Festivals?
-          Trag dein Event auf TrailHub ein und erreiche tausende Rider in deiner Region!
-        </p>
+        <h2 className="text-base font-semibold text-amber-500">{t('ctctEventTitle')}</h2>
+        <p className="text-stone-400">{t('ctctEventDesc')}</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-stone-400">
-          {[
-            'Offroad-Events & Trail-Rides',
-            'MX-Tracks & MX-Races',
-            'Skills-Camps & Fahrtrainings',
-            'Offroad-Festivals & Community-Treffen',
-            'Enduro-, Hard-Enduro- & Adventure-Events',
-          ].map((item) => (
+          {t('ctctEventCategories').map((item) => (
             <div key={item} className="flex items-center gap-2">
               <span className="text-amber-500">✓</span>
               <span>{item}</span>
@@ -9449,28 +9808,20 @@ function KontaktPage({ setCurrentView }) {
         </div>
 
         <div className="space-y-2 text-stone-400">
-          <p className="text-stone-300 font-medium">So funktioniert's:</p>
-          <p>Schreib uns eine E-Mail an <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a> mit folgenden Infos:</p>
+          <p className="text-stone-300 font-medium">{t('ctctHowTitle')}</p>
+          <p>
+            {t('ctctHowIntro')}{' '}
+            <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a>{' '}
+            {t('ctctHowIntroSuffix')}
+          </p>
           <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>Event-Name und Datum</li>
-            <li>Ort / GPS-Koordinaten</li>
-            <li>Kurzbeschreibung und Zielgruppe</li>
-            <li>Schwierigkeitsgrad (1–3)</li>
-            <li>Preis-Info (kostenlos / Eintritt / Anmeldung)</li>
-            <li>Link zur Veranstalter-Website</li>
-            <li>Kontakt-E-Mail für Rückfragen</li>
+            {t('ctctHowItems').map((item, i) => <li key={i}>{item}</li>)}
           </ul>
-          <p className="mt-2">Wir prüfen dein Event und fügen es innerhalb von <span className="text-stone-300">1–3 Werktagen</span> hinzu.</p>
+          <p className="mt-2">{t('ctctHowNote')}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-stone-400 pt-2">
-          {[
-            { icon: '📍', text: 'Sichtbarkeit bei aktiven Offroad-Enthusiasten' },
-            { icon: '🗓️', text: 'Automatische Anzeige in Kalender & Kartenansicht' },
-            { icon: '✅', text: 'User können "Angemeldet"-Status setzen' },
-            { icon: '🌍', text: 'Mehrsprachige Darstellung (DE/EN/FR/NL)' },
-            { icon: '🔗', text: 'Direkter Link zu deiner Anmeldeseite' },
-          ].map((item) => (
+          {t('ctctBenefits').map((item) => (
             <div key={item.text} className="flex items-start gap-2">
               <span>{item.icon}</span>
               <span>{item.text}</span>
@@ -9478,24 +9829,21 @@ function KontaktPage({ setCurrentView }) {
           ))}
         </div>
 
-        <p className="text-xs text-stone-600 pt-2 border-t border-stone-800">
-          TrailHub ist eine Community-Plattform. Wir übernehmen keine Haftung für externe Events.
-          Die finale Anmeldung erfolgt immer direkt beim Veranstalter.
-        </p>
+        <p className="text-xs text-stone-600 pt-2 border-t border-stone-800">{t('ctctDisclaimer')}</p>
       </div>
 
-      {/* ── Kontaktformular ── */}
-      <LegalSection title="Schreib uns">
+      {/* ── Contact form ── */}
+      <LegalSection title={t('ctctFormTitle')}>
         {submitted ? (
           <div className="bg-stone-900 border border-amber-500/20 rounded-xl p-6 text-center space-y-2">
-            <p className="text-stone-300 font-medium">Vielen Dank! Deine Nachricht wurde gesendet.</p>
-            <p className="text-stone-500 text-xs">Wir melden uns in der Regel innerhalb von 1–2 Werktagen.</p>
+            <p className="text-stone-300 font-medium">{t('ctctSuccessTitle')}</p>
+            <p className="text-stone-500 text-xs">{t('ctctSuccessSub')}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-stone-500 mb-1">Name *</label>
+                <label className="block text-xs text-stone-500 mb-1">{t('ctctFormName')} *</label>
                 <input
                   type="text"
                   required
@@ -9505,7 +9853,7 @@ function KontaktPage({ setCurrentView }) {
                 />
               </div>
               <div>
-                <label className="block text-xs text-stone-500 mb-1">E-Mail *</label>
+                <label className="block text-xs text-stone-500 mb-1">{t('ctctFormEmail')} *</label>
                 <input
                   type="email"
                   required
@@ -9516,7 +9864,7 @@ function KontaktPage({ setCurrentView }) {
               </div>
             </div>
             <div>
-              <label className="block text-xs text-stone-500 mb-1">Betreff</label>
+              <label className="block text-xs text-stone-500 mb-1">{t('ctctFormSubject')}</label>
               <select
                 value={formData.subject}
                 onChange={e => setFormData(p => ({ ...p, subject: e.target.value }))}
@@ -9526,7 +9874,7 @@ function KontaktPage({ setCurrentView }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-stone-500 mb-1">Nachricht *</label>
+              <label className="block text-xs text-stone-500 mb-1">{t('ctctFormMessage')} *</label>
               <textarea
                 required
                 rows={5}
@@ -9545,35 +9893,24 @@ function KontaktPage({ setCurrentView }) {
                 className="mt-0.5 accent-amber-500"
               />
               <label htmlFor="consent" className="text-xs text-stone-500 leading-relaxed">
-                Ich stimme der Verarbeitung meiner Daten gemäß der{' '}
+                {t('ctctFormConsent')}{' '}
                 <button type="button" onClick={() => { setCurrentView('datenschutz'); window.scrollTo(0, 0); }} className="text-amber-500 hover:text-amber-400">
-                  Datenschutzerklärung
+                  {t('ctctFormConsentLink')}
                 </button>{' '}
-                zu. *
+                {t('ctctFormConsentSuffix')} *
               </label>
             </div>
-            {sendError && (
-              <p className="text-red-400 text-sm">{sendError}</p>
-            )}
+            {sendError && <p className="text-red-400 text-sm">{sendError}</p>}
             <button
               type="submit"
               disabled={sending}
               className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-stone-950 font-semibold text-sm px-8 py-2.5 rounded-lg transition-colors flex items-center gap-2"
             >
               {sending && <span className="w-4 h-4 border-2 border-stone-950 border-t-transparent rounded-full animate-spin"/>}
-              {sending ? 'Wird gesendet...' : 'Nachricht senden'}
+              {sending ? t('ctctFormSending') : t('ctctFormSubmit')}
             </button>
           </form>
         )}
-      </LegalSection>
-
-      {/* ── Direkte Kontaktinfos ── */}
-      <LegalSection title="Direkte Kontaktmöglichkeiten">
-        <div className="space-y-2">
-          <p>Allgemeine Anfragen: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
-          <p>Events eintragen: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
-          <p>Technischer Support: <a href="mailto:info@trailhub.mx" className="text-amber-500 hover:text-amber-400">info@trailhub.mx</a></p>
-        </div>
       </LegalSection>
     </LegalPageShell>
   );
