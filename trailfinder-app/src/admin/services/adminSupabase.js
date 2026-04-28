@@ -2,13 +2,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../../services/supabaseClient';
 
-// Service-role client — used only for auth.admin operations (delete user from auth.users).
-// The service role key is bundled into the admin JS build; acceptable for an admin-only panel.
-const adminAuthClient = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
+// Service-role client — only created when the key is available (avoids crash when env var is unset).
+const _serviceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const adminAuthClient = _serviceKey
+  ? createClient(import.meta.env.VITE_SUPABASE_URL, _serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+  : null;
 
 // ─── COMPUTED STATUS ──────────────────────────────────────────────────────────
 // Statuses that are not date-driven and must never be auto-overridden.
@@ -337,12 +337,12 @@ export const adminUpdateUser = async (id, updates) => {
 };
 
 export const adminDeleteUser = async (id) => {
-  // Delete profile row first (cascades friends etc.)
   const { error: profileErr } = await supabase.from('users').delete().eq('id', id);
   if (profileErr) throw profileErr;
-  // Delete the auth.users entry so the user can't log in again
-  const { error: authErr } = await adminAuthClient.auth.admin.deleteUser(id);
-  if (authErr) throw authErr;
+  if (adminAuthClient) {
+    const { error: authErr } = await adminAuthClient.auth.admin.deleteUser(id);
+    if (authErr) throw authErr;
+  }
 };
 
 // ─── ANALYTICS / DASHBOARD ────────────────────────────────────────────────────
