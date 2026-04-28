@@ -73,7 +73,8 @@
     "upload": "↑ Upload",
     "yes": "Ja",
     "no": "Nein",
-    "none": "–"
+    "none": "–",
+    "refresh": "Aktualisieren"
   },
   "dashboard": {
     "title": "Dashboard",

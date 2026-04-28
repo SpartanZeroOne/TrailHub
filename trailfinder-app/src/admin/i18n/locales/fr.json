@@ -73,7 +73,8 @@
     "upload": "↑ Uploader",
     "yes": "Oui",
     "no": "Non",
-    "none": "–"
+    "none": "–",
+    "refresh": "Actualiser"
   },
   "dashboard": {
     "title": "Tableau de bord",

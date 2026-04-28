@@ -1,14 +1,5 @@
 // ─── TrailHub Admin – Supabase Service Layer ──────────────────────────────────
-import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../../services/supabaseClient';
-
-// Service-role client — only created when the key is available (avoids crash when env var is unset).
-const _serviceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-const adminAuthClient = _serviceKey
-  ? createClient(import.meta.env.VITE_SUPABASE_URL, _serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
-  : null;
 
 // ─── COMPUTED STATUS ──────────────────────────────────────────────────────────
 // Statuses that are not date-driven and must never be auto-overridden.
@@ -337,11 +328,20 @@ export const adminUpdateUser = async (id, updates) => {
 };
 
 export const adminDeleteUser = async (id) => {
-  const { error: profileErr } = await supabase.from('users').delete().eq('id', id);
-  if (profileErr) throw profileErr;
-  if (adminAuthClient) {
-    const { error: authErr } = await adminAuthClient.auth.admin.deleteUser(id);
-    if (authErr) throw authErr;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const serviceKey  = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) throw new Error('VITE_SUPABASE_SERVICE_ROLE_KEY not set');
+
+  // Direct HTTP call to the Auth Admin REST API.
+  // The Supabase JS client blocks sb_secret_ keys for table queries, but the
+  // GoTrue auth endpoint accepts them. Deleting auth.users cascades to public.users.
+  const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${id}`, {
+    method: 'DELETE',
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message ?? `Auth delete failed (${res.status})`);
   }
 };
 
@@ -783,7 +783,6 @@ export const adminFetchEventRegistrationDetails = async (eventId) => {
 
 export const adminFetchRegistrationsByUser = async ({
   eventId = null, organizerId = null,
-  dateFrom = null, dateTo = null,
   page = 0, perPage = 50,
 } = {}) => {
   // Fetch events (with optional filters)
