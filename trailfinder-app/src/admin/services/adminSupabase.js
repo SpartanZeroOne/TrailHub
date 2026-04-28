@@ -1,5 +1,14 @@
 // ─── TrailHub Admin – Supabase Service Layer ──────────────────────────────────
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../../services/supabaseClient';
+
+// Service-role client — used only for auth.admin operations (delete user from auth.users).
+// The service role key is bundled into the admin JS build; acceptable for an admin-only panel.
+const adminAuthClient = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 // ─── COMPUTED STATUS ──────────────────────────────────────────────────────────
 // Statuses that are not date-driven and must never be auto-overridden.
@@ -328,10 +337,12 @@ export const adminUpdateUser = async (id, updates) => {
 };
 
 export const adminDeleteUser = async (id) => {
-  // Note: this only deletes from the users profile table.
-  // Deleting from auth.users requires the service-role key (Edge Function).
-  const { error } = await supabase.from('users').delete().eq('id', id);
-  if (error) throw error;
+  // Delete profile row first (cascades friends etc.)
+  const { error: profileErr } = await supabase.from('users').delete().eq('id', id);
+  if (profileErr) throw profileErr;
+  // Delete the auth.users entry so the user can't log in again
+  const { error: authErr } = await adminAuthClient.auth.admin.deleteUser(id);
+  if (authErr) throw authErr;
 };
 
 // ─── ANALYTICS / DASHBOARD ────────────────────────────────────────────────────
