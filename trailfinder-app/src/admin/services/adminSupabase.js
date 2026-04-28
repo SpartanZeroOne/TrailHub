@@ -269,6 +269,49 @@ export const adminFetchUsers = async ({
   if (minRegistrations && minRegistrations > 0) {
     users = users.filter(u => (u.registered_event_ids ?? []).length >= minRegistrations);
   }
+
+  // Batch-fetch start_dates for all registered events to compute per-user stats.
+  // Flexible events (is_flexible_date=true, start_date=null) count as "upcoming"
+  // to match the mobile app's "Bevorstehend" logic.
+  const allEventIds = [...new Set(users.flatMap(u => u.registered_event_ids ?? []))];
+  if (allEventIds.length > 0) {
+    const { data: eventDates, error: edErr } = await supabase
+      .from('events').select('id, start_date, is_flexible_date').in('id', allEventIds);
+    if (edErr) console.error('[adminFetchUsers] event batch error:', edErr);
+    const eventMap = {};
+    (eventDates ?? []).forEach(e => {
+      eventMap[e.id]         = e;
+      eventMap[String(e.id)] = e;
+    });
+    const today = new Date().toISOString().split('T')[0];
+    const currentYear = String(new Date().getFullYear());
+    users = users.map(u => {
+      // flex_confirmed_dates: { "event_id_str": { start: "YYYY-MM-DD", end: "YYYY-MM-DD" } }
+      const flexDates = u.flex_confirmed_dates ?? {};
+      let upcoming = 0, thisYear = 0;
+      (u.registered_event_ids ?? []).forEach(id => {
+        const ev = eventMap[id] ?? eventMap[String(id)];
+        if (!ev) return;
+        if (ev.is_flexible_date && !ev.start_date) {
+          // Use user-confirmed start date if available, otherwise treat as open/upcoming
+          const confirmedStart = flexDates[String(id)]?.start;
+          if (confirmedStart) {
+            if (confirmedStart >= today) upcoming++;
+            if (confirmedStart.startsWith(currentYear)) thisYear++;
+          } else {
+            upcoming++;
+          }
+        } else if (ev.start_date) {
+          if (ev.start_date > today) upcoming++;
+          if (ev.start_date.startsWith(currentYear)) thisYear++;
+        }
+      });
+      return { ...u, upcomingEventsCount: upcoming, currentYearEventsCount: thisYear };
+    });
+  } else {
+    users = users.map(u => ({ ...u, upcomingEventsCount: 0, currentYearEventsCount: 0 }));
+  }
+
   return { data: users, count: count ?? 0 };
 };
 
@@ -375,6 +418,20 @@ export const adminFetchPastEvents = async (limit = 10) => {
     .limit(limit);
   if (error) throw error;
   return data ?? [];
+};
+
+export const adminFetchRecentlyEditedEvents = async (limit = 10) => {
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, name, category, status, updated_at, created_at')
+    // Only include events that were genuinely edited (updated more than 1 min after creation)
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+  if (error) return [];
+  return (data ?? []).filter(e => {
+    if (!e.updated_at || !e.created_at) return false;
+    return new Date(e.updated_at) - new Date(e.created_at) > 60_000;
+  });
 };
 
 export const adminFetchEventsByCategory = async () => {
@@ -522,6 +579,355 @@ export const adminUpdateMxTrack = async (form, eventId) => {
     .from('mx_tracks').update(payload).eq('event_id', eventId).select().single();
   if (error) throw error;
   return data;
+};
+
+// ─── ORGANIZER-SCOPED ANALYTICS ───────────────────────────────────────────────
+
+export const organizerFetchDashboardStats = async (organizerId) => {
+  const [
+    { count: totalEvents },
+    { count: upcomingEvents },
+    { data: recentEvents },
+    { data: allEvents },
+  ] = await Promise.all([
+    supabase.from('events').select('id', { count: 'exact', head: true }).eq('organizer_id', organizerId),
+    supabase.from('events').select('id', { count: 'exact', head: true }).eq('organizer_id', organizerId).eq('status', 'upcoming'),
+    supabase.from('events').select('id, name, category, status, created_at').eq('organizer_id', organizerId).order('created_at', { ascending: false }).limit(10),
+    supabase.from('events').select('id, registered_friends').eq('organizer_id', organizerId),
+  ]);
+
+  const regCounts = await countRegsUnified(allEvents ?? []);
+  const totalRegistrations = Object.values(regCounts).reduce((s, v) => s + v, 0);
+
+  return {
+    totalEvents: totalEvents ?? 0,
+    upcomingEvents: upcomingEvents ?? 0,
+    totalRegistrations,
+    recentEvents: recentEvents ?? [],
+  };
+};
+
+export const organizerFetchEventsByCategory = async (organizerId) => {
+  const { data, error } = await supabase.from('events').select('category').eq('organizer_id', organizerId);
+  if (error) return [];
+  const counts = {};
+  (data ?? []).forEach(e => { if (e.category) counts[e.category] = (counts[e.category] || 0) + 1; });
+  return Object.entries(counts).map(([category, count]) => ({ category, count }));
+};
+
+export const organizerFetchEventsPerMonth = async (organizerId) => {
+  const { data, error } = await supabase.from('events').select('start_date, event_dates').eq('organizer_id', organizerId);
+  if (error) return { chartData: [], undatedCount: 0 };
+  const counts = {};
+  let undatedCount = 0;
+  (data ?? []).forEach(e => {
+    if (e.start_date) {
+      const month = e.start_date.substring(0, 7);
+      counts[month] = (counts[month] || 0) + 1;
+    } else if (Array.isArray(e.event_dates) && e.event_dates.length > 0) {
+      e.event_dates.forEach(d => {
+        const month = d.start_date?.substring(0, 7);
+        if (month) counts[month] = (counts[month] || 0) + 1;
+      });
+    } else {
+      undatedCount++;
+    }
+  });
+  const chartData = Object.entries(counts)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, count]) => ({ month, count }));
+  return { chartData, undatedCount };
+};
+
+// ─── Shared helper: union registrations from BOTH sources per event ──────────
+// Source A: events.registered_friends (JSONB array of user UUID strings)
+// Source B: users.registered_event_ids — queried per event with .contains(),
+//           the same server-side operator used in adminFetchEventRegistrationDetails.
+// Runs all per-event queries in parallel. Deduplicates by user ID.
+async function countRegsUnified(events) {
+  if (!events?.length) return {};
+
+  const counts = {};
+  await Promise.all(events.map(async e => {
+    // Source A: registered_friends JSONB array
+    const seen = new Set(
+      (Array.isArray(e.registered_friends) ? e.registered_friends : []).map(String)
+    );
+    // Source B: server-side .contains() — identical to the modal query
+    const { data: regUsers } = await supabase
+      .from('users').select('id').contains('registered_event_ids', [e.id]);
+    (regUsers ?? []).forEach(u => seen.add(String(u.id)));
+    counts[e.id] = seen.size;
+  }));
+  return counts;
+}
+
+export const organizerFetchRegistrationsPerEvent = async (organizerId) => {
+  const { data: events, error: evErr } = await supabase
+    .from('events')
+    .select('id, name, registered_friends, group_size, status, start_date, location')
+    .eq('organizer_id', organizerId)
+    .order('start_date', { ascending: false });
+  if (evErr) { console.warn('organizerFetchRegistrationsPerEvent error:', evErr.message); return []; }
+  if (!events?.length) return [];
+
+  const counts = await countRegsUnified(events);
+
+  return (events ?? []).map(e => ({
+    id: e.id, name: e.name, location: e.location,
+    registrations: counts[e.id] ?? 0,
+    maxParticipants: e.group_size ?? null,
+    status: e.status, startDate: e.start_date,
+  }));
+};
+
+// ─── REGISTRATION TRENDS (organizer-scoped) ───────────────────────────────────
+
+export const organizerFetchRegistrationTrends = async (organizerId) => {
+  const { data: events } = await supabase
+    .from('events').select('id').eq('organizer_id', organizerId);
+  const eventIds = (events ?? []).map(e => e.id);
+  if (eventIds.length === 0) return { thisWeek: 0, thisMonth: 0, monthly: [] };
+
+  const yearAgo = new Date(); yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+  const { data: regs, error } = await supabase
+    .from('event_registrations')
+    .select('event_id, registered_at')
+    .in('event_id', eventIds)
+    .gte('registered_at', yearAgo.toISOString())
+    .eq('status', 'registered')
+    .order('registered_at', { ascending: true });
+  if (error) return { thisWeek: 0, thisMonth: 0, monthly: [] };
+
+  const now = new Date();
+  const weekAgo  = new Date(now - 7  * 86400000).toISOString();
+  const monthAgo = new Date(now - 30 * 86400000).toISOString();
+  const thisWeek  = (regs ?? []).filter(r => r.registered_at >= weekAgo).length;
+  const thisMonth = (regs ?? []).filter(r => r.registered_at >= monthAgo).length;
+  const buckets = {};
+  (regs ?? []).forEach(r => {
+    const m = r.registered_at.substring(0, 7);
+    buckets[m] = (buckets[m] || 0) + 1;
+  });
+  const monthly = Object.entries(buckets)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, count]) => ({ month, count }));
+  return { thisWeek, thisMonth, monthly };
+};
+
+// ─── REGISTRATION ANALYTICS (super-admin) ────────────────────────────────────
+
+export const adminFetchTopEventsByRegistrations = async (limit = 10) => {
+  const { data: evs, error } = await supabase
+    .from('events')
+    .select('id, name, category, start_date, registered_friends, organizer_id');
+  if (error) return [];
+
+  // Fetch organizer names separately to avoid embedded-join failures
+  const orgIds = [...new Set((evs ?? []).map(e => e.organizer_id).filter(Boolean))];
+  let orgMap = {};
+  if (orgIds.length) {
+    const { data: orgs } = await supabase.from('organizers').select('id, name').in('id', orgIds);
+    (orgs ?? []).forEach(o => { orgMap[o.id] = o.name; });
+  }
+
+  const counts = await countRegsUnified(evs ?? []);
+
+  return (evs ?? [])
+    .map(e => ({
+      id: e.id, name: e.name, category: e.category, startDate: e.start_date,
+      registrations: counts[e.id] ?? 0,
+      organizerName: orgMap[e.organizer_id] ?? '–',
+    }))
+    .sort((a, b) => b.registrations - a.registrations)
+    .slice(0, limit);
+};
+
+// Fetch all users registered for a specific event (super-admin only)
+export const adminFetchEventRegistrationDetails = async (eventId) => {
+  const { data: ev, error: evErr } = await supabase
+    .from('events')
+    .select('id, name, registered_friends')
+    .eq('id', eventId)
+    .single();
+  if (evErr || !ev) return { eventName: '', users: [] };
+
+  // Union both sources: registered_friends (UUIDs) + users.registered_event_ids
+  const friendIds = new Set(
+    (Array.isArray(ev.registered_friends) ? ev.registered_friends : []).map(String)
+  );
+  const { data: usersWithEvent } = await supabase
+    .from('users').select('id').contains('registered_event_ids', [eventId]);
+  (usersWithEvent ?? []).forEach(u => friendIds.add(String(u.id)));
+  const ids = [...friendIds];
+
+  if (ids.length === 0) return { eventName: ev.name, users: [] };
+
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, name, email, avatar')
+    .in('id', ids);
+  return { eventName: ev.name, users: users ?? [] };
+};
+
+export const adminFetchRegistrationsByUser = async ({
+  eventId = null, organizerId = null,
+  dateFrom = null, dateTo = null,
+  page = 0, perPage = 50,
+} = {}) => {
+  // Fetch events (with optional filters)
+  let evQ = supabase
+    .from('events')
+    .select('id, name, start_date, category, registered_friends, organizer_id');
+  if (eventId)     evQ = evQ.eq('id', eventId);
+  if (organizerId) evQ = evQ.eq('organizer_id', organizerId);
+
+  const { data: evs, error: evErr } = await evQ;
+  if (evErr || !evs?.length) return { data: [], count: 0 };
+
+  // Fetch organizer names separately to avoid embedded-join failures
+  const orgIds = [...new Set((evs ?? []).map(e => e.organizer_id).filter(Boolean))];
+  let orgMap = {};
+  if (orgIds.length) {
+    const { data: orgs } = await supabase.from('organizers').select('id, name').in('id', orgIds);
+    (orgs ?? []).forEach(o => { orgMap[o.id] = o.name; });
+  }
+
+  const evMap = {};
+  evs.forEach(e => { evMap[e.id] = { ...e, _orgName: orgMap[e.organizer_id] ?? '–' }; });
+
+  // Union both sources into per-event sets of user IDs (deduplicates by user)
+  const strToOrigId = new Map(evs.map(e => [String(e.id), e.id]));
+  // Source A: registered_friends
+  const pairSet = new Map(); // key: `${userId}:${eventId}` → { userId, event }
+  evs.forEach(e => {
+    (Array.isArray(e.registered_friends) ? e.registered_friends : []).forEach(uid => {
+      const key = `${String(uid)}:${e.id}`;
+      if (!pairSet.has(key)) pairSet.set(key, { userId: String(uid), event: e });
+    });
+  });
+  // Source B: server-side overlap so PostgreSQL handles type coercion
+  const { data: allUsers } = await supabase
+    .from('users')
+    .select('id, name, email, avatar, registered_event_ids')
+    .overlaps('registered_event_ids', evs.map(e => e.id));
+  const userDataMap = {};
+  (allUsers ?? []).forEach(u => {
+    userDataMap[String(u.id)] = u;
+    (u.registered_event_ids ?? []).forEach(eid => {
+      const origId = strToOrigId.get(String(eid));
+      if (origId !== undefined) {
+        const key = `${String(u.id)}:${origId}`;
+        if (!pairSet.has(key)) pairSet.set(key, { userId: String(u.id), event: evMap[origId] });
+      }
+    });
+  });
+
+  const pairs = [...pairSet.values()];
+  if (pairs.length === 0) return { data: [], count: 0 };
+
+  // Fetch user details for any user IDs not already loaded from source B
+  const uniqueIds = [...new Set(pairs.map(p => p.userId))];
+  const missingIds = uniqueIds.filter(id => !userDataMap[id]);
+  if (missingIds.length) {
+    const { data: extraUsers } = await supabase
+      .from('users').select('id, name, email, avatar').in('id', missingIds);
+    (extraUsers ?? []).forEach(u => { userDataMap[String(u.id)] = u; });
+  }
+  const userMap = userDataMap;
+
+  // Best-effort timestamps from event_registrations
+  const { data: erRows } = await supabase
+    .from('event_registrations').select('user_id, event_id, registered_at')
+    .in('event_id', evs.map(e => e.id));
+  const tsMap = {};
+  (erRows ?? []).forEach(r => { tsMap[`${r.user_id}:${r.event_id}`] = r.registered_at; });
+
+  const allRows = pairs.map(p => {
+    const u = userMap[p.userId] ?? {};
+    const e = p.event;
+    return {
+      id: `${p.userId}:${e.id}`,
+      registeredAt: tsMap[`${p.userId}:${e.id}`] ?? null,
+      userId: p.userId, eventId: e.id,
+      userName: u.name ?? '–', userEmail: u.email ?? '–', userAvatar: u.avatar ?? null,
+      eventName: e.name ?? '–', eventDate: e.start_date ?? null,
+      eventCategory: e.category ?? null, organizerName: e._orgName ?? '–',
+    };
+  });
+
+  allRows.sort((a, b) => (b.eventDate ?? '').localeCompare(a.eventDate ?? ''));
+  return { count: allRows.length, data: allRows.slice(page * perPage, (page + 1) * perPage) };
+};
+
+export const adminFetchRegistrationsByOrganizer = async () => {
+  const { data: evs, error } = await supabase
+    .from('events').select('id, organizer_id, registered_friends');
+  if (error) return [];
+
+  // Fetch organizer details separately to avoid embedded-join failures
+  const orgIds = [...new Set((evs ?? []).map(e => e.organizer_id).filter(Boolean))];
+  let orgMap = {};
+  if (orgIds.length) {
+    const { data: orgs } = await supabase.from('organizers').select('id, name, logo').in('id', orgIds);
+    (orgs ?? []).forEach(o => { orgMap[o.id] = o; });
+  }
+
+  const regCounts = await countRegsUnified(evs ?? []);
+
+  const map = {};
+  (evs ?? []).forEach(e => {
+    const oid = e.organizer_id; if (!oid) return;
+    const o = orgMap[oid]; if (!o) return;
+    if (!map[oid]) map[oid] = { id: o.id, name: o.name, logo: o.logo, registrations: 0, eventCount: 0 };
+    map[oid].registrations += regCounts[e.id] ?? 0;
+    map[oid].eventCount++;
+  });
+  return Object.values(map).sort((a, b) => b.registrations - a.registrations);
+};
+
+export const adminFetchRegistrationTrends = async () => {
+  const yearAgo = new Date(); yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+  const { data: regs, error } = await supabase
+    .from('event_registrations')
+    .select('registered_at')
+    .gte('registered_at', yearAgo.toISOString())
+    .eq('status', 'registered');
+  if (error) return { thisWeek: 0, thisMonth: 0, monthly: [] };
+
+  const now = new Date();
+  const weekAgo  = new Date(now - 7  * 86400000).toISOString();
+  const monthAgo = new Date(now - 30 * 86400000).toISOString();
+  const thisWeek  = (regs ?? []).filter(r => r.registered_at >= weekAgo).length;
+  const thisMonth = (regs ?? []).filter(r => r.registered_at >= monthAgo).length;
+  const buckets = {};
+  (regs ?? []).forEach(r => {
+    const m = r.registered_at.substring(0, 7);
+    buckets[m] = (buckets[m] || 0) + 1;
+  });
+  const monthly = Object.entries(buckets)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, count]) => ({ month, count }));
+  return { thisWeek, thisMonth, monthly };
+};
+
+// ─── ROLE MANAGEMENT (Super-Admin only) ───────────────────────────────────────
+
+export const adminUpdateUserRole = async (userId, adminRole, organizerId = null) => {
+  const updates = { admin_role: adminRole };
+  if (organizerId !== undefined) updates.organizer_id = organizerId;
+  const { error } = await supabase.from('users').update(updates).eq('id', userId);
+  if (error) throw error;
+  const { data: fresh, error: fetchErr } = await supabase.from('users').select('*').eq('id', userId).single();
+  if (fetchErr) throw fetchErr;
+  return fresh;
+};
+
+export const adminFetchUserRole = async (userId) => {
+  const { data, error } = await supabase
+    .from('users').select('admin_role, organizer_id').eq('id', userId).single();
+  if (error) return { admin_role: 'user', organizer_id: null };
+  return data ?? { admin_role: 'user', organizer_id: null };
 };
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────

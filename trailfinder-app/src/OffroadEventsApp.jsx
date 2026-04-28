@@ -8577,40 +8577,53 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
             </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={copyLink}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${copied ? 'bg-emerald-500 text-white shadow-none ring-0' : 'bg-stone-800 text-stone-200 ring-1 ring-amber-500/30 shadow-[0_0_10px_rgba(251,146,60,0.12)] hover:bg-stone-700 hover:ring-amber-500/50 hover:shadow-[0_0_14px_rgba(251,146,60,0.2)]'
-                  }`}
-              >
-                {copied ? `✓ ${t('copied')}` : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                    {t('copyLink')}
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  onActiveTabChange('settings');
-                  setTimeout(() => {
-                    const el = document.getElementById('settings-form');
-                    if (!el) return;
-                    // Scroll to top of form minus fixed header height (80px = pt-20)
-                    const top = el.getBoundingClientRect().top + window.scrollY - 88;
-                    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-                  }, 100);
-                }}
-                className="px-4 py-2 bg-stone-800 text-stone-300 rounded-lg text-sm font-medium hover:bg-stone-700 flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {t('edit')}
-              </button>
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={copyLink}
+                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${copied ? 'bg-emerald-500 text-white shadow-none ring-0' : 'bg-stone-800 text-stone-200 ring-1 ring-amber-500/30 shadow-[0_0_10px_rgba(251,146,60,0.12)] hover:bg-stone-700 hover:ring-amber-500/50 hover:shadow-[0_0_14px_rgba(251,146,60,0.2)]'
+                    }`}
+                >
+                  {copied ? `✓ ${t('copied')}` : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                      {t('copyLink')}
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    onActiveTabChange('settings');
+                    setTimeout(() => {
+                      const el = document.getElementById('settings-form');
+                      if (!el) return;
+                      // Scroll to top of form minus fixed header height (80px = pt-20)
+                      const top = el.getBoundingClientRect().top + window.scrollY - 88;
+                      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+                    }, 100);
+                  }}
+                  className="flex-1 px-4 py-2 bg-stone-800 text-stone-300 rounded-lg text-sm font-medium hover:bg-stone-700 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {t('edit')}
+                </button>
+              </div>
+              {((auth.profile?.admin_role && auth.profile.admin_role !== 'user') || !!auth.profile?.organizer_id || auth.user?.app_metadata?.role === 'admin') && (
+                <button
+                  onClick={() => window.location.href = '/admin'}
+                  className="w-full px-4 py-2 bg-orange-500/20 text-orange-300 rounded-lg text-sm font-medium hover:bg-orange-500/30 ring-1 ring-orange-500/30 flex items-center justify-center gap-2 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Admin Panel
+                </button>
+              )}
             </div>
           </div>
 

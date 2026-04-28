@@ -106,7 +106,7 @@ function timeframeRange(value) {
   return {};
 }
 
-export default function EventList({ onNavigate, toast, initialOrganizerId = '', organizerName = '', initialMonth = '', initialCategory = '' }) {
+export default function EventList({ onNavigate, toast, initialOrganizerId = '', organizerName = '', initialMonth = '', initialCategory = '', organizerLocked = false }) {
   const { t } = useTranslation();
   const [events, setEvents] = useState([]);
   const [total, setTotal] = useState(0);
@@ -292,7 +292,7 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
-          {initialOrganizerId && (
+          {initialOrganizerId && !organizerLocked && (
             <button
               onClick={() => onNavigate('/admin/organizers')}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm border border-stone-700 transition-colors"

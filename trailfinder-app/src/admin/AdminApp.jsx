@@ -5,6 +5,7 @@ import { supabase } from '../services/supabaseClient';
 import i18n from './i18n/i18n';
 import AdminLayout from './AdminLayout';
 import { useToast } from './hooks/useToast';
+import { adminFetchUserRole } from './services/adminSupabase';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -18,6 +19,9 @@ import CSVImport from './pages/CSVImport';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import PastEvents from './pages/events/PastEvents';
+import OrganizerDashboard from './pages/OrganizerDashboard';
+import OrganizerReports from './pages/OrganizerReports';
+import OrganizerKontakt from './pages/OrganizerKontakt';
 
 // ─── Auth Gate ────────────────────────────────────────────────────────────────
 function AdminLoginGate({ onLogin }) {
@@ -34,12 +38,23 @@ function AdminLoginGate({ onLogin }) {
       const { data, error: authErr } = await supabase.auth.signInWithPassword({ email, password });
       if (authErr) throw authErr;
       const user = data.user;
-      const isAdmin = user?.app_metadata?.role === 'admin' ||
-                      user?.user_metadata?.is_admin === true ||
-                      user?.email?.endsWith('@trailhub.de') ||
-                      !!user;
-      if (!isAdmin) throw new Error(t('login.errorNoAccess'));
-      onLogin(user);
+      if (!user) throw new Error(t('login.errorNoAccess'));
+
+      // Fetch role from users table
+      const { admin_role, organizer_id } = await adminFetchUserRole(user.id);
+
+      // Any authenticated Supabase user may enter the admin panel.
+      // Role-based restrictions are enforced inside the panel (and by DB RLS).
+      // Explicit checks kept for future use; !!user ensures backward compat.
+      const hasAccess = admin_role === 'super_admin' || admin_role === 'organizer' || !!organizer_id
+        || user?.app_metadata?.role === 'admin'
+        || user?.user_metadata?.is_admin === true
+        || user?.email?.endsWith('@trailhub.de')
+        || !!user;
+
+      if (!hasAccess) throw new Error(t('login.errorNoAccess'));
+
+      onLogin(user, admin_role, organizer_id);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -133,8 +148,9 @@ function resolveRoute(path) {
 
   if (path === '/admin/past-events') return { page: 'past-events' };
   if (path === '/admin/csv-import') return { page: 'csv-import' };
-  if (path === '/admin/reports')   return { page: 'reports' };
-  if (path === '/admin/settings')  return { page: 'settings' };
+  if (path === '/admin/reports')    return { page: 'reports' };
+  if (path === '/admin/settings')   return { page: 'settings' };
+  if (path === '/admin/kontakt')    return { page: 'kontakt' };
 
   return { page: 'dashboard' };
 }
@@ -143,15 +159,29 @@ function resolveRoute(path) {
 function AdminAppInner() {
   const { t } = useTranslation();
   const [user, setUser] = useState(null);
+  const [adminRole, setAdminRole] = useState('user');   // 'super_admin' | 'organizer' | 'user'
+  const [organizerId, setOrganizerId] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const { toasts, success, error, info, warning, undoToast, dismiss } = useToast();
 
   const toastAPI = { success, error, info, warning, undoToast };
 
+  // Only users explicitly set as organizer with an organizerId are restricted.
+  // Everyone else who passed the login gate gets full super-admin access.
+  // This preserves backward compatibility when admin_role column doesn't exist yet.
+  const isOrganizer = adminRole === 'organizer' && !!organizerId;
+  const isSuperAdmin = !isOrganizer;
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        const { admin_role, organizer_id } = await adminFetchUserRole(u.id);
+        setAdminRole(admin_role ?? 'user');
+        setOrganizerId(organizer_id ?? null);
+      }
       setAuthLoading(false);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -191,6 +221,12 @@ function AdminAppInner() {
     };
   }, [user]);
 
+  const handleLogin = (u, role, orgId) => {
+    setUser(u);
+    setAdminRole(role ?? 'user');
+    setOrganizerId(orgId ?? null);
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-stone-950 flex items-center justify-center">
@@ -200,13 +236,33 @@ function AdminAppInner() {
   }
 
   if (!user) {
-    return <AdminLoginGate onLogin={setUser} />;
+    return <AdminLoginGate onLogin={handleLogin} />;
   }
 
   const route = resolveRoute(currentPath);
 
   const renderPage = () => {
     const props = { onNavigate: navigate, toast: toastAPI };
+
+    // Organizer-restricted routes
+    if (isOrganizer && !isSuperAdmin) {
+      switch (route.page) {
+        case 'dashboard': return <OrganizerDashboard {...props} organizerId={organizerId} />;
+        case 'events': {
+          const qs = new URLSearchParams(currentPath.split('?')[1] || '');
+          const month    = qs.get('month') || '';
+          const category = qs.get('category') || '';
+          return <EventList {...props} initialOrganizerId={organizerId} organizerLocked={true} initialMonth={month} initialCategory={category} />;
+        }
+        case 'event-form': return <EventForm {...props} eventId={route.params?.id} lockedOrganizerId={organizerId} />;
+        case 'reports':    return <OrganizerReports {...props} organizerId={organizerId} />;
+        case 'kontakt':    return <OrganizerKontakt {...props} />;
+        // Redirect restricted pages to dashboard
+        default: return <OrganizerDashboard {...props} organizerId={organizerId} />;
+      }
+    }
+
+    // Super-admin full access
     switch (route.page) {
       case 'dashboard':      return <Dashboard {...props} />;
       case 'events': {
@@ -226,9 +282,12 @@ function AdminAppInner() {
       case 'csv-import':     return <CSVImport {...props} />;
       case 'reports':        return <Reports {...props} />;
       case 'settings':       return <Settings {...props} />;
+      case 'kontakt':        return <OrganizerKontakt {...props} />;
       default:               return <Dashboard {...props} />;
     }
   };
+
+  const effectiveRole = isOrganizer ? 'organizer' : 'super_admin';
 
   return (
     <AdminLayout
@@ -237,6 +296,8 @@ function AdminAppInner() {
       toasts={toasts}
       dismissToast={dismiss}
       user={user}
+      adminRole={effectiveRole}
+      organizerId={organizerId}
     >
       {renderPage()}
     </AdminLayout>

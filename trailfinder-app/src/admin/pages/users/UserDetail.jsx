@@ -1,7 +1,7 @@
 // ─── TrailHub Admin – User Detail ─────────────────────────────────────────────
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { adminFetchUserById, adminUpdateUser, adminDeleteUser, adminFetchEvents, adminUpdateUserRole, adminFetchOrganizers } from '../../services/adminSupabase';
+import { adminFetchUserById, adminUpdateUser, adminDeleteUser, adminUpdateUserRole, adminFetchOrganizers } from '../../services/adminSupabase';
 import { supabase } from '../../../services/supabaseClient';
 
 export default function UserDetail({ userId, onNavigate, toast }) {
@@ -33,11 +33,14 @@ export default function UserDetail({ userId, onNavigate, toast }) {
         setOrganizers(orgs ?? []);
         setSelectedOrganizerId(u?.organizer_id ?? '');
         setIsSuperAdminCheck(u?.admin_role === 'super_admin');
-        // Fetch registered events
+        // Fetch ALL registered events directly by ID (includes past + flexible)
         if (u?.registered_event_ids?.length) {
-          const { data } = await adminFetchEvents({ perPage: 100 });
-          const registered = data.filter(e => u.registered_event_ids.includes(e.id));
-          setRegisteredEvents(registered);
+          const { data: evData } = await supabase
+            .from('events')
+            .select('id, name, start_date, end_date, location, image, is_flexible_date, status')
+            .in('id', u.registered_event_ids)
+            .order('start_date', { ascending: false, nullsFirst: false });
+          setRegisteredEvents(evData ?? []);
         }
         // Fetch favorite events by IDs directly
         if (u?.favorite_event_ids?.length) {
@@ -260,21 +263,36 @@ export default function UserDetail({ userId, onNavigate, toast }) {
               <p className="text-stone-600 text-sm">{t('userDetail.noEventReg')}</p>
             ) : (
               <div className="space-y-2">
-                {registeredEvents.map(e => (
-                  <div key={e.id} className="flex items-center gap-3 p-3 rounded-lg bg-stone-800 hover:bg-stone-700 transition-colors">
-                    {e.image && <img src={e.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0"/>}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-stone-200 text-sm font-medium truncate">{e.name}</p>
-                      <p className="text-stone-500 text-xs">{e.start_date} · {e.location}</p>
+                {registeredEvents.map(e => {
+                  const isPast = e.status === 'past' || (!e.is_flexible_date && e.start_date && e.start_date < new Date().toISOString().split('T')[0]);
+                  const confirmed = (user.flex_confirmed_dates ?? {})[String(e.id)];
+                  const dateLabel = e.is_flexible_date
+                    ? confirmed?.start
+                      ? `📅 ${formatDate(confirmed.start)}${confirmed.end && confirmed.end !== confirmed.start ? ` – ${formatDate(confirmed.end)}` : ''}`
+                      : '📅 Flexibles Datum'
+                    : e.start_date
+                      ? `${formatDate(e.start_date)}${e.end_date && e.end_date !== e.start_date ? ` – ${formatDate(e.end_date)}` : ''}`
+                      : '–';
+                  return (
+                    <div key={e.id} className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isPast ? 'bg-stone-800/50 opacity-60' : 'bg-stone-800 hover:bg-stone-700'}`}>
+                      {e.image && <img src={e.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0"/>}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-stone-200 text-sm font-medium truncate">{e.name}</p>
+                          {e.is_flexible_date && <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/20 flex-shrink-0">Flex</span>}
+                          {isPast && <span className="text-xs px-1.5 py-0.5 rounded bg-stone-700 text-stone-500 flex-shrink-0">Past</span>}
+                        </div>
+                        <p className="text-stone-500 text-xs mt-0.5">{dateLabel} · {e.location ?? '–'}</p>
+                      </div>
+                      <button
+                        onClick={() => onNavigate(`/admin/events/${e.id}/edit`)}
+                        className="text-orange-400 hover:text-orange-300 text-xs flex-shrink-0"
+                      >
+                        {t('userDetail.openLink')}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => onNavigate(`/admin/events/${e.id}/edit`)}
-                      className="text-orange-400 hover:text-orange-300 text-xs"
-                    >
-                      {t('userDetail.openLink')}
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

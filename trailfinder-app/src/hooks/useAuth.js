@@ -39,11 +39,20 @@ export function AuthProvider({ children }) {
         }
 
         // Aktuelle Session laden
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            // Don't log in automatically if this is a recovery session
-            if (!isRecoveryRef.current) {
-                setUser(session?.user ?? null);
-                if (session?.user) loadProfile(session.user.id);
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+            if (!isRecoveryRef.current && session?.user) {
+                // Block check: kick out users that were locked while already logged in
+                const { data: prof } = await supabase
+                    .from('users').select('is_blocked').eq('id', session.user.id).single();
+                if (prof?.is_blocked) {
+                    await supabase.auth.signOut();
+                    setLoading(false);
+                    return;
+                }
+                setUser(session.user);
+                loadProfile(session.user.id);
+            } else if (!isRecoveryRef.current) {
+                setUser(null);
             }
             setLoading(false);
         });

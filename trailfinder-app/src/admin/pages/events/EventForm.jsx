@@ -350,11 +350,11 @@ function CategoryFields({ form, setField, cfg }) {
 }
 
 // ─── Main EventForm Component ─────────────────────────────────────────────────
-export default function EventForm({ eventId, onNavigate, toast }) {
+export default function EventForm({ eventId, onNavigate, toast, lockedOrganizerId = null }) {
   const { t } = useTranslation();
   const isNew = !eventId || eventId === 'new';
   const [activeTab, setActiveTab] = useState('basics');
-  const [form, setFormState] = useState({ ...DEFAULTS });
+  const [form, setFormState] = useState({ ...DEFAULTS, ...(lockedOrganizerId ? { organizer_id: lockedOrganizerId } : {}) });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!isNew);
@@ -632,15 +632,19 @@ export default function EventForm({ eventId, onNavigate, toast }) {
                 />
               </Field>
 
-              <Field label={t('common.organizer')} hint={t('eventForm.organizerHint')}>
-                <Select
-                  value={form.organizer_id}
-                  onChange={v => setField('organizer_id', v)}
-                  options={[
-                    ...organizers.map(o => ({ value: o.id, label: o.name })),
-                  ]}
-                  placeholder={t('eventForm.organizerSelect')}
-                />
+              <Field label={t('common.organizer')} hint={lockedOrganizerId ? t('organizer.organizerLocked') : t('eventForm.organizerHint')}>
+                {lockedOrganizerId ? (
+                  <div className="px-3 py-2.5 rounded-lg bg-stone-800/50 border border-stone-700/50 text-stone-400 text-sm">
+                    {organizers.find(o => o.id === lockedOrganizerId)?.name ?? lockedOrganizerId}
+                  </div>
+                ) : (
+                  <Select
+                    value={form.organizer_id}
+                    onChange={v => setField('organizer_id', v)}
+                    options={organizers.map(o => ({ value: o.id, label: o.name }))}
+                    placeholder={t('eventForm.organizerSelect')}
+                  />
+                )}
               </Field>
 
               <div className="flex flex-col gap-3 justify-end">

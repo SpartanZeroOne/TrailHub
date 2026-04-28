@@ -1,7 +1,8 @@
 // ─── TrailHub Admin – Dashboard ───────────────────────────────────────────────
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { adminFetchDashboardStats, adminFetchEventsByCategory, adminFetchEventsPerMonth, adminFetchPastEvents } from '../services/adminSupabase';
+import { adminFetchDashboardStats, adminFetchEventsByCategory, adminFetchEventsPerMonth, adminFetchPastEvents, adminFetchRecentlyEditedEvents } from '../services/adminSupabase';
+import { useAdmin } from '../AdminLayout';
 
 const CATEGORY_LABELS = {
   'trail-adventures': 'Trail Adventures',
@@ -265,14 +266,69 @@ function PastEventsFeed({ events, onNavigate }) {
   );
 }
 
+// ─── Recently Edited Feed ─────────────────────────────────────────────────────
+function RecentlyEditedFeed({ events, onNavigate }) {
+  const { i18n } = useTranslation();
+  const catColors = {
+    'trail-adventures': 'bg-orange-500',
+    'rallyes':          'bg-yellow-500',
+    'adventure-trips':  'bg-green-500',
+    'skills-camps':     'bg-blue-500',
+    'offroad-festivals':'bg-purple-500',
+  };
+
+  const formatRelative = (iso) => {
+    if (!iso) return '–';
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1)  return 'Gerade eben';
+    if (mins < 60) return `vor ${mins} Min.`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)  return `vor ${hrs} Std.`;
+    return new Date(iso).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  if (!events.length) {
+    return <p className="text-stone-600 text-sm text-center py-4">Keine bearbeiteten Events</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {events.map(e => (
+        <button
+          key={e.id}
+          onClick={() => onNavigate(`/admin/events/${e.id}/edit`)}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-stone-800 transition-colors text-left group"
+        >
+          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${catColors[e.category] ?? 'bg-stone-500'}`} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-stone-300 truncate group-hover:text-stone-100 transition-colors">{e.name}</p>
+            <p className="text-xs text-stone-500">{CATEGORY_LABELS[e.category] ?? e.category}</p>
+          </div>
+          <span className="text-xs text-stone-500 flex-shrink-0 whitespace-nowrap">{formatRelative(e.updated_at)}</span>
+          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+            e.status === 'upcoming'  ? 'bg-green-500/15 text-green-400' :
+            e.status === 'ongoing'   ? 'bg-blue-500/15 text-blue-400'  :
+            e.status === 'past'      ? 'bg-stone-700 text-stone-400'   :
+            'bg-blue-500/15 text-blue-400'
+          }`}>{e.status}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 export default function Dashboard({ onNavigate, toast }) {
   const { t } = useTranslation();
+  const adminCtx = useAdmin();
+  const isSuperAdmin = !adminCtx || adminCtx.isSuperAdmin !== false;
   const [stats, setStats] = useState(null);
   const [catData, setCatData] = useState([]);
   const [monthData, setMonthData] = useState([]);
   const [undatedCount, setUndatedCount] = useState(0);
   const [pastEvents, setPastEvents] = useState([]);
+  const [recentlyEdited, setRecentlyEdited] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -282,11 +338,12 @@ export default function Dashboard({ onNavigate, toast }) {
       adminFetchEventsByCategory(),
       adminFetchEventsPerMonth(),
       adminFetchPastEvents(10),
-    ]).then(([s, c, m, p]) => {
+      adminFetchRecentlyEditedEvents(10),
+    ]).then(([s, c, m, p, e]) => {
       setStats(s);
       setCatData(c);
       const { chartData, undatedCount: uc } = m;
-      const nowMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+      const nowMonth = new Date().toISOString().slice(0, 7);
       const filtered = chartData
         .filter(d => d.month >= nowMonth)
         .slice(0, 12)
@@ -294,6 +351,7 @@ export default function Dashboard({ onNavigate, toast }) {
       setMonthData(filtered);
       setUndatedCount(uc ?? 0);
       setPastEvents(p);
+      setRecentlyEdited(e);
     }).catch(err => {
       toast?.error(t('common.error') + ': ' + err.message);
     }).finally(() => setLoading(false));
@@ -328,15 +386,17 @@ export default function Dashboard({ onNavigate, toast }) {
             </svg>
             {t('dashboard.createEvent')}
           </button>
-          <button
-            onClick={() => onNavigate('/admin/csv-import')}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm font-medium border border-stone-700 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-            </svg>
-            {t('dashboard.csvImport')}
-          </button>
+          {isSuperAdmin && (
+            <button
+              onClick={() => onNavigate('/admin/csv-import')}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm font-medium border border-stone-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+              </svg>
+              {t('dashboard.csvImport')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -432,6 +492,17 @@ export default function Dashboard({ onNavigate, toast }) {
           </button>
         </div>
         <ActivityFeed events={stats?.recentEvents ?? []} onNavigate={onNavigate} />
+      </div>
+
+      {/* Recently Edited */}
+      <div className="bg-stone-900 rounded-xl border border-stone-800 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-stone-200 font-semibold">Zuletzt bearbeitete Events</h2>
+          <button onClick={() => onNavigate('/admin/events')} className="text-orange-400 text-sm hover:text-orange-300">
+            Alle ansehen →
+          </button>
+        </div>
+        <RecentlyEditedFeed events={recentlyEdited} onNavigate={onNavigate} />
       </div>
 
       {/* Past Events */}

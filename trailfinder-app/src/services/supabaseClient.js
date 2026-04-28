@@ -19,6 +19,12 @@ export const signUp = async (email, password, name) => {
 export const signIn = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    const { data: profile } = await supabase
+        .from('users').select('is_blocked').eq('id', data.user.id).single();
+    if (profile?.is_blocked) {
+        await supabase.auth.signOut();
+        throw new Error('Dein Account wurde gesperrt. Bitte kontaktiere den Support.');
+    }
     return data;
 };
 export const signOut = async () => {
