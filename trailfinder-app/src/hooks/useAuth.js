@@ -24,13 +24,32 @@ import {
 
 const AuthContext = createContext(null);
 
+const DELETED_MESSAGES = {
+    de: 'Dein Konto wurde gelöscht. Bitte wende dich an den Support.',
+    fr: 'Votre compte a été supprimé. Veuillez contacter le support.',
+    en: 'Your account has been deleted. Please contact support.',
+};
+function getDeletedMessage() {
+    const lang = (localStorage.getItem('i18nextLng') || 'en').substring(0, 2);
+    return DELETED_MESSAGES[lang] ?? DELETED_MESSAGES.en;
+}
+
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+    const [deletedBanner, setDeletedBanner] = useState(false);
     // Ref needed because onAuthStateChange closure can't read stale useState value
     const isRecoveryRef = useRef(false);
+
+    const signOutGhostUser = async () => {
+        setDeletedBanner(true);
+        setTimeout(() => setDeletedBanner(false), 7000);
+        await supabase.auth.signOut();
+        setUser(null);
+        setProfile(null);
+    };
 
     useEffect(() => {
         if (!isSupabaseConfigured()) {
@@ -41,11 +60,17 @@ export function AuthProvider({ children }) {
         // Aktuelle Session laden
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (!isRecoveryRef.current && session?.user) {
-                // Block check: kick out users that were locked while already logged in
-                const { data: prof } = await supabase
+                // Block + ghost check: kick out locked or deleted users on resume
+                const { data: prof, error: profErr } = await supabase
                     .from('users').select('is_blocked').eq('id', session.user.id).single();
                 if (prof?.is_blocked) {
                     await supabase.auth.signOut();
+                    setLoading(false);
+                    return;
+                }
+                // PGRST116 = row not found → auth exists but profile deleted → ghost user
+                if (prof === null && profErr?.code === 'PGRST116') {
+                    await signOutGhostUser();
                     setLoading(false);
                     return;
                 }
@@ -86,19 +111,23 @@ export function AuthProvider({ children }) {
             setIsPasswordRecovery(false);
 
             if (session?.user) {
-                // Check is_blocked before ever setting user — prevents the race where
-                // onAuthStateChange fires before the signIn() async check completes.
+                // Check is_blocked + ghost user before ever setting user.
                 supabase.from('users').select('is_blocked').eq('id', session.user.id).single()
-                    .then(({ data: prof }) => {
+                    .then(({ data: prof, error: profErr }) => {
                         if (prof?.is_blocked) {
                             supabase.auth.signOut();
+                            return;
+                        }
+                        // PGRST116 = no profile row → auth exists but account deleted
+                        if (prof === null && profErr?.code === 'PGRST116') {
+                            signOutGhostUser();
                             return;
                         }
                         setUser(session.user);
                         loadProfile(session.user.id);
                     })
                     .catch(() => {
-                        // If the check itself fails, allow through (fail open)
+                        // Network failure → fail open (don't punish real users)
                         setUser(session.user);
                         loadProfile(session.user.id);
                     });
@@ -178,19 +207,19 @@ export function AuthProvider({ children }) {
     };
 
     const toggleFavorite = async (eventId) => {
-        if (!user) return;
+        if (!user || !profile) return;
         const updated = await sbToggleFavorite(user.id, eventId);
         setProfile(updated);
     };
 
     const toggleRegistration = async (eventId) => {
-        if (!user) return;
+        if (!user || !profile) return;
         const updated = await sbToggleRegistration(user.id, eventId);
         setProfile(updated);
     };
 
     const saveEventDateSelection = async (eventId, dateIdx) => {
-        if (!user) return;
+        if (!user || !profile) return;
         const updated = await sbSaveEventDateSelection(user.id, eventId, dateIdx);
         setProfile(updated);
     };
@@ -218,6 +247,14 @@ export function AuthProvider({ children }) {
             isRegistered,
         }}>
             {children}
+            {deletedBanner && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 bg-red-950 border border-red-700 rounded-xl shadow-2xl text-sm text-red-100 flex items-center gap-3 animate-fade-in">
+                    <svg className="w-5 h-5 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    </svg>
+                    {getDeletedMessage()}
+                </div>
+            )}
         </AuthContext.Provider>
     );
 }
