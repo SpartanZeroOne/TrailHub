@@ -95,7 +95,7 @@ export default function UserDetail({ userId, onNavigate, toast }) {
   const handlePasswordReset = async () => {
     setSaving(true);
     try {
-      const redirectTo = `${window.location.origin}/update-password`;
+      const redirectTo = `${window.location.origin}/reset-password`;
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, { redirectTo });
       if (error) throw error;
       toast?.success(t('userDetail.successPasswordReset'));

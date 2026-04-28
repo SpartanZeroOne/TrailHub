@@ -10923,7 +10923,7 @@ function parsePathname(pathname) {
   if (seg0 === 'profile' && seg1 === 'friend' && seg2) return { view: 'friend-profile', friendId: seg2 };
   if (seg0 === 'profile' && seg1)                      return { view: 'public-profile', userId: seg1 };
   if (seg0 === 'profile')                              return { view: 'profile' };
-  if (seg0 === 'reset-password')                       return { view: 'reset-password' };
+  if (seg0 === 'reset-password' || seg0 === 'update-password') return { view: 'reset-password' };
   return { view: 'landing' };
 }
 
@@ -11637,7 +11637,7 @@ export default function OffroadEventsApp() {
 
   const content = (
     <div className="min-h-screen bg-stone-950">
-      {currentView !== 'event-detail' && currentView !== 'friend-profile' && (
+      {currentView !== 'event-detail' && currentView !== 'friend-profile' && currentView !== 'reset-password' && (
         <Navigation
           currentView={currentView}
           setCurrentView={setCurrentView}
@@ -11756,16 +11756,23 @@ export default function OffroadEventsApp() {
         <EventEditor onClose={() => { setNavigationType('POP'); setCurrentView('events'); }} />
       )}
 
+      {currentView === 'reset-password' && (
+        <PasswordResetPage onDone={() => {
+          window.history.replaceState({}, '', '/');
+          setCurrentView('landing');
+          setShowAuthModal(true);
+        }} />
+      )}
+
       {/* Login Prompt Modal */}
       {showLoginPrompt && <LoginPromptModal />}
 
       {/* Auth Modal (echtes Login / Registrierung) */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
-      {/* Passwort-Reset Modal – erscheint automatisch nach Klick auf Reset-Link in E-Mail */}
-      {auth.isPasswordRecovery && (
+      {/* Passwort-Reset Modal – only for in-app recovery (not the dedicated /reset-password page) */}
+      {auth.isPasswordRecovery && currentView !== 'reset-password' && (
         <PasswordResetModal onDone={async () => {
-          // Signout beendet den Recovery-Mode und verhindert automatische Anmeldung
           await auth.signOut();
           setShowAuthModal(true);
         }} />
