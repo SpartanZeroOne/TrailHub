@@ -2,9 +2,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../services/supabaseClient';
+import { useAdmin } from '../AdminLayout';
 
 export default function OrganizerKontakt({ toast }) {
   const { t } = useTranslation();
+  const { organizerId } = useAdmin();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -28,6 +30,7 @@ export default function OrganizerKontakt({ toast }) {
           subject,
           message,
           source: 'admin',
+          organizer_id: organizerId,
         },
       });
 

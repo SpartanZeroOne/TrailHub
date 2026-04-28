@@ -14,7 +14,8 @@
     "past-events": "Past Events",
     "kontakt": "Kontakt",
     "organizer": "Organizer",
-    "organizerAdmin": "Admin"
+    "organizerAdmin": "Admin",
+    "noOrganizer": "Kein Veranstalter verknüpft"
   },
   "search": {
     "placeholder": "Suchen...",

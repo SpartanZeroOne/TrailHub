@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
-    const { sender_name, sender_email, subject, message, source } = await req.json()
+    const { sender_name, sender_email, subject, message, source, organizer_id } = await req.json()
 
     if (!sender_name || !sender_email || !message) {
       return json({ error: 'Missing required fields' }, 400)
@@ -25,9 +25,23 @@ Deno.serve(async (req) => {
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (!resendKey) throw new Error('RESEND_API_KEY not configured')
 
+    // Resolve organizer name for admin submissions
+    let organizerName = ''
+    if (source === 'admin' && organizer_id) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      const sb = createClient(supabaseUrl, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+      const { data: org } = await sb.from('organizers').select('name').eq('id', organizer_id).single()
+      if (org?.name) organizerName = org.name
+    }
+
     const subjectPrefix = source === 'admin' ? '[Organizer Contact]' : '[Website Contact]'
     const emailSubject = `${subjectPrefix} ${subject || '—'}`
-    const sourceLabel = source === 'admin' ? 'Admin Panel (Organizer)' : 'Website Footer'
+    const sourceLabel = source === 'admin'
+      ? `Admin Panel (${organizerName || 'Organizer'})`
+      : 'Website Footer'
 
     const safeMessage = message
       .replace(/&/g, '&amp;')

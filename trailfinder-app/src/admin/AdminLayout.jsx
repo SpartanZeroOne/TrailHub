@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ToastContainer } from './hooks/useToast';
+import { supabase } from '../services/supabaseClient';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 export const AdminContext = createContext(null);
@@ -238,6 +239,13 @@ function Breadcrumbs({ path, onNavigate }) {
 export default function AdminLayout({ children, currentPath, onNavigate, toasts, dismissToast, user, adminRole = 'super_admin', organizerId = null }) {
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [organizerName, setOrganizerName] = useState('');
+
+  useEffect(() => {
+    if (!organizerId) return;
+    supabase.from('organizers').select('name').eq('id', organizerId).single()
+      .then(({ data }) => { if (data?.name) setOrganizerName(data.name); });
+  }, [organizerId]);
 
   const navItems = ALL_NAV_ITEMS.filter(item => item.roles.includes(adminRole));
 
@@ -311,6 +319,11 @@ export default function AdminLayout({ children, currentPath, onNavigate, toasts,
                 <div className="min-w-0">
                   <div className="text-xs text-stone-300 truncate">{user.email}</div>
                   <div className={`text-xs font-medium ${adminRole === 'super_admin' ? 'text-orange-500' : 'text-blue-400'}`}>{roleLabel}</div>
+                  {adminRole === 'organizer' && (
+                    <div className="text-xs text-stone-500 truncate mt-0.5">
+                      {organizerName || t('nav.noOrganizer')}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
