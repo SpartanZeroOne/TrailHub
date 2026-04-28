@@ -84,10 +84,26 @@ export function AuthProvider({ children }) {
             // Alle anderen Events (SIGNED_OUT etc.) beenden den Recovery-Mode
             isRecoveryRef.current = false;
             setIsPasswordRecovery(false);
-            setUser(session?.user ?? null);
+
             if (session?.user) {
-                loadProfile(session.user.id);
+                // Check is_blocked before ever setting user — prevents the race where
+                // onAuthStateChange fires before the signIn() async check completes.
+                supabase.from('users').select('is_blocked').eq('id', session.user.id).single()
+                    .then(({ data: prof }) => {
+                        if (prof?.is_blocked) {
+                            supabase.auth.signOut();
+                            return;
+                        }
+                        setUser(session.user);
+                        loadProfile(session.user.id);
+                    })
+                    .catch(() => {
+                        // If the check itself fails, allow through (fail open)
+                        setUser(session.user);
+                        loadProfile(session.user.id);
+                    });
             } else {
+                setUser(null);
                 setProfile(null);
             }
         });
