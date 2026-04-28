@@ -1,7 +1,7 @@
 // ─── TrailHub Admin – User Detail ─────────────────────────────────────────────
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { adminFetchUserById, adminUpdateUser, adminDeleteUser, adminUpdateUserRole, adminFetchOrganizers } from '../../services/adminSupabase';
+import { adminFetchUserById, adminUpdateUser, adminDeleteUser, adminUpdateUserRole, adminFetchOrganizers, adminFetchUserFriends } from '../../services/adminSupabase';
 import { supabase } from '../../../services/supabaseClient';
 
 export default function UserDetail({ userId, onNavigate, toast }) {
@@ -21,6 +21,11 @@ export default function UserDetail({ userId, onNavigate, toast }) {
   const [selectedOrganizerId, setSelectedOrganizerId] = useState('');
   const [isSuperAdminCheck, setIsSuperAdminCheck] = useState(false);
   const [roleSaving, setRoleSaving] = useState(false);
+
+  // Friends tab state — loaded lazily on first tab visit
+  const [friends, setFriends] = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+  const [friendsLoaded, setFriendsLoaded] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -134,6 +139,15 @@ export default function UserDetail({ userId, onNavigate, toast }) {
     }
   };
 
+  useEffect(() => {
+    if (tab !== 'friends' || friendsLoaded) return;
+    setFriendsLoading(true);
+    adminFetchUserFriends(userId)
+      .then(data => { setFriends(data); setFriendsLoaded(true); })
+      .catch(err => toast?.error('Freunde laden fehlgeschlagen: ' + err.message))
+      .finally(() => setFriendsLoading(false));
+  }, [tab, userId, friendsLoaded]); // eslint-disable-line
+
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }) : '–';
 
   if (loading) return (
@@ -150,9 +164,10 @@ export default function UserDetail({ userId, onNavigate, toast }) {
   );
 
   const TABS = [
-    { id: 'profile',    label: t('userDetail.tabProfile') },
-    { id: 'activity',   label: `${t('userDetail.tabActivity')} (${(user.registered_event_ids ?? []).length})` },
-    { id: 'admin',      label: t('userDetail.tabAdmin') },
+    { id: 'profile',  label: t('userDetail.tabProfile') },
+    { id: 'activity', label: `${t('userDetail.tabActivity')} (${(user.registered_event_ids ?? []).length})` },
+    { id: 'friends',  label: friendsLoaded ? `${t('userDetail.tabFriends')} (${friends.length})` : t('userDetail.tabFriends') },
+    { id: 'admin',    label: t('userDetail.tabAdmin') },
   ];
 
   return (
@@ -321,6 +336,45 @@ export default function UserDetail({ userId, onNavigate, toast }) {
                 )
               }
             </div>
+          </div>
+        )}
+
+        {/* Friends Tab */}
+        {tab === 'friends' && (
+          <div className="space-y-4">
+            <h2 className="text-stone-300 font-semibold">
+              {t('userDetail.sectionFriends')}{friendsLoaded ? ` (${friends.length})` : ''}
+            </h2>
+            {friendsLoading ? (
+              <div className="flex items-center justify-center h-20">
+                <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"/>
+              </div>
+            ) : friends.length === 0 ? (
+              <p className="text-stone-600 text-sm">{t('userDetail.noFriends')}</p>
+            ) : (
+              <div className="space-y-2">
+                {friends.map(f => (
+                  <div key={f.id} className="flex items-center gap-3 p-3 rounded-lg bg-stone-800 hover:bg-stone-700 transition-colors">
+                    {f.avatar
+                      ? <img src={f.avatar} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-stone-700"/>
+                      : <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                          {f.name?.[0]?.toUpperCase() ?? '?'}
+                        </div>
+                    }
+                    <div className="flex-1 min-w-0">
+                      <p className="text-stone-200 text-sm font-medium truncate">{f.name ?? '–'}</p>
+                      <p className="text-stone-500 text-xs">{f.email} · {(f.registered_event_ids ?? []).length} Events</p>
+                    </div>
+                    <button
+                      onClick={() => onNavigate(`/admin/users/${f.id}`)}
+                      className="text-orange-400 hover:text-orange-300 text-xs flex-shrink-0"
+                    >
+                      {t('userDetail.openLink')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -312,6 +312,38 @@ export const adminFetchUsers = async ({
     users = users.map(u => ({ ...u, upcomingEventsCount: 0, currentYearEventsCount: 0 }));
   }
 
+  // Batch-fetch friend counts (requires migration 28 super_admin policy on friends table)
+  const userIds = users.map(u => u.id);
+  if (userIds.length > 0) {
+    const uidsParam = userIds.join(',');
+    const { data: friendRows, error: frErr } = await supabase
+      .from('friends')
+      .select('user_id, friend_id')
+      .or(`user_id.in.(${uidsParam}),friend_id.in.(${uidsParam})`)
+      .eq('status', 'accepted');
+    if (frErr) console.error('[adminFetchUsers] friends batch error:', frErr);
+    const friendCounts = {};
+    (friendRows ?? []).forEach(r => {
+      friendCounts[r.user_id] = (friendCounts[r.user_id] || 0) + 1;
+      friendCounts[r.friend_id] = (friendCounts[r.friend_id] || 0) + 1;
+    });
+    users = users.map(u => ({ ...u, friends_count: friendCounts[u.id] ?? 0 }));
+  }
+
+  // Batch-fetch organizer names for users who have an organizer_id
+  const orgIds = [...new Set(users.map(u => u.organizer_id).filter(Boolean))];
+  if (orgIds.length > 0) {
+    const { data: orgData, error: orgErr } = await supabase
+      .from('organizers').select('id, name').in('id', orgIds);
+    if (orgErr) console.error('[adminFetchUsers] organizers batch error:', orgErr);
+    const orgMap = {};
+    (orgData ?? []).forEach(o => { orgMap[o.id] = o.name; });
+    users = users.map(u => ({
+      ...u,
+      organizer_name: u.organizer_id ? (orgMap[u.organizer_id] ?? u.organizer_id) : null,
+    }));
+  }
+
   return { data: users, count: count ?? 0 };
 };
 
@@ -325,6 +357,29 @@ export const adminUpdateUser = async (id, updates) => {
   const { data, error } = await supabase.from('users').update(updates).eq('id', id).select().single();
   if (error) throw error;
   return data;
+};
+
+export const adminFetchUserFriends = async (userId) => {
+  const { data: friendRows, error: frErr } = await supabase
+    .from('friends')
+    .select('user_id, friend_id, created_at')
+    .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
+    .eq('status', 'accepted');
+  if (frErr) throw frErr;
+  const rows = friendRows ?? [];
+  if (rows.length === 0) return [];
+  const sinceMap = {};
+  const friendIds = rows.map(r => {
+    const fId = r.user_id === userId ? r.friend_id : r.user_id;
+    sinceMap[fId] = r.created_at;
+    return fId;
+  });
+  const { data: profiles, error: pErr } = await supabase
+    .from('users')
+    .select('id, name, email, avatar, registered_event_ids')
+    .in('id', friendIds);
+  if (pErr) throw pErr;
+  return (profiles ?? []).map(p => ({ ...p, friends_since: sinceMap[p.id] }));
 };
 
 export const adminDeleteUser = async (id) => {

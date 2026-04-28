@@ -182,14 +182,14 @@ export default function UserList({ onNavigate, toast }) {
                   <th className="px-4 py-3">
                     <input type="checkbox" checked={users.length > 0 && selected.size === users.length} onChange={toggleAll} className="rounded border-stone-600 bg-stone-800 accent-orange-500" />
                   </th>
-                  {[t('users.tableAvatar'), t('users.tableName'), t('users.tableEmail'), t('users.tableLocation'), t('users.tableEvents'), t('users.tableThisYear'), t('users.tableUpcoming'), t('users.tableFriends'), t('users.tableRegistered'), t('users.tableStatus'), t('users.tableActions')].map(h => (
+                  {[t('users.tableAvatar'), t('users.tableName'), t('users.tableEmail'), t('users.tableLocation'), t('users.tableEvents'), t('users.tableThisYear'), t('users.tableUpcoming'), t('users.tableFriends'), t('users.tableRole'), t('users.tableRegistered'), t('users.tableStatus'), t('users.tableActions')].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-medium text-stone-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-800">
                 {users.length === 0 ? (
-                  <tr><td colSpan={12} className="text-center py-12 text-stone-600">{t('users.noUsers')}</td></tr>
+                  <tr><td colSpan={13} className="text-center py-12 text-stone-600">{t('users.noUsers')}</td></tr>
                 ) : users.map(user => (
                   <tr key={user.id} className={`hover:bg-stone-800/40 transition-colors ${selected.has(user.id) ? 'bg-orange-500/5' : ''}`}>
                     <td className="px-4 py-3">
@@ -218,8 +218,19 @@ export default function UserList({ onNavigate, toast }) {
                     <td className="px-4 py-3">
                       <span className="text-emerald-400 text-sm font-medium">{user.upcomingEventsCount ?? 0}</span>
                     </td>
-                    <td className="px-4 py-3 text-stone-400 text-sm">
-                      {user.friend_ids?.length ?? user.friends_count ?? '–'}
+                    <td className="px-4 py-3 text-stone-300 text-sm font-medium">
+                      {user.friends_count ?? '–'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {user.organizer_name ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-500/15 text-amber-400 border border-amber-500/20 whitespace-nowrap">
+                          ★ {user.organizer_name}
+                        </span>
+                      ) : user.admin_role === 'super_admin' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-purple-500/15 text-purple-400 border border-purple-500/20">
+                          Super Admin
+                        </span>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3 text-stone-500 text-sm whitespace-nowrap">
                       {formatDate(user.created_at)}
