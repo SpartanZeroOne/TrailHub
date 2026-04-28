@@ -322,12 +322,15 @@ export const adminFetchUsers = async ({
       .or(`user_id.in.(${uidsParam}),friend_id.in.(${uidsParam})`)
       .eq('status', 'accepted');
     if (frErr) console.error('[adminFetchUsers] friends batch error:', frErr);
-    const friendCounts = {};
+    // Use Sets so bidirectional rows (A→B and B→A) don't double-count.
+    const friendSets = {};
     (friendRows ?? []).forEach(r => {
-      friendCounts[r.user_id] = (friendCounts[r.user_id] || 0) + 1;
-      friendCounts[r.friend_id] = (friendCounts[r.friend_id] || 0) + 1;
+      if (!friendSets[r.user_id]) friendSets[r.user_id] = new Set();
+      if (!friendSets[r.friend_id]) friendSets[r.friend_id] = new Set();
+      friendSets[r.user_id].add(r.friend_id);
+      friendSets[r.friend_id].add(r.user_id);
     });
-    users = users.map(u => ({ ...u, friends_count: friendCounts[u.id] ?? 0 }));
+    users = users.map(u => ({ ...u, friends_count: friendSets[u.id]?.size ?? 0 }));
   }
 
   // Batch-fetch organizer names for users who have an organizer_id
@@ -369,11 +372,13 @@ export const adminFetchUserFriends = async (userId) => {
   const rows = friendRows ?? [];
   if (rows.length === 0) return [];
   const sinceMap = {};
-  const friendIds = rows.map(r => {
+  const friendIdSet = new Set();
+  rows.forEach(r => {
     const fId = r.user_id === userId ? r.friend_id : r.user_id;
-    sinceMap[fId] = r.created_at;
-    return fId;
+    friendIdSet.add(fId);
+    if (!sinceMap[fId]) sinceMap[fId] = r.created_at;
   });
+  const friendIds = [...friendIdSet];
   const { data: profiles, error: pErr } = await supabase
     .from('users')
     .select('id, name, email, avatar, registered_event_ids')
@@ -383,21 +388,8 @@ export const adminFetchUserFriends = async (userId) => {
 };
 
 export const adminDeleteUser = async (id) => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const serviceKey  = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) throw new Error('VITE_SUPABASE_SERVICE_ROLE_KEY not set');
-
-  // Direct HTTP call to the Auth Admin REST API.
-  // The Supabase JS client blocks sb_secret_ keys for table queries, but the
-  // GoTrue auth endpoint accepts them. Deleting auth.users cascades to public.users.
-  const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${id}`, {
-    method: 'DELETE',
-    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.message ?? `Auth delete failed (${res.status})`);
-  }
+  const { error } = await supabase.rpc('admin_delete_user', { target_user_id: id });
+  if (error) throw error;
 };
 
 // ─── ANALYTICS / DASHBOARD ────────────────────────────────────────────────────
