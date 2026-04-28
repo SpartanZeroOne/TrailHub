@@ -9,34 +9,35 @@ export default function OrganizerKontakt({ toast }) {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sendError, setSendError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!subject.trim() || !message.trim()) return;
     setSending(true);
+    setSendError('');
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      // Try Edge Function first; fall back to storing in admin_audit_log as a contact record
-      try {
-        await supabase.functions.invoke('send-organizer-contact', {
-          body: { subject, message, senderEmail: user?.email, senderId: user?.id },
-        });
-      } catch {
-        // Edge Function not deployed — store as audit log entry so super-admin can see it
-        await supabase.from('admin_audit_log').insert([{
-          action: 'organizer_contact',
-          entity: 'contact',
-          entity_id: user?.id ?? 'unknown',
-          admin_id: user?.id,
-          details: { subject, message, sender_email: user?.email },
-          created_at: new Date().toISOString(),
-        }]);
-      }
+      const { data: profile } = await supabase.from('users').select('name').eq('id', user.id).single();
+      const senderName = profile?.name || user?.email?.split('@')[0] || 'Organizer';
+
+      const { error } = await supabase.functions.invoke('send-contact-message', {
+        body: {
+          sender_name: senderName,
+          sender_email: user?.email,
+          subject,
+          message,
+          source: 'admin',
+        },
+      });
+
+      if (error) throw error;
+
       setSent(true);
       setSubject('');
       setMessage('');
     } catch (err) {
-      toast?.error(t('common.error') + ': ' + err.message);
+      setSendError('Fehler: Die Nachricht konnte nicht gesendet werden. Bitte kontaktiere uns direkt per E-Mail an info@trailhub.mx');
     } finally {
       setSending(false);
     }
@@ -90,6 +91,11 @@ export default function OrganizerKontakt({ toast }) {
                 className="w-full px-3 py-2.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 text-sm placeholder:text-stone-600 focus:outline-none focus:border-orange-500/60 resize-y transition-colors"
               />
             </div>
+            {sendError && (
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-red-400 text-sm">
+                {sendError}
+              </div>
+            )}
             <button
               type="submit"
               disabled={sending || !subject.trim() || !message.trim()}

@@ -9382,6 +9382,8 @@ function DatenschutzPage({ setCurrentView }) {
 function KontaktPage({ setCurrentView }) {
   const [formData, setFormData] = React.useState({ name: '', email: '', subject: 'general', message: '', consent: false });
   const [submitted, setSubmitted] = React.useState(false);
+  const [sending, setSending] = React.useState(false);
+  const [sendError, setSendError] = React.useState('');
 
   const subjectOptions = [
     { value: 'general', label: 'Allgemeine Frage' },
@@ -9390,13 +9392,29 @@ function KontaktPage({ setCurrentView }) {
     { value: 'feedback', label: 'Feedback' },
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSending(true);
+    setSendError('');
     const { name, email, subject, message } = formData;
     const subjectLabel = subjectOptions.find(o => o.value === subject)?.label || subject;
-    const mailtoLink = `mailto:info@trailhub.mx?subject=${encodeURIComponent(`[${subjectLabel}] – Kontaktanfrage von ${name}`)}&body=${encodeURIComponent(`Name: ${name}\nE-Mail: ${email}\n\n${message}`)}`;
-    window.location.href = mailtoLink;
-    setSubmitted(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-contact-message', {
+        body: {
+          sender_name: name,
+          sender_email: email,
+          subject: subjectLabel,
+          message,
+          source: 'footer',
+        },
+      });
+      if (error) throw error;
+      setSubmitted(true);
+    } catch {
+      setSendError('Entschuldigung, es gab ein Problem beim Senden. Bitte versuche es später erneut oder schreibe direkt an info@trailhub.mx');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -9470,8 +9488,8 @@ function KontaktPage({ setCurrentView }) {
       <LegalSection title="Schreib uns">
         {submitted ? (
           <div className="bg-stone-900 border border-amber-500/20 rounded-xl p-6 text-center space-y-2">
-            <p className="text-stone-300 font-medium">Deine E-Mail-App wurde geöffnet.</p>
-            <p className="text-stone-500 text-xs">Falls nichts passiert ist, schreib uns direkt an <a href="mailto:info@trailhub.mx" className="text-amber-500">info@trailhub.mx</a>.</p>
+            <p className="text-stone-300 font-medium">Vielen Dank! Deine Nachricht wurde gesendet.</p>
+            <p className="text-stone-500 text-xs">Wir melden uns in der Regel innerhalb von 1–2 Werktagen.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -9534,11 +9552,16 @@ function KontaktPage({ setCurrentView }) {
                 zu. *
               </label>
             </div>
+            {sendError && (
+              <p className="text-red-400 text-sm">{sendError}</p>
+            )}
             <button
               type="submit"
-              className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold text-sm px-8 py-2.5 rounded-lg transition-colors"
+              disabled={sending}
+              className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-stone-950 font-semibold text-sm px-8 py-2.5 rounded-lg transition-colors flex items-center gap-2"
             >
-              Nachricht senden
+              {sending && <span className="w-4 h-4 border-2 border-stone-950 border-t-transparent rounded-full animate-spin"/>}
+              {sending ? 'Wird gesendet...' : 'Nachricht senden'}
             </button>
           </form>
         )}
