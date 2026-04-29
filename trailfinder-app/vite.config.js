@@ -67,6 +67,7 @@ export default defineConfig({
         skipWaiting: true,       // activate new SW immediately, don't wait for tabs to close
         clientsClaim: true,      // new SW takes control of all open tabs instantly
         cleanupOutdatedCaches: true, // remove stale caches from previous builds
+        importScripts: ['/push-sw-addon.js'],  // push event + notificationclick handlers
         // Don't cache Supabase or Mapbox API calls
         navigateFallback: '/index.html',
         runtimeCaching: [
