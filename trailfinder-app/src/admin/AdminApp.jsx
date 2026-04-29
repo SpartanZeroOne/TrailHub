@@ -17,7 +17,6 @@ import UserList from './pages/users/UserList';
 import UserDetail from './pages/users/UserDetail';
 import CSVImport from './pages/CSVImport';
 import Reports from './pages/Reports';
-import Settings from './pages/Settings';
 import PastEvents from './pages/events/PastEvents';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import OrganizerReports from './pages/OrganizerReports';
@@ -149,7 +148,6 @@ function resolveRoute(path) {
   if (path === '/admin/past-events') return { page: 'past-events' };
   if (path === '/admin/csv-import') return { page: 'csv-import' };
   if (path === '/admin/reports')    return { page: 'reports' };
-  if (path === '/admin/settings')   return { page: 'settings' };
   if (path === '/admin/kontakt')    return { page: 'kontakt' };
 
   return { page: 'dashboard' };
@@ -157,14 +155,12 @@ function resolveRoute(path) {
 
 // ─── AdminApp (inner) ─────────────────────────────────────────────────────────
 function AdminAppInner() {
-  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [adminRole, setAdminRole] = useState('user');   // 'super_admin' | 'organizer' | 'user'
   const [organizerId, setOrganizerId] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const { toasts, success, error, info, warning, undoToast, dismiss } = useToast();
-
   const toastAPI = { success, error, info, warning, undoToast };
 
   // Only users explicitly set as organizer with an organizerId are restricted.
@@ -203,22 +199,10 @@ function AdminAppInner() {
 
   useEffect(() => {
     if (!user) return;
-    let timer;
-    const reset = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        supabase.auth.signOut();
-        info(t('login.errorSession'));
-      }, 30 * 60 * 1000);
-    };
-    reset();
-    window.addEventListener('mousemove', reset);
-    window.addEventListener('keydown', reset);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('mousemove', reset);
-      window.removeEventListener('keydown', reset);
-    };
+    const interval = setInterval(() => {
+      window.location.reload();
+    }, 7200000);
+    return () => clearInterval(interval);
   }, [user]);
 
   const handleLogin = (u, role, orgId) => {
@@ -281,7 +265,6 @@ function AdminAppInner() {
       case 'past-events':    return <PastEvents {...props} />;
       case 'csv-import':     return <CSVImport {...props} />;
       case 'reports':        return <Reports {...props} />;
-      case 'settings':       return <Settings {...props} />;
       case 'kontakt':        return <OrganizerKontakt {...props} />;
       default:               return <Dashboard {...props} />;
     }
