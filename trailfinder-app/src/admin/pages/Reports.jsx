@@ -224,6 +224,7 @@ export default function Reports({ onNavigate, toast }) {
   const PER_PAGE = 50;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     Promise.allSettled([
       adminFetchDashboardStats(),
@@ -265,6 +266,7 @@ export default function Reports({ onNavigate, toast }) {
 
   // Load reg-by-user when filters or page change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRegLoading(true);
     adminFetchRegistrationsByUser({
       eventId:    regFilters.eventId    || null,

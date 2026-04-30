@@ -51,3 +51,6 @@ Thumbs.db
 # Netlify build artifacts (contain bundled secrets)
 trailfinder-app/netlify/index-*.js
 trailfinder-app/netlify/index-*.css
+
+# Sticker assets (local design files, not app source)
+Sticker/

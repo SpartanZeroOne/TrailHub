@@ -75,6 +75,7 @@ export function AuthProvider({ children }) {
                     return;
                 }
                 setUser(session.user);
+                // eslint-disable-next-line react-hooks/immutability
                 loadProfile(session.user.id);
             } else if (!isRecoveryRef.current) {
                 setUser(null);
@@ -143,14 +144,14 @@ export function AuthProvider({ children }) {
         };
     }, []);
 
-    const loadProfile = async (userId) => {
+    async function loadProfile(userId) {
         try {
             const p = await fetchUserProfile(userId);
             setProfile(p);
         } catch {
             setProfile(null);
         }
-    };
+    }
 
     const signIn = async (email, password) => {
         const data = await sbSignIn(email, password);

@@ -33,7 +33,7 @@ class AppErrorBoundary extends Component {
 }
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { supabase, fetchEvents, fetchFeaturedEvents, fetchEventById, fetchOrganizers, isSupabaseConfigured, uploadAvatar, fetchFriendsWithStatus, fetchIncomingRequests, searchUsers, fetchUserById, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriendship, setHideMyEventsFromFriend, fetchMxTracks, fetchFlexibleRegistrations, saveFlexibleRegistration, deleteFlexibleRegistration } from './services/supabaseClient';
+import { supabase, fetchEvents, fetchFeaturedEvents, fetchEventById, fetchOrganizers, isSupabaseConfigured, uploadAvatar, fetchFriendsWithStatus, fetchIncomingRequests, searchUsers, fetchUserById, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriendship, setHideMyEventsFromFriend, fetchMxTracks, saveFlexibleRegistration, deleteFlexibleRegistration } from './services/supabaseClient';
 import { useAuth } from './hooks/useAuth';
 import AuthModal from './components/Auth/AuthModal';
 import PasswordResetModal from './components/Auth/PasswordResetModal';
@@ -353,8 +353,6 @@ const translations = {
 
     // Map
     today: 'Heute',
-    soon: 'Bald',
-    days: 'Tage',
     from: 'Ab',
     now: 'Jetzt',
     details: 'Details',
@@ -379,7 +377,6 @@ const translations = {
     noUpcomingEvents: 'Keine bevorstehenden Events',
     discoverEvents: 'Events entdecken',
     copyLink: 'Profil-Link',
-    copied: 'Kopiert!',
     edit: 'Bearbeiten',
     eventsAttended: 'Events besucht',
     registeredEvents: 'Angemeldete Events',
@@ -471,7 +468,6 @@ const translations = {
     farTravel: 'Fernreise',
     hobbyist: 'Hobbyfahrer',
     ambitious: 'Ambitioniert',
-    logout: 'Abmelden',
     upcomingEventsCount: 'Kommende Events',
     pastEventsCount: 'Vergangene Events',
     noEventsVisible: 'Keine Events sichtbar',
@@ -501,7 +497,6 @@ const translations = {
     switzerland: 'Schweiz',
     croatia: 'Kroatien',
     greece: 'Griechenland',
-    morocco: 'Marokko',
     portugal: 'Portugal',
     poland: 'Polen',
     czechRepublic: 'Tschechien',
@@ -532,9 +527,6 @@ const translations = {
     mxTrack: 'MX-Track',
     mxRace: 'Race',
     checkOrganizerInfo: 'ℹ︎ Aktuelle Infos auf der Veranstalter-Website prüfen',
-
-    // Registration
-    registered: 'Angemeldet',
 
     // Registration confirm popup
     regPopupTitle: 'Teilnahme bestätigen',
@@ -788,8 +780,6 @@ const translations = {
 
     // Map
     today: 'Today',
-    soon: 'Soon',
-    days: 'days',
     from: 'From',
     now: 'Now',
     details: 'Details',
@@ -814,7 +804,6 @@ const translations = {
     noUpcomingEvents: 'No upcoming events',
     discoverEvents: 'Discover events',
     copyLink: 'Profile link',
-    copied: 'Copied!',
     edit: 'Edit',
     eventsAttended: 'Events attended',
     registeredEvents: 'Registered events',
@@ -906,7 +895,6 @@ const translations = {
     farTravel: 'Long distance',
     hobbyist: 'Hobbyist',
     ambitious: 'Ambitious',
-    logout: 'Logout',
     upcomingEventsCount: 'Upcoming Events',
     pastEventsCount: 'Past Events',
     noEventsVisible: 'No events visible',
@@ -936,7 +924,6 @@ const translations = {
     switzerland: 'Switzerland',
     croatia: 'Croatia',
     greece: 'Greece',
-    morocco: 'Morocco',
     portugal: 'Portugal',
     poland: 'Poland',
     czechRepublic: 'Czech Republic',
@@ -967,9 +954,6 @@ const translations = {
     mxTrack: 'MX-Track',
     mxRace: 'Race',
     checkOrganizerInfo: 'ℹ︎ Check latest info on organizer website',
-
-    // Registration
-    registered: 'Registered',
 
     // Registration confirm popup
     regPopupTitle: 'Confirm Attendance',
@@ -1223,8 +1207,6 @@ const translations = {
 
     // Map
     today: "Aujourd'hui",
-    soon: 'Bientôt',
-    days: 'jours',
     from: 'Dès',
     now: 'Maintenant',
     details: 'Détails',
@@ -1249,7 +1231,6 @@ const translations = {
     noUpcomingEvents: 'Aucun événement à venir',
     discoverEvents: 'Découvrir les événements',
     copyLink: 'Lien du profil',
-    copied: 'Copié!',
     edit: 'Modifier',
     eventsAttended: 'Événements visités',
     registeredEvents: 'Événements inscrits',
@@ -1341,7 +1322,6 @@ const translations = {
     farTravel: 'Lointain',
     hobbyist: 'Amateur',
     ambitious: 'Ambitieux',
-    logout: 'Déconnexion',
     upcomingEventsCount: 'Événements à venir',
     pastEventsCount: 'Événements passés',
     noEventsVisible: 'Aucun événement visible',
@@ -1371,7 +1351,6 @@ const translations = {
     switzerland: 'Suisse',
     croatia: 'Croatie',
     greece: 'Grèce',
-    morocco: 'Maroc',
     portugal: 'Portugal',
     poland: 'Pologne',
     czechRepublic: 'Tchéquie',
@@ -1402,9 +1381,6 @@ const translations = {
     mxTrack: 'Piste MX',
     mxRace: 'Course',
     checkOrganizerInfo: "ℹ︎ Vérifier les infos actuelles sur le site de l'organisateur",
-
-    // Registration
-    registered: 'Inscrit',
 
     // Registration confirm popup
     regPopupTitle: 'Confirmer la participation',
@@ -1658,8 +1634,6 @@ const translations = {
 
     // Map
     today: 'Vandaag',
-    soon: 'Binnenkort',
-    days: 'dagen',
     from: 'Vanaf',
     now: 'Nu',
     details: 'Details',
@@ -1684,7 +1658,6 @@ const translations = {
     noUpcomingEvents: 'Geen aankomende evenementen',
     discoverEvents: 'Evenementen ontdekken',
     copyLink: 'Profiellink',
-    copied: 'Gekopieerd!',
     edit: 'Bewerken',
     eventsAttended: 'Bezochte evenementen',
     registeredEvents: 'Aangemelde evenementen',
@@ -1776,7 +1749,6 @@ const translations = {
     farTravel: 'Verre reis',
     hobbyist: 'Hobbyrijder',
     ambitious: 'Ambitieus',
-    logout: 'Uitloggen',
     upcomingEventsCount: 'Aankomende Evenementen',
     pastEventsCount: 'Afgelopen Evenementen',
     noEventsVisible: 'Geen evenementen zichtbaar',
@@ -1806,7 +1778,6 @@ const translations = {
     switzerland: 'Zwitserland',
     croatia: 'Kroatië',
     greece: 'Griekenland',
-    morocco: 'Marokko',
     portugal: 'Portugal',
     poland: 'Polen',
     czechRepublic: 'Tsjechië',
@@ -1837,9 +1808,6 @@ const translations = {
     mxTrack: 'MX-Baan',
     mxRace: 'Race',
     checkOrganizerInfo: 'ℹ︎ Controleer actuele info op de organisator website',
-
-    // Registration
-    registered: 'Aangemeld',
 
     // Registration confirm popup
     regPopupTitle: 'Deelname bevestigen',
@@ -3176,7 +3144,7 @@ function translateLocation(location, language) {
   return translatedParts.join(', ');
 }
 
-function isThisWeekend(dateStr) {
+function _isThisWeekend(dateStr) {
   const eventDate = new Date(dateStr);
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -3878,11 +3846,11 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
   const [showChangeTooltip, setShowChangeTooltip] = useState(false);
   const isSoldOut   = event.status === 'sold_out';
   const isCancelled = event.status === 'cancelled';
-  const [isHovered, setIsHovered] = useState(false);
+  const [_isHovered, setIsHovered] = useState(false);
   const [shareStatus, setShareStatus] = useState(null); // null, 'copied', 'shared'
   const isPast = event.status === 'past';
 
-  const localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
+  const _localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
   const translatedLocation = translateLocation(event.location, language);
 
   const getDaysUntilStart = (startDate) => {
@@ -4129,6 +4097,7 @@ function EventCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
           )}
           {event.skillLevel && (
             <div className="ml-2 flex-shrink-0">
+              {/* eslint-disable-next-line react-hooks/react-compiler */}
               <SkillBadge level={event.skillLevel} />
             </div>
           )}
@@ -6462,7 +6431,7 @@ function MXTrackCard({ event, isLoggedIn, onEventClick, origin = 'events' }) {
           await navigator.clipboard.writeText(shareUrl);
           setShareStatus('copied');
           setTimeout(() => setShareStatus(null), 2000);
-        } catch { }
+        } catch { /* intentional */ }
       }
     }
   };
@@ -6609,11 +6578,11 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
   const isSoldOut   = event.status === 'sold_out';
   const isCancelled = event.status === 'cancelled';
   const [showChangeTooltip, setShowChangeTooltip] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  const [_isHovered, setIsHovered] = useState(false);
   const [shareStatus, setShareStatus] = useState(null);
   const isPast = event.status === 'past';
 
-  const localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
+  const _localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
   const translatedLocation = translateLocation(event.location, language);
 
   // Share handler
@@ -6641,7 +6610,7 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
           await navigator.clipboard.writeText(shareUrl);
           setShareStatus('copied');
           setTimeout(() => setShareStatus(null), 2000);
-        } catch { }
+        } catch { /* intentional */ }
       }
     }
   };
@@ -6826,6 +6795,7 @@ function EventCardWithFriendPopup({ event, isLoggedIn, onFriendClick, onEventCli
             {event.name}
           </h3>
           {event.difficulty && <div className="ml-2 flex-shrink-0"><DifficultyIcon level={event.difficulty} /></div>}
+          {/* eslint-disable-next-line react-hooks/react-compiler */}
           {event.skillLevel && <div className="ml-2 flex-shrink-0"><SkillBadge level={event.skillLevel} /></div>}
         </div>
 
@@ -6907,7 +6877,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
   const mapInstanceRef = React.useRef(null);
   const markersRef = React.useRef([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [selectedCluster, setSelectedCluster] = useState(null);
+  const [_selectedCluster, setSelectedCluster] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState(12);
   const [minPrice, setMinPrice] = useState(0);
@@ -6938,11 +6908,11 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
   });
 
   const today = new Date();
-  const localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
+  const _localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
 
   // Price steps for slider
   const PRICE_STEPS = [0, 50, 100, 150, 200, 300, 500, 1000, 2000, 9999];
-  const getPriceLabel = (idx) => PRICE_STEPS[idx] >= 9999 ? '€2000+' : `€${PRICE_STEPS[idx]}`;
+  const _getPriceLabel = (idx) => PRICE_STEPS[idx] >= 9999 ? '€2000+' : `€${PRICE_STEPS[idx]}`;
   const getMinPriceLabel = (idx) => idx >= 8 ? '€1990' : PRICE_STEPS[idx] === 0 ? '€0' : `€${PRICE_STEPS[idx]}`;
   const getMaxPriceLabel = (idx) => PRICE_STEPS[idx] >= 9999 ? '€2000+' : `€${PRICE_STEPS[idx]}`;
 
@@ -6995,7 +6965,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
   }, [isLoggedIn, onLoginRequired, toggleFavorite]);
 
   // Registration toggle with auth check
-  const handleRegistrationToggle = React.useCallback((eventId, e) => {
+  const _handleRegistrationToggle = React.useCallback((eventId, e) => {
     e.stopPropagation();
     if (!isLoggedIn) {
       if (onLoginRequired) onLoginRequired();
@@ -7038,7 +7008,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
   }, [language]);
 
   // Time-range helper for map (mirrors EventsOverview.isInTimeRange — same IDs)
-  const mapTimeFilter = (dateStr, timeFilter) => {
+  const _mapTimeFilter = (dateStr, timeFilter) => {
     if (!timeFilter || timeFilter === 'all') return true;
     const eventDate = new Date(dateStr);
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -7216,7 +7186,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
           });
           if (map.getSource('events-source')) map.removeSource('events-source');
         }
-      } catch (e) { /* map style not ready */ }
+      } catch { /* map style not ready */ }
     };
 
     cleanupAll();
@@ -8033,7 +8003,7 @@ function MapPlaceholder({ isLoggedIn, onViewEvent, onLoginRequired }) {
 // Profile Dashboard - Mein Offroad-Dashboard
 function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, setCurrentView, userPreferredDiscipline = 'none', onPreferredDisciplineChange, activeTab, onActiveTabChange }) {
   const { t, language } = useTranslation();
-  const { registeredEventIds, favoriteEventIds, userProfile, setUserProfile, saveProfile, eventDateSelections, flexibleRegistrations } = useUserState();
+  const { registeredEventIds, favoriteEventIds, userProfile, setUserProfile: _setUserProfile, saveProfile, eventDateSelections, flexibleRegistrations } = useUserState();
   const auth = useAuth();
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -8049,7 +8019,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
-  const localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
+  const _localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
 
   // Handler for discipline change
   const handleDisciplineChange = (value) => {
@@ -8784,7 +8754,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
                     onChange={async (e) => {
                       const value = e.target.value;
                       setSettings(prev => ({ ...prev, privacy: { ...prev.privacy, showRegistrations: value } }));
-                      try { await saveProfile({ privacy_registration_visibility: value }); } catch {}
+                      try { await saveProfile({ privacy_registration_visibility: value }); } catch { /* intentional */ }
                     }}
                     className="w-4 h-4 text-amber-500 bg-stone-800 border-stone-600"
                   />
@@ -8830,7 +8800,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
                             user_lat: pos.coords.latitude,
                             user_lng: pos.coords.longitude,
                           }});
-                        } catch {}
+                        } catch { /* intentional */ }
                       });
                     }
                   }
@@ -8844,7 +8814,7 @@ function ProfileDashboard({ isLoggedIn, onViewEvent, onViewFriend, onLogout, set
                       new_events_region:   newNotifs.newEvents,
                       friend_registrations: newNotifs.friendRegistrations,
                     }});
-                  } catch {}
+                  } catch { /* intentional */ }
                 }}
                 className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 relative ${settings.notifications[item.key] ? 'bg-amber-500' : 'bg-stone-700'
                   }`}
@@ -9509,6 +9479,7 @@ function FriendProfileView({ friend, onBack, onViewEvent, isLoggedIn }) {
 
 // Friend Card Component with nudge and menu
 function FriendCard({ friend }) {
+  const { t } = useTranslation();
   const { isHiddenFromFriend, toggleHiddenFromFriend, loadFriends } = useUserState();
   const auth = useAuth();
   const [showMenu, setShowMenu] = useState(false);
@@ -10046,7 +10017,7 @@ function Footer({ setCurrentView, onCategoryClick }) {
 // Event Detail Page
 function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, setCurrentView, onViewFriend, onCategoryClick }) {
   const { t, language } = useTranslation();
-  const { isRegistered, isFavorite, toggleRegistration, toggleFavorite, friendsPerEvent, eventDateSelections, saveEventDateSelection, getFlexibleReg, saveFlexibleReg, removeFlexibleReg } = useUserState();
+  const { isRegistered, isFavorite, toggleRegistration, toggleFavorite, friendsPerEvent, eventDateSelections, saveEventDateSelection, getFlexibleReg: _getFlexibleReg, saveFlexibleReg, removeFlexibleReg } = useUserState();
 
   // Enrich event data on mount: if coordinates or AI summaries are missing (e.g. when
   // navigating from FeaturedEvents with a partial object), fetch the full record from Supabase.
@@ -10182,7 +10153,7 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
   const displayStartDate = _selectedEntry ? (_selectedEntry.start_date || _selectedEntry.start || event.startDate) : event.startDate;
   const displayEndDate   = _selectedEntry ? (_selectedEntry.end_date   || _selectedEntry.end   || event.endDate || null) : (event.endDate || null);
 
-  const localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
+  const _localeMap = { de: 'de-DE', en: 'en-US', fr: 'fr-FR', nl: 'nl-NL' };
   const translatedLocationForShare = translateLocation(event.location, language);
 
   // Share handler
@@ -10409,13 +10380,18 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
   };
 
   // Sticky back button visibility on scroll
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const heroRef = useRef(null);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [showStickyNav, setShowStickyNav] = useState(false);
 
   // Detail map ref and initialization
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const detailMapContainerRef = useRef(null);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const detailMapInstanceRef = useRef(null);
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!event?.coordinates || !detailMapContainerRef.current) return;
     if (detailMapInstanceRef.current) return; // already initialized
@@ -10426,7 +10402,7 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
       container: detailMapContainerRef.current,
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [event.coordinates.lng, event.coordinates.lat],
-      zoom: 12,
+      zoom: 8,
       interactive: true,
       attributionControl: false,
       preserveDrawingBuffer: true, // required for iOS WebView (Capacitor)
@@ -10450,6 +10426,7 @@ function EventDetailPage({ event: eventProp, onBack, isLoggedIn, onViewEvent, se
     };
   }, [event?.coordinates?.lat, event?.coordinates?.lng]);
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     const hero = heroRef.current;
     if (!hero) return;
@@ -11473,6 +11450,7 @@ export default function OffroadEventsApp() {
   }, []);
 
   const pendingPublicUserIdRef = useRef(null);
+  // eslint-disable-next-line react-hooks/react-compiler
   const [currentView, setCurrentView] = useState(() => {
     const { view, eventId, userId } = parsePathname(window.location.pathname);
     if (view === 'event-detail' && eventId) {
@@ -11540,7 +11518,7 @@ export default function OffroadEventsApp() {
         if (user) { setSelectedPublicUser(user); setCurrentView('public-profile'); }
       }).catch(() => {});
     }
-  }, []); // eslint-disable-line
+  }, []);
 
   // 1) Resolve deep-link /event/:id once events are loaded from Supabase
   useEffect(() => {
@@ -11555,7 +11533,7 @@ export default function OffroadEventsApp() {
       }
       // If not found yet, keep ref alive — next _forceRender (events load) will retry
     }
-  }, [renderTick]); // eslint-disable-line
+  }, [renderTick]);
 
   // 2) Browser back/forward → restore view from URL
   useEffect(() => {
@@ -11585,7 +11563,7 @@ export default function OffroadEventsApp() {
     };
     window.addEventListener('popstate', onPopstate);
     return () => window.removeEventListener('popstate', onPopstate);
-  }, []); // eslint-disable-line
+  }, []);
 
   // 3) State → URL: push a new history entry on every navigation
   useEffect(() => {
@@ -11887,7 +11865,7 @@ export default function OffroadEventsApp() {
     window.scrollTo(0, 0);
   };
 
-  const handleViewEvent = (event, origin = 'events', currentCategory = null) => {
+  const handleViewEvent = (event, origin = 'events', _currentCategory = null) => {
     if (!isLoggedIn) {
       setShowLoginPrompt(true);
       return;

@@ -197,7 +197,6 @@ export const translations = {
     farTravel: 'Fernreise',
     hobbyist: 'Hobbyfahrer',
     ambitious: 'Ambitioniert',
-    logout: 'Abmelden',
     upcomingEventsCount: 'Kommende Events',
     pastEventsCount: 'Vergangene Events',
     noEventsVisible: 'Keine Events sichtbar',
@@ -215,9 +214,8 @@ export const translations = {
     switzerland: 'Schweiz',
     croatia: 'Kroatien',
     greece: 'Griechenland',
-    morocco: 'Marokko',
     portugal: 'Portugal',
-    
+
     // Regions
     northGermany: 'Norddeutschland',
     westGermany: 'Westdeutschland',
@@ -236,9 +234,6 @@ export const translations = {
     mxTrack: 'MX-Track',
     mxRace: 'Race',
     checkOrganizerInfo: 'ℹ︎ Aktuelle Infos auf der Veranstalter-Website prüfen',
-    
-    // Registration
-    registered: 'Angemeldet',
     
     // External link notice
     openingExternalLink: 'Externen Link öffnen',
@@ -450,7 +445,6 @@ export const translations = {
     farTravel: 'Long distance',
     hobbyist: 'Hobbyist',
     ambitious: 'Ambitious',
-    logout: 'Logout',
     upcomingEventsCount: 'Upcoming Events',
     pastEventsCount: 'Past Events',
     noEventsVisible: 'No events visible',
@@ -468,7 +462,6 @@ export const translations = {
     switzerland: 'Switzerland',
     croatia: 'Croatia',
     greece: 'Greece',
-    morocco: 'Morocco',
     portugal: 'Portugal',
     
     // Regions
@@ -489,9 +482,6 @@ export const translations = {
     mxTrack: 'MX-Track',
     mxRace: 'Race',
     checkOrganizerInfo: 'ℹ︎ Check latest info on organizer website',
-    
-    // Registration
-    registered: 'Registered',
     
     // External link notice
     openingExternalLink: 'Opening external link',
@@ -703,7 +693,6 @@ export const translations = {
     farTravel: 'Lointain',
     hobbyist: 'Amateur',
     ambitious: 'Ambitieux',
-    logout: 'Déconnexion',
     upcomingEventsCount: 'Événements à venir',
     pastEventsCount: 'Événements passés',
     noEventsVisible: 'Aucun événement visible',
@@ -721,7 +710,6 @@ export const translations = {
     switzerland: 'Suisse',
     croatia: 'Croatie',
     greece: 'Grèce',
-    morocco: 'Maroc',
     portugal: 'Portugal',
     
     // Regions
@@ -742,9 +730,6 @@ export const translations = {
     mxTrack: 'Piste MX',
     mxRace: 'Course',
     checkOrganizerInfo: "ℹ︎ Vérifier les infos actuelles sur le site de l'organisateur",
-    
-    // Registration
-    registered: 'Inscrit',
     
     // External link notice
     openingExternalLink: 'Ouverture du lien externe',
@@ -956,7 +941,6 @@ export const translations = {
     farTravel: 'Verre reis',
     hobbyist: 'Hobbyrijder',
     ambitious: 'Ambitieus',
-    logout: 'Uitloggen',
     upcomingEventsCount: 'Aankomende Evenementen',
     pastEventsCount: 'Afgelopen Evenementen',
     noEventsVisible: 'Geen evenementen zichtbaar',
@@ -974,7 +958,6 @@ export const translations = {
     switzerland: 'Zwitserland',
     croatia: 'Kroatië',
     greece: 'Griekenland',
-    morocco: 'Marokko',
     portugal: 'Portugal',
     
     // Regions
@@ -995,9 +978,6 @@ export const translations = {
     mxTrack: 'MX-Baan',
     mxRace: 'Race',
     checkOrganizerInfo: 'ℹ︎ Controleer actuele info op de organisator website',
-    
-    // Registration
-    registered: 'Aangemeld',
     
     // External link notice
     openingExternalLink: 'Externe link openen',

@@ -368,7 +368,7 @@ export default function EventForm({ eventId, onNavigate, toast, lockedOrganizerI
 
   const isMxSubcategory = form.category === 'trail-adventures' && form.subcategory === 'mx';
   const isMxTrack = isMxSubcategory && form.mx_type === 'mx-track';
-  const isMxRace  = isMxSubcategory && form.mx_type === 'mx-race';
+  const _isMxRace  = isMxSubcategory && form.mx_type === 'mx-race';
 
   // ─── Multi-date helpers (Skills-Camps) ──────────────────────────────────────
   const addEventDate = () => {

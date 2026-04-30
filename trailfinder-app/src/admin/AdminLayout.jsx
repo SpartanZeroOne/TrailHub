@@ -5,7 +5,9 @@ import { ToastContainer } from './hooks/useToast';
 import { supabase } from '../services/supabaseClient';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
+// eslint-disable-next-line react-refresh/only-export-components
 export const AdminContext = createContext(null);
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAdmin = () => useContext(AdminContext);
 
 // ─── Nav item definitions ─────────────────────────────────────────────────────

@@ -125,6 +125,7 @@ function DonutChart({ data, onCategoryClick }) {
               onClick={() => onCategoryClick?.(d.category)}
             />
           );
+          // eslint-disable-next-line react-hooks/immutability
           offset += pct;
           return slice;
         })}
@@ -279,6 +280,7 @@ function RecentlyEditedFeed({ events, onNavigate }) {
 
   const formatRelative = (iso) => {
     if (!iso) return '–';
+    // eslint-disable-next-line react-hooks/purity
     const diff = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diff / 60000);
     if (mins < 1)  return 'Gerade eben';
@@ -332,6 +334,7 @@ export default function Dashboard({ onNavigate, toast }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     Promise.all([
       adminFetchDashboardStats(),

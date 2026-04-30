@@ -5,7 +5,6 @@ import {
   organizerFetchDashboardStats,
   organizerFetchEventsByCategory,
   organizerFetchEventsPerMonth,
-  adminFetchPastEvents,
 } from '../services/adminSupabase';
 
 const CATEGORY_LABELS = {
@@ -118,6 +117,7 @@ function DonutChart({ data, onCategoryClick }) {
               onClick={() => onCategoryClick?.(d.category)}
             />
           );
+          // eslint-disable-next-line react-hooks/immutability
           offset += pct;
           return slice;
         })}
@@ -210,6 +210,7 @@ export default function OrganizerDashboard({ onNavigate, toast, organizerId }) {
 
   useEffect(() => {
     if (!organizerId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     Promise.all([
       organizerFetchDashboardStats(organizerId),

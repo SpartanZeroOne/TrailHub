@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../../services/supabaseClient';
 import { useAdmin } from '../AdminLayout';
 
-export default function OrganizerKontakt({ toast }) {
+export default function OrganizerKontakt() {
   const { t } = useTranslation();
   const { organizerId } = useAdmin();
   const [subject, setSubject] = useState('');
@@ -39,7 +39,7 @@ export default function OrganizerKontakt({ toast }) {
       setSent(true);
       setSubject('');
       setMessage('');
-    } catch (err) {
+    } catch {
       setSendError('Fehler: Die Nachricht konnte nicht gesendet werden. Bitte kontaktiere uns direkt per E-Mail an info@trailhub.mx');
     } finally {
       setSending(false);

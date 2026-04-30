@@ -15,12 +15,12 @@ export const fetchEvents = async () => {
     return null;
 };
 
-export const saveEvent = async (event) => {
+export const saveEvent = async () => {
     console.warn('Convex not configured – saving locally');
     return null;
 };
 
-export const deleteEvent = async (eventId) => {
+export const deleteEvent = async () => {
     console.warn('Convex not configured – deleting locally');
     return null;
 };

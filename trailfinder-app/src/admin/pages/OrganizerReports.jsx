@@ -159,7 +159,7 @@ function StatCard({ label, value, sub }) {
   );
 }
 
-export default function OrganizerReports({ onNavigate, toast, organizerId }) {
+export default function OrganizerReports({ organizerId }) {
   const { t, i18n } = useTranslation();
   const [stats, setStats] = useState(null);
   const [catData, setCatData] = useState([]);
@@ -170,6 +170,7 @@ export default function OrganizerReports({ onNavigate, toast, organizerId }) {
 
   useEffect(() => {
     if (!organizerId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     Promise.allSettled([
       organizerFetchDashboardStats(organizerId),
