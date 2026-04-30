@@ -3,6 +3,7 @@
 
 -- ─── Extensions ──────────────────────────────────────────────────────────────
 CREATE EXTENSION IF NOT EXISTS pg_net;
+CREATE EXTENSION IF NOT EXISTS postgis;  -- best-effort; Haversine fallback used if unavailable
 
 -- ─── Table: push_subscriptions ───────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -28,7 +29,23 @@ CREATE POLICY "ps_user_own" ON push_subscriptions
   USING    (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
--- ─── PostGIS helper: users within radius of an event ─────────────────────────
+-- ─── Haversine helper: great-circle distance in meters ───────────────────────
+CREATE OR REPLACE FUNCTION haversine_meters(
+  lat1 double precision, lng1 double precision,
+  lat2 double precision, lng2 double precision
+)
+RETURNS double precision
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT 6371000.0 * 2.0 * ASIN(SQRT(
+    POWER(SIN(RADIANS((lat2 - lat1) / 2.0)), 2) +
+    COS(RADIANS(lat1)) * COS(RADIANS(lat2)) *
+    POWER(SIN(RADIANS((lng2 - lng1) / 2.0)), 2)
+  ));
+$$;
+
+-- ─── Users within radius of an event (Haversine, no PostGIS required) ────────
 -- Returns user IDs who: (a) enabled new_events_region, (b) have stored GPS coords
 CREATE OR REPLACE FUNCTION users_near_event(
   event_lat double precision,
@@ -43,18 +60,14 @@ AS $$
   SELECT u.id
   FROM   public.users u
   WHERE
-    -- preference is enabled (null defaults to true)
     coalesce((u.notification_preferences->>'new_events_region')::boolean, true)
     AND (u.notification_preferences->>'user_lat') IS NOT NULL
     AND (u.notification_preferences->>'user_lng') IS NOT NULL
-    AND ST_DWithin(
-      ST_MakePoint(
-        (u.notification_preferences->>'user_lng')::float8,
-        (u.notification_preferences->>'user_lat')::float8
-      )::geography,
-      ST_MakePoint(event_lng, event_lat)::geography,
-      radius_meters
-    );
+    AND haversine_meters(
+      (u.notification_preferences->>'user_lat')::float8,
+      (u.notification_preferences->>'user_lng')::float8,
+      event_lat, event_lng
+    ) <= radius_meters;
 $$;
 
 -- ─── Trigger: new event created → notify nearby users ────────────────────────
@@ -131,25 +144,30 @@ BEGIN
 END $$;
 
 -- ─── pg_cron: daily event reminders at 09:00 UTC ─────────────────────────────
+-- pg_cron must be enabled in Supabase Dashboard → Database → Extensions.
+-- If not yet enabled, this block is silently skipped.
 DO $$
 BEGIN
-  -- Silently unschedule if exists, ignore if not
-  BEGIN
-    PERFORM cron.unschedule('trailhub-notify-reminders');
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    -- Unschedule any previous version of the job
+    BEGIN
+      PERFORM cron.unschedule('trailhub-notify-reminders');
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
 
-  PERFORM cron.schedule(
-    'trailhub-notify-reminders',
-    '0 9 * * *',
-    $job$
-      SELECT net.http_post(
-        url     := 'https://hmdkiteqapiahwvdbdyh.supabase.co/functions/v1/notify-reminders',
-        headers := '{"Content-Type":"application/json","Authorization":"Bearer sb_publishable_AtNTl52QtqAFJHeWan5bHw_THkJC_yY"}'::jsonb,
-        body    := '{}'::jsonb
-      );
-    $job$
-  );
-EXCEPTION WHEN UNDEFINED_FUNCTION THEN
-  RAISE NOTICE 'pg_cron not available — run manually: SELECT cron.schedule(...) after enabling pg_cron in Supabase Dashboard.';
+    PERFORM cron.schedule(
+      'trailhub-notify-reminders',
+      '0 9 * * *',
+      $job$
+        SELECT net.http_post(
+          url     := 'https://hmdkiteqapiahwvdbdyh.supabase.co/functions/v1/notify-reminders',
+          headers := '{"Content-Type":"application/json","Authorization":"Bearer sb_publishable_AtNTl52QtqAFJHeWan5bHw_THkJC_yY"}'::jsonb,
+          body    := '{}'::jsonb
+        );
+      $job$
+    );
+    RAISE NOTICE 'pg_cron job trailhub-notify-reminders scheduled.';
+  ELSE
+    RAISE NOTICE 'pg_cron not enabled — enable it in Supabase Dashboard > Database > Extensions, then re-run this block.';
+  END IF;
 END $$;
