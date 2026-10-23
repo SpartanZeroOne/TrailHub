@@ -533,6 +533,7 @@
     "statusPast": "Beendet",
     "renewBtn": "Für nächstes Jahr erneuern",
     "renewHelper": "Termine werden um 12 Monate verschoben",
+    "renewedHelper": "Bereits fürs nächste Jahr erneuert",
     "renewConfirmTitle": "Event erneuern?",
     "renewConfirmMsg": "Ein neuer Entwurf wird erstellt und alle Daten um 12 Monate verschoben. Das Original bleibt unverändert.",
     "renewSuccess": "Event erneuert! Bitte überprüfen und veröffentlichen.",

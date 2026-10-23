@@ -533,6 +533,7 @@
     "statusPast": "Terminé",
     "renewBtn": "Renouveler pour l'année prochaine",
     "renewHelper": "Les dates seront avancées de 12 mois",
+    "renewedHelper": "Déjà renouvelé pour l'année prochaine",
     "renewConfirmTitle": "Renouveler l'événement ?",
     "renewConfirmMsg": "Un nouveau brouillon sera créé avec toutes les dates avancées de 12 mois. L'original reste inchangé.",
     "renewSuccess": "Événement renouvelé ! Veuillez vérifier et publier.",

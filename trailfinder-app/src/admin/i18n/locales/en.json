@@ -533,6 +533,7 @@
     "statusPast": "Ended",
     "renewBtn": "Renew for Next Year",
     "renewHelper": "Dates will shift forward by 12 months",
+    "renewedHelper": "Already renewed for next year",
     "renewConfirmTitle": "Renew event?",
     "renewConfirmMsg": "A new draft will be created with all dates shifted forward by 12 months. The original remains untouched.",
     "renewSuccess": "Event renewed! Please review and publish.",

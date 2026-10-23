@@ -419,7 +419,7 @@ export const adminFetchDashboardStats = async () => {
 };
 
 export const adminFetchArchivedEvents = async ({
-  page = 1, perPage = 25, category, search, sortBy = 'end_date', sortDir = 'desc',
+  page = 1, perPage = 25, category, organizerId, search, sortBy = 'end_date', sortDir = 'desc',
 } = {}) => {
   const today = new Date().toISOString().split('T')[0];
   // Include both explicitly-past events AND date-expired events that haven't been
@@ -432,6 +432,7 @@ export const adminFetchArchivedEvents = async ({
       `and(is_flexible_date.neq.true,end_date.is.null,start_date.lt.${today},status.not.in.(past,permanent,cancelled,sold_out))`
     );
   if (category) q = q.eq('category', category);
+  if (organizerId) q = q.eq('organizer_id', organizerId);
   if (search)   q = q.or(`name.ilike.%${search}%,location.ilike.%${search}%`);
   q = q.order(sortBy, { ascending: sortDir === 'asc' });
   q = q.range((page - 1) * perPage, page * perPage - 1);
@@ -439,6 +440,18 @@ export const adminFetchArchivedEvents = async ({
   if (error) throw error;
   // Apply computed status + persist any stragglers that weren't written back yet
   return { data: applyComputedStatus(data ?? [], { writeBack: true }), count: count ?? 0 };
+};
+
+// "name|organizer_id" keys of events dated next year — a past event whose key is in
+// this set has already been renewed (adminRenewEvent copies name + organizer).
+export const adminFetchNextYearEventKeys = async () => {
+  const next = new Date().getFullYear() + 1;
+  const { data, error } = await supabase.from('events')
+    .select('name, organizer_id')
+    .gte('start_date', `${next}-01-01`)
+    .lt('start_date', `${next + 1}-01-01`);
+  if (error) throw error;
+  return new Set((data ?? []).map(e => `${e.name}|${e.organizer_id ?? ''}`));
 };
 
 export const adminRenewEvent = async (eventId) => {

@@ -1,7 +1,7 @@
 // ─── TrailHub Admin – Past Events Archive ──────────────────────────────────────
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { adminFetchArchivedEvents, adminRenewEvent } from '../../services/adminSupabase';
+import { adminFetchArchivedEvents, adminRenewEvent, adminFetchOrganizers, adminFetchNextYearEventKeys } from '../../services/adminSupabase';
 import { CATEGORIES, ITEMS_PER_PAGE_OPTIONS } from '../../utils/adminConfig';
 
 const CATEGORY_LABELS = {
@@ -34,7 +34,9 @@ export default function PastEvents({ onNavigate, toast }) {
   const [perPage, setPerPage] = useState(25);
   const [sortBy, setSortBy] = useState('end_date');
   const [sortDir, setSortDir] = useState('desc');
-  const [filters, setFilters] = useState({ category: '', search: '' });
+  const [filters, setFilters] = useState({ category: '', organizerId: '', search: '' });
+  const [organizers, setOrganizers] = useState([]);
+  const [renewedKeys, setRenewedKeys] = useState(new Set());
   const [renewingId, setRenewingId] = useState(null);
   const [confirmRenew, setConfirmRenew] = useState(null);
   const searchTimer = useRef(null);
@@ -45,10 +47,12 @@ export default function PastEvents({ onNavigate, toast }) {
       const { data, count } = await adminFetchArchivedEvents({
         page, perPage, sortBy, sortDir,
         category: filters.category || undefined,
+        organizerId: filters.organizerId || undefined,
         search: filters.search || undefined,
       });
       setEvents(data);
       setTotal(count);
+      adminFetchNextYearEventKeys().then(setRenewedKeys).catch(() => {});
     } catch (err) {
       toast?.error(t('events.errorLoad', { msg: err.message }));
     } finally {
@@ -57,6 +61,10 @@ export default function PastEvents({ onNavigate, toast }) {
   }, [page, perPage, sortBy, sortDir, filters]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    adminFetchOrganizers({ perPage: 1000 }).then(r => setOrganizers(r.data)).catch(() => {});
+  }, []);
 
   const handleSearchChange = (val) => {
     clearTimeout(searchTimer.current);
@@ -136,6 +144,14 @@ export default function PastEvents({ onNavigate, toast }) {
             {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
           <select
+            value={filters.organizerId}
+            onChange={e => { setFilters(f => ({ ...f, organizerId: e.target.value })); setPage(1); }}
+            className="px-3 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm focus:outline-none focus:border-orange-500/50"
+          >
+            <option value="">{t('reports.allOrganizers')}</option>
+            {organizers.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+          </select>
+          <select
             value={perPage}
             onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }}
             className="px-3 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm focus:outline-none focus:border-orange-500/50"
@@ -201,7 +217,9 @@ export default function PastEvents({ onNavigate, toast }) {
                       {t('archive.noEvents')}
                     </td>
                   </tr>
-                ) : events.map(event => (
+                ) : events.map(event => {
+                  const renewed = renewedKeys.has(`${event.name}|${event.organizer_id ?? ''}`);
+                  return (
                   <tr key={event.id} className="hover:bg-stone-800/30 transition-colors opacity-80">
                     <td className="px-4 py-3">
                       {event.image ? (
@@ -252,8 +270,10 @@ export default function PastEvents({ onNavigate, toast }) {
                         <button
                           onClick={() => setConfirmRenew(event)}
                           disabled={renewingId === event.id}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-orange-500/15 text-stone-400 hover:text-orange-400 border border-stone-700 hover:border-orange-500/30 text-xs font-medium transition-colors disabled:opacity-40"
-                          title={t('archive.renewHelper')}
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-40 ${renewed
+                            ? 'bg-green-500/15 text-green-400 border-green-500/40 hover:bg-green-500/25'
+                            : 'bg-stone-800 hover:bg-orange-500/15 text-stone-400 hover:text-orange-400 border-stone-700 hover:border-orange-500/30'}`}
+                          title={t(renewed ? 'archive.renewedHelper' : 'archive.renewHelper')}
                         >
                           {renewingId === event.id ? (
                             <span className="w-3.5 h-3.5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin"/>
@@ -267,7 +287,8 @@ export default function PastEvents({ onNavigate, toast }) {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
