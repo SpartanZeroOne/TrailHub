@@ -476,7 +476,26 @@ export const adminFetchArchivedEvents = async ({
   if (category) q = q.eq('category', category);
   if (organizerId) q = q.eq('organizer_id', organizerId);
   if (search)   q = q.or(`name.ilike.%${search}%,location.ilike.%${search}%`);
-  q = q.order(sortBy, { ascending: sortDir === 'asc' });
+  const ascending = sortDir === 'asc';
+
+  // 'renewed' isn't a column (a future-dated copy exists) → sort + paginate client-side.
+  // ponytail: loads the whole filtered archive; move to an SQL view if it grows past a few thousand rows.
+  if (sortBy === 'renewed') {
+    const [{ data, error, count }, renewedKeys] = await Promise.all([
+      q.order('end_date', { ascending: false }),
+      adminFetchUpcomingEventKeys(),
+    ]);
+    if (error) throw error;
+    const isRenewed = e => renewedKeys.has(`${e.name}|${e.organizer_id ?? ''}`);
+    // desc = renewed (green) first; Array.sort is stable, so end_date desc stays within groups
+    const sorted = [...(data ?? [])].sort((a, b) => (isRenewed(b) - isRenewed(a)) * (ascending ? -1 : 1));
+    const pageRows = sorted.slice((page - 1) * perPage, page * perPage);
+    return { data: applyComputedStatus(pageRows, { writeBack: true }), count: count ?? 0 };
+  }
+
+  q = sortBy === 'organizer'
+    ? q.order('organizers(name)', { ascending, nullsFirst: false })
+    : q.order(sortBy, { ascending });
   q = q.range((page - 1) * perPage, page * perPage - 1);
   const { data, error, count } = await q;
   if (error) throw error;

@@ -90,7 +90,8 @@ export default function PastEvents({ onNavigate, toast }) {
 
   const handleSort = (col) => {
     if (sortBy === col) setQ({ sortDir: sortDir === 'asc' ? 'desc' : 'asc', page: 1 });
-    else setQ({ sortBy: col, sortDir: 'asc', page: 1 });
+    // Actions: first click shows renewed (green) events on top
+    else setQ({ sortBy: col, sortDir: col === 'renewed' ? 'desc' : 'asc', page: 1 });
   };
 
   // Opens a pre-filled, unsaved draft — the button only turns green once that draft
@@ -211,10 +212,10 @@ export default function PastEvents({ onNavigate, toast }) {
                   <Th label={t('events.tableCategory')} col="category" />
                   <Th label={t('events.tableDate')} col="start_date" />
                   <Th label={t('events.tableLocation')} col="location" />
-                  <Th label={t('events.tableOrganizer')} />
+                  <Th label={t('events.tableOrganizer')} col="organizer" />
                   <Th label={t('events.tablePrice')} col="price_value" />
                   <th className="px-4 py-3 text-left text-xs font-medium text-stone-400 uppercase tracking-wider whitespace-nowrap">{t('events.tableWebsite')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-stone-400 uppercase tracking-wider">{t('events.tableActions')}</th>
+                  <Th label={t('events.tableActions')} col="renewed" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-800">
