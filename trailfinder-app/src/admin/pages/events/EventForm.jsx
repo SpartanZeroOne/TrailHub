@@ -1,7 +1,7 @@
 // ─── TrailHub Admin – Event Form (Multi-Tab) ──────────────────────────────────
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { adminFetchEventById, adminCreateEvent, adminUpdateEvent, adminUploadEventImage, adminGenerateAiSummary, adminCreateMxTrack, adminUpdateMxTrack, adminFetchMxTrackByEventId } from '../../services/adminSupabase';
+import { adminFetchEventById, adminBuildRenewalDraft, adminCreateEvent, adminUpdateEvent, adminUploadEventImage, adminGenerateAiSummary, adminCreateMxTrack, adminUpdateMxTrack, adminFetchMxTrackByEventId } from '../../services/adminSupabase';
 import { adminFetchOrganizers } from '../../services/adminSupabase';
 import { CATEGORY_FIELDS, CATEGORIES, STATUS_OPTIONS, AI_PROMPT_TEMPLATES } from '../../utils/adminConfig';
 
@@ -350,14 +350,15 @@ function CategoryFields({ form, setField, cfg }) {
 }
 
 // ─── Main EventForm Component ─────────────────────────────────────────────────
-export default function EventForm({ eventId, onNavigate, toast, lockedOrganizerId = null }) {
+export default function EventForm({ eventId, renewFromId = null, onNavigate, toast, lockedOrganizerId = null }) {
   const { t } = useTranslation();
   const isNew = !eventId || eventId === 'new';
+  const loadId = isNew ? renewFromId : eventId;
   const [activeTab, setActiveTab] = useState('basics');
   const [form, setFormState] = useState({ ...DEFAULTS, ...(lockedOrganizerId ? { organizer_id: lockedOrganizerId } : {}) });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(!isNew);
+  const [loading, setLoading] = useState(!!loadId);
   const [organizers, setOrganizers] = useState([]);
   const [aiLoading, setAiLoading] = useState({ DE: false, EN: false, FR: false, NL: false });
   const [imgUploading, setImgUploading] = useState(false);
@@ -365,6 +366,10 @@ export default function EventForm({ eventId, onNavigate, toast, lockedOrganizerI
   const [tempEndDate, setTempEndDate] = useState('');
 
   const setField = (key, val) => setFormState(f => ({ ...f, [key]: val }));
+
+  // Back to the exact list view the form was opened from (path + filters, set by
+  // AdminApp's navigate in history state); plain list only for direct links/reloads.
+  const goBack = () => onNavigate(window.history.state?.returnTo ?? (renewFromId ? '/admin/past-events' : '/admin/events'));
 
   const isMxSubcategory = form.category === 'trail-adventures' && form.subcategory === 'mx';
   const isMxTrack = isMxSubcategory && form.mx_type === 'mx-track';
@@ -423,9 +428,10 @@ export default function EventForm({ eventId, onNavigate, toast, lockedOrganizerI
       .then(({ data }) => setOrganizers(data))
       .catch(() => {});
 
-    if (!isNew) {
+    if (loadId) {
       setLoading(true);
-      adminFetchEventById(eventId).then(async event => {
+      // Renewal: unsaved +12-month copy — saving creates it (isNew), cancelling leaves the DB untouched
+      (isNew ? adminBuildRenewalDraft(loadId) : adminFetchEventById(loadId)).then(async event => {
         const base = {
           ...DEFAULTS,
           ...event,
@@ -434,7 +440,7 @@ export default function EventForm({ eventId, onNavigate, toast, lockedOrganizerI
         };
         if (event.mx_type === 'mx-track') {
           try {
-            const mxTrack = await adminFetchMxTrackByEventId(eventId);
+            const mxTrack = await adminFetchMxTrackByEventId(loadId);
             if (mxTrack) {
               base.mx_season_start   = mxTrack.season_start   || '';
               base.mx_season_end     = mxTrack.season_end     || '';
@@ -449,7 +455,7 @@ export default function EventForm({ eventId, onNavigate, toast, lockedOrganizerI
         toast?.error(t('eventForm.errorLoad', { msg: err.message }));
       }).finally(() => setLoading(false));
     }
-  }, [eventId]);
+  }, [eventId, renewFromId]);
 
   const validate = () => {
     const e = {};
@@ -496,8 +502,15 @@ export default function EventForm({ eventId, onNavigate, toast, lockedOrganizerI
         }
       }
       toast?.success(isNew ? t('eventForm.successCreate') : t('eventForm.successSave'));
-      onNavigate('/admin/events');
+      goBack();
     } catch (err) {
+      if (err.code === 'DUPLICATE_EVENT') {
+        // Show on the name field too, so the user sees what to change
+        setErrors(e => ({ ...e, name: t('eventForm.errorDuplicate') }));
+        setActiveTab('basics');
+        toast?.error(t('eventForm.errorDuplicate'));
+        return;
+      }
       toast?.error(t('eventForm.errorLoad', { msg: err.message }));
     } finally {
       setSaving(false);
@@ -553,7 +566,7 @@ export default function EventForm({ eventId, onNavigate, toast, lockedOrganizerI
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => onNavigate('/admin/events')}
+            onClick={goBack}
             className="px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm border border-stone-700 transition-colors"
           >
             {t('common.cancel')}
@@ -1151,7 +1164,7 @@ export default function EventForm({ eventId, onNavigate, toast, lockedOrganizerI
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => onNavigate('/admin/events')}
+            onClick={goBack}
             className="px-4 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm border border-stone-700 transition-colors"
           >
             {t('common.cancel')}

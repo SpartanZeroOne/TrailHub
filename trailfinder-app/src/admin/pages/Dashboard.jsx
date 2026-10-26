@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { adminFetchDashboardStats, adminFetchEventsByCategory, adminFetchEventsPerMonth, adminFetchPastEvents, adminFetchRecentlyEditedEvents } from '../services/adminSupabase';
 import { useAdmin } from '../AdminLayout';
+import DuplicateEventsAlert from './DuplicateEventsAlert';
 
 const CATEGORY_LABELS = {
   'trail-adventures': 'Trail Adventures',
@@ -402,6 +403,8 @@ export default function Dashboard({ onNavigate, toast }) {
           )}
         </div>
       </div>
+
+      <DuplicateEventsAlert onNavigate={onNavigate} toast={toast} />
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

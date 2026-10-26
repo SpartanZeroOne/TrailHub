@@ -1,5 +1,6 @@
 // Supabase Client – TrailFinder
 import { createClient } from '@supabase/supabase-js';
+import { dedupeEvents } from '../utils/eventDedup';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -57,7 +58,8 @@ export const fetchEvents = async ({ category, status } = {}) => {
     if (status) query = query.eq('status', status);
     const { data, error } = await query;
     if (error) throw error;
-    return applyComputedStatus(data ?? []);
+    // DB index unique_event_idx blocks duplicates; this is the UI safety net
+    return applyComputedStatus(dedupeEvents(data ?? []));
 };
 export const fetchFeaturedEvents = async ({ limit = 8 } = {}) => {
     const { data, error } = await supabase
@@ -68,7 +70,7 @@ export const fetchFeaturedEvents = async ({ limit = 8 } = {}) => {
         .order('start_date', { ascending: true })
         .limit(limit);
     if (error) throw error;
-    return data ?? [];
+    return dedupeEvents(data ?? []);
 };
 export const fetchEventById = async (id) => {
     const { data, error } = await supabase.from('events').select('*, organizers(*)').eq('id', id).single();

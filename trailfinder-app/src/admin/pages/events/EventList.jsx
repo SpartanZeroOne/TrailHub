@@ -1,5 +1,6 @@
 // ─── TrailHub Admin – Event List ──────────────────────────────────────────────
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useUrlState } from '../../hooks/useUrlState';
 import { useTranslation } from 'react-i18next';
 import { adminFetchEvents, adminBulkUpdateEvents, adminBulkDeleteEvents, adminFetchArchivedEvents, adminSyncExpiredEvents } from '../../services/adminSupabase';
 import { CATEGORIES, STATUS_OPTIONS, ITEMS_PER_PAGE_OPTIONS } from '../../utils/adminConfig';
@@ -106,18 +107,26 @@ function timeframeRange(value) {
   return {};
 }
 
-export default function EventList({ onNavigate, toast, initialOrganizerId = '', organizerName = '', initialMonth = '', initialCategory = '', organizerLocked = false }) {
+// URL query params ↔ list state (shared pattern with PastEvents)
+const LIST_DEFAULTS = {
+  search: '', category: '', status: '', organizer_id: '', month: '', timeframe: 'all',
+  page: 1, perPage: 25, sortBy: 'start_date', sortDir: 'asc',
+};
+
+export default function EventList({ onNavigate, toast, lockedOrganizerId = null }) {
   const { t } = useTranslation();
   const [events, setEvents] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
-  const [sortBy, setSortBy] = useState('start_date');
-  const [sortDir, setSortDir] = useState('asc');
-  const [filters, setFilters] = useState({ category: initialCategory, status: '', organizerId: initialOrganizerId, search: '' });
-  const [monthFilter, setMonthFilter] = useState(initialMonth);
-  const [timeframe, setTimeframe] = useState('all');
+  const [q, setQ] = useUrlState(LIST_DEFAULTS, onNavigate);
+  const { page, perPage, sortBy, sortDir, timeframe, month: monthFilter } = q;
+  const organizerLocked = !!lockedOrganizerId;
+  const initialOrganizerId = lockedOrganizerId ?? q.organizer_id;
+  const organizerName = new URLSearchParams(window.location.search).get('organizer_name') ?? '';
+  const filters = useMemo(
+    () => ({ category: q.category, status: q.status, organizerId: initialOrganizerId, search: q.search }),
+    [q.category, q.status, initialOrganizerId, q.search],
+  );
   const [selected, setSelected] = useState(new Set());
   const [bulkAction, setBulkAction] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -165,21 +174,16 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
   const handleSearchChange = (val) => {
     clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
-      setFilters(f => ({ ...f, search: val }));
-      setPage(1);
+      setQ({ search: val, page: 1 });
     }, 300);
   };
 
   const handleSort = (col) => {
-    if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortBy(col); setSortDir('asc'); }
-    setPage(1);
+    if (sortBy === col) setQ({ sortDir: sortDir === 'asc' ? 'desc' : 'asc', page: 1 });
+    else setQ({ sortBy: col, sortDir: 'asc', page: 1 });
   };
 
-  const handleFilterChange = (key, val) => {
-    setFilters(f => ({ ...f, [key]: val }));
-    setPage(1);
-  };
+  const handleFilterChange = (key, val) => setQ({ [key]: val, page: 1 });
 
   const toggleSelect = (id) => {
     setSelected(prev => {
@@ -270,7 +274,7 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
                 </svg>
                 Filter: {formatMonthDE(monthFilter)}
                 <button
-                  onClick={() => { setMonthFilter(''); setPage(1); onNavigate('/admin/events'); }}
+                  onClick={() => setQ({ month: '', page: 1 })}
                   className="ml-0.5 hover:text-orange-100 transition-colors"
                   title="Filter entfernen"
                 >✕</button>
@@ -283,7 +287,7 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
                 </svg>
                 {CATEGORY_LABELS[filters.category] ?? filters.category}
                 <button
-                  onClick={() => { handleFilterChange('category', ''); onNavigate('/admin/events'); }}
+                  onClick={() => handleFilterChange('category', '')}
                   className="ml-0.5 hover:text-orange-100 transition-colors"
                   title="Filter entfernen"
                 >✕</button>
@@ -343,7 +347,7 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
           </select>
           <select
             value={timeframe}
-            onChange={e => { setTimeframe(e.target.value); setPage(1); }}
+            onChange={e => setQ({ timeframe: e.target.value, page: 1 })}
             className="px-3 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm focus:outline-none focus:border-orange-500/50"
           >
             <option value="all">All Timeframes</option>
@@ -353,7 +357,7 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
           </select>
           <select
             value={perPage}
-            onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }}
+            onChange={e => setQ({ perPage: Number(e.target.value), page: 1 })}
             className="px-3 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-300 text-sm focus:outline-none focus:border-orange-500/50"
           >
             {ITEMS_PER_PAGE_OPTIONS.map(n => <option key={n} value={n}>{n} {t('events.perPage')}</option>)}
@@ -607,13 +611,13 @@ export default function EventList({ onNavigate, toast, initialOrganizerId = '', 
             </p>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setQ({ page: Math.max(1, page - 1) })}
                 disabled={page === 1}
                 className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-400 text-sm disabled:opacity-40 hover:bg-stone-700 transition-colors"
               >{t('common.back')}</button>
               <span className="text-stone-400 text-sm px-2">{page} / {totalPages}</span>
               <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setQ({ page: Math.min(totalPages, page + 1) })}
                 disabled={page === totalPages}
                 className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-400 text-sm disabled:opacity-40 hover:bg-stone-700 transition-colors"
               >{t('common.next')}</button>

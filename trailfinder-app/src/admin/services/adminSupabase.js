@@ -1,5 +1,6 @@
 // ─── TrailHub Admin – Supabase Service Layer ──────────────────────────────────
 import { supabase } from '../../services/supabaseClient';
+import { eventKey, findSimilarEventGroups } from '../../utils/eventDedup';
 
 // ─── COMPUTED STATUS ──────────────────────────────────────────────────────────
 // Statuses that are not date-driven and must never be auto-overridden.
@@ -103,18 +104,59 @@ export const adminFetchEventById = async (id) => {
   return data;
 };
 
+// Thrown when a save would duplicate another event (same key as DB index unique_event_idx).
+// EventForm checks err.code to show a translated message.
+const duplicateEventError = () => Object.assign(
+  new Error('A similar event already exists. Please check the event list to avoid duplicates.'),
+  { code: 'DUPLICATE_EVENT' },
+);
+
+const matchNullable = (q, col, val) => (val == null ? q.is(col, null) : q.eq(col, val));
+
+// Pre-save check for a friendly error; the unique index is the race-proof guard.
+const assertNoDuplicateEvent = async (payload, excludeId = null) => {
+  let q = supabase.from('events').select('id, name, start_date, organizer_id, category');
+  q = matchNullable(q, 'start_date', payload.start_date ?? null);
+  q = matchNullable(q, 'organizer_id', payload.organizer_id ?? null);
+  q = matchNullable(q, 'category', payload.category ?? null);
+  if (excludeId != null) q = q.neq('id', excludeId);
+  const { data, error } = await q;
+  if (error) throw error;
+  const key = eventKey(payload);
+  if ((data ?? []).some(e => eventKey(e) === key)) throw duplicateEventError();
+};
+
+const rethrowDuplicate = (error) => {
+  throw error.code === '23505' && error.message?.includes('unique_event_idx') ? duplicateEventError() : error;
+};
+
 export const adminCreateEvent = async (eventData) => {
   const payload = normalizeEventPayload(eventData);
+  await assertNoDuplicateEvent(payload);
   const { data, error } = await supabase.from('events').insert([payload]).select().single();
-  if (error) throw error;
+  if (error) rethrowDuplicate(error);
   return data;
 };
 
 export const adminUpdateEvent = async (id, eventData) => {
   const payload = normalizeEventPayload(eventData);
+  await assertNoDuplicateEvent(payload, id);
   const { data, error } = await supabase.from('events').update(payload).eq('id', id).select().single();
-  if (error) throw error;
+  if (error) rethrowDuplicate(error);
   return data;
+};
+
+// Groups of events sharing name + start date across organizers/categories — exact
+// duplicates are impossible (unique_event_idx), these are for manual review.
+// ponytail: loads id/name/date of all events and groups client-side; move to an SQL
+// GROUP BY view if the table grows past a few thousand rows.
+export const adminFetchSimilarEvents = async () => {
+  const { data, error } = await supabase.from('events')
+    .select('id, name, start_date, category, status, organizer_id, organizers(name)')
+    .not('start_date', 'is', null)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return findSimilarEventGroups(data ?? []);
 };
 
 export const adminDeleteEvent = async (id) => {
@@ -442,19 +484,20 @@ export const adminFetchArchivedEvents = async ({
   return { data: applyComputedStatus(data ?? [], { writeBack: true }), count: count ?? 0 };
 };
 
-// "name|organizer_id" keys of events dated next year — a past event whose key is in
-// this set has already been renewed (adminRenewEvent copies name + organizer).
-export const adminFetchNextYearEventKeys = async () => {
-  const next = new Date().getFullYear() + 1;
+// "name|organizer_id" keys of saved events with a future start_date — a past event whose
+// key is in this set has already been renewed (the renewal draft copies name + organizer).
+export const adminFetchUpcomingEventKeys = async () => {
+  const today = new Date().toISOString().split('T')[0];
   const { data, error } = await supabase.from('events')
     .select('name, organizer_id')
-    .gte('start_date', `${next}-01-01`)
-    .lt('start_date', `${next + 1}-01-01`);
+    .gte('start_date', today);
   if (error) throw error;
   return new Set((data ?? []).map(e => `${e.name}|${e.organizer_id ?? ''}`));
 };
 
-export const adminRenewEvent = async (eventId) => {
+// Builds an unsaved copy of a past event with all dates shifted +12 months.
+// Nothing is written — EventForm creates the row only when the user saves.
+export const adminBuildRenewalDraft = async (eventId) => {
   const original = await adminFetchEventById(eventId);
   const shiftDate = (d) => {
     if (!d) return null;
@@ -462,7 +505,7 @@ export const adminRenewEvent = async (eventId) => {
     date.setFullYear(date.getFullYear() + 1);
     return date.toISOString().split('T')[0];
   };
-  const payload = {
+  return {
     ...original,
     status: 'upcoming',
     start_date: shiftDate(original.start_date),
@@ -476,7 +519,6 @@ export const adminRenewEvent = async (eventId) => {
         }))
       : original.event_dates,
   };
-  return adminCreateEvent(payload);
 };
 
 export const adminFetchPastEvents = async (limit = 10) => {

@@ -243,7 +243,7 @@ export default function AdminLayout({ children, currentPath, onNavigate, toasts,
   const navItems = ALL_NAV_ITEMS.filter(item => item.roles.includes(adminRole));
 
   const activeId = navItems.find(n => {
-    if (n.path === '/admin') return currentPath === '/admin';
+    if (n.path === '/admin') return currentPath.split('?')[0] === '/admin';
     return currentPath.startsWith(n.path);
   })?.id ?? 'dashboard';
 
@@ -341,7 +341,7 @@ export default function AdminLayout({ children, currentPath, onNavigate, toasts,
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <header className="flex-shrink-0 flex items-center gap-4 px-6 py-3 bg-stone-900/50 border-b border-stone-800">
-            <Breadcrumbs path={currentPath} onNavigate={onNavigate} />
+            <Breadcrumbs path={currentPath.split('?')[0]} onNavigate={onNavigate} />
             <div className="ml-auto flex items-center gap-3">
               <QuickSearch onNavigate={onNavigate} navItems={navItems} />
               <LanguageSelector />

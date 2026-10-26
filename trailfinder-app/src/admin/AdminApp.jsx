@@ -130,11 +130,16 @@ function AdminLoginGate({ onLogin }) {
 }
 
 // ─── Simple Router (path-based) ───────────────────────────────────────────────
-function resolveRoute(path) {
+const EVENT_FORM_PATH = /^\/admin\/events\/(new|[^/]+\/(edit|renew))$/;
+
+function resolveRoute(fullPath) {
+  const path = fullPath.split('?')[0];
   if (path === '/admin/events/new') return { page: 'event-form', params: { id: 'new' } };
   const eventEdit = path.match(/^\/admin\/events\/([^/]+)\/edit$/);
   if (eventEdit) return { page: 'event-form', params: { id: eventEdit[1] } };
-  if (path === '/admin/events' || path.startsWith('/admin/events?')) return { page: 'events' };
+  const eventRenew = path.match(/^\/admin\/events\/([^/]+)\/renew$/);
+  if (eventRenew) return { page: 'event-form', params: { id: 'new', renewFrom: eventRenew[1] } };
+  if (path === '/admin/events') return { page: 'events' };
 
   if (path === '/admin/organizers/new') return { page: 'organizer-form', params: { id: 'new' } };
   const orgEdit = path.match(/^\/admin\/organizers\/([^/]+)\/edit$/);
@@ -159,7 +164,7 @@ function AdminAppInner() {
   const [adminRole, setAdminRole] = useState('user');   // 'super_admin' | 'organizer' | 'user'
   const [organizerId, setOrganizerId] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const [currentPath, setCurrentPath] = useState(window.location.pathname + window.location.search);
   const { toasts, success, error, info, warning, undoToast, dismiss } = useToast();
   const toastAPI = { success, error, info, warning, undoToast };
 
@@ -187,13 +192,19 @@ function AdminAppInner() {
   }, []);
 
   useEffect(() => {
-    const handler = () => setCurrentPath(window.location.pathname);
+    const handler = () => setCurrentPath(window.location.pathname + window.location.search);
     window.addEventListener('popstate', handler);
     return () => window.removeEventListener('popstate', handler);
   }, []);
 
-  const navigate = (path) => {
-    window.history.pushState({}, '', path);
+  // Opening the event form from anywhere remembers the exact view (path + filters)
+  // in history state; EventForm returns there on save/cancel. Survives reloads.
+  const navigate = (path, { replace = false } = {}) => {
+    const fromPath = window.location.pathname + window.location.search;
+    const state = EVENT_FORM_PATH.test(path.split('?')[0]) && !EVENT_FORM_PATH.test(window.location.pathname)
+      ? { returnTo: fromPath }
+      : {};
+    window.history[replace ? 'replaceState' : 'pushState'](state, '', path);
     setCurrentPath(path);
   };
 
@@ -232,13 +243,8 @@ function AdminAppInner() {
     if (isOrganizer && !isSuperAdmin) {
       switch (route.page) {
         case 'dashboard': return <OrganizerDashboard {...props} organizerId={organizerId} />;
-        case 'events': {
-          const qs = new URLSearchParams(currentPath.split('?')[1] || '');
-          const month    = qs.get('month') || '';
-          const category = qs.get('category') || '';
-          return <EventList {...props} initialOrganizerId={organizerId} organizerLocked={true} initialMonth={month} initialCategory={category} />;
-        }
-        case 'event-form': return <EventForm {...props} eventId={route.params?.id} lockedOrganizerId={organizerId} />;
+        case 'events': return <EventList {...props} lockedOrganizerId={organizerId} />;
+        case 'event-form': return <EventForm {...props} eventId={route.params?.id} renewFromId={route.params?.renewFrom} lockedOrganizerId={organizerId} />;
         case 'reports':    return <OrganizerReports {...props} organizerId={organizerId} />;
         case 'kontakt':    return <OrganizerKontakt {...props} />;
         // Redirect restricted pages to dashboard
@@ -249,15 +255,8 @@ function AdminAppInner() {
     // Super-admin full access
     switch (route.page) {
       case 'dashboard':      return <Dashboard {...props} />;
-      case 'events': {
-        const qs = new URLSearchParams(currentPath.split('?')[1] || '');
-        const orgId    = qs.get('organizer_id') || '';
-        const orgName  = qs.get('organizer_name') || '';
-        const month    = qs.get('month') || '';
-        const category = qs.get('category') || '';
-        return <EventList {...props} initialOrganizerId={orgId} organizerName={orgName} initialMonth={month} initialCategory={category} />;
-      }
-      case 'event-form':     return <EventForm {...props} eventId={route.params?.id} />;
+      case 'events':         return <EventList {...props} />;
+      case 'event-form':     return <EventForm {...props} eventId={route.params?.id} renewFromId={route.params?.renewFrom} />;
       case 'organizers':     return <OrganizerList {...props} />;
       case 'organizer-form': return <OrganizerForm {...props} organizerId={route.params?.id} />;
       case 'users':          return <UserList {...props} />;
