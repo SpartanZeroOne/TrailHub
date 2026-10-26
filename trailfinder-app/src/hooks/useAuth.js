@@ -34,6 +34,20 @@ function getDeletedMessage() {
     return DELETED_MESSAGES[lang] ?? DELETED_MESSAGES.en;
 }
 
+// Block + ghost check for a session → 'blocked' | 'deleted' | 'ok'.
+// The session's own token is sent explicitly: during sign-in/token refresh the shared
+// client can fire this request as anon, RLS then hides the row and a live account
+// looked "deleted" (seen 2026-10-26). Any error → 'ok' (fail open, never punish real users).
+async function checkAccount(session) {
+    const { data, error } = await supabase
+        .from('users').select('is_blocked').eq('id', session.user.id)
+        .setHeader('Authorization', `Bearer ${session.access_token}`)
+        .maybeSingle();
+    if (error) return 'ok';
+    if (data?.is_blocked) return 'blocked';
+    return data === null ? 'deleted' : 'ok';
+}
+
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
@@ -61,15 +75,13 @@ export function AuthProvider({ children }) {
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (!isRecoveryRef.current && session?.user) {
                 // Block + ghost check: kick out locked or deleted users on resume
-                const { data: prof, error: profErr } = await supabase
-                    .from('users').select('is_blocked').eq('id', session.user.id).single();
-                if (prof?.is_blocked) {
+                const status = await checkAccount(session);
+                if (status === 'blocked') {
                     await supabase.auth.signOut();
                     setLoading(false);
                     return;
                 }
-                // PGRST116 = row not found → auth exists but profile deleted → ghost user
-                if (prof === null && profErr?.code === 'PGRST116') {
+                if (status === 'deleted') {
                     await signOutGhostUser();
                     setLoading(false);
                     return;
@@ -113,25 +125,17 @@ export function AuthProvider({ children }) {
 
             if (session?.user) {
                 // Check is_blocked + ghost user before ever setting user.
-                supabase.from('users').select('is_blocked').eq('id', session.user.id).single()
-                    .then(({ data: prof, error: profErr }) => {
-                        if (prof?.is_blocked) {
-                            supabase.auth.signOut();
-                            return;
-                        }
-                        // PGRST116 = no profile row → auth exists but account deleted
-                        if (prof === null && profErr?.code === 'PGRST116') {
-                            signOutGhostUser();
-                            return;
-                        }
-                        setUser(session.user);
-                        loadProfile(session.user.id);
-                    })
-                    .catch(() => {
-                        // Network failure → fail open (don't punish real users)
-                        setUser(session.user);
-                        loadProfile(session.user.id);
-                    });
+                // setTimeout: Supabase docs — don't call the client inside this callback.
+                setTimeout(() => {
+                    checkAccount(session)
+                        .catch(() => 'ok') // network failure → fail open
+                        .then(status => {
+                            if (status === 'blocked') { supabase.auth.signOut(); return; }
+                            if (status === 'deleted') { signOutGhostUser(); return; }
+                            setUser(session.user);
+                            loadProfile(session.user.id);
+                        });
+                }, 0);
             } else {
                 setUser(null);
                 setProfile(null);
